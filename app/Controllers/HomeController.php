@@ -17,7 +17,9 @@ class HomeController extends \app\Core\Controller {
 
 
 
-
 }
+
+$home = new HomeController();
+call_user_func([$home, 'index']);
 
 ?>
