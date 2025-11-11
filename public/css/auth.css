@@ -1,0 +1,730 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #e8f0e8 0%, #d4e4d4 50%, #c8dbd8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: auto;
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.brand-section {
+    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.3; }
+}
+
+.logo {
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 2px;
+}
+
+.brand-tagline {
+    font-size: 16px;
+    text-align: center;
+    opacity: 0.95;
+    position: relative;
+    z-index: 1;
+}
+
+.form-section {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    min-height: 500px;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 10;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.tab-btn:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(30, 77, 61, 0.2);
+}
+
+/* FIXED: Better form content positioning and transitions */
+.form-content {
+    display: none;
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: blur(8px);
+}
+
+.form-content.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+    position: relative;
+    z-index: 1;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #1f2937;
+    text-align: center;
+}
+
+.subtitle {
+    color: #6b7280;
+    margin-bottom: 25px;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    background: white;
+}
+
+input:focus {
+    border-color: #2d5a4a;
+    background: #f0f5f3;
+    box-shadow: 0 0 0 3px rgba(45, 90, 74, 0.1);
+}
+
+input::placeholder {
+    color: #9ca3af;
+}
+
+.password-input {
+    position: relative;
+}
+
+.password-input input {
+    padding-right: 50px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.3s;
+    z-index: 10;
+}
+
+.toggle-password:hover {
+    color: #2d5a4a;
+}
+
+.eye-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Styles for password toggle icon */
+.eye-icon .eye-closed {
+    display: block;
+}
+
+.eye-icon .eye-open {
+    display: none;
+}
+
+/* Toggled state (password visible) */
+.eye-icon.toggled .eye-closed {
+    display: none;
+}
+
+.eye-icon.toggled .eye-open {
+    display: block;
+}
+
+.forgot-password {
+    text-align: right;
+    margin-top: -10px;
+    margin-bottom: 25px;
+}
+
+.forgot-password a {
+    color: #2d5a4a;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.forgot-password a:hover {
+    color: #1e4d3d;
+    text-decoration: underline;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 10px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(30, 77, 61, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin: 3px 0 0;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    margin: 0;
+    font-weight: normal;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.checkbox-group a {
+    color: #2d5a4a;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.checkbox-group a:hover {
+    text-decoration: underline;
+}
+
+/* IMPROVED: Smoother alert animations */
+.alert {
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 2px solid transparent;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(-20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.alert.success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    border-color: #6ee7b7;
+}
+
+.alert.error {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.alert.show {
+    opacity: 1;
+    max-height: 300px;
+    transform: translateY(0) scale(1);
+    margin-bottom: 20px;
+}
+
+.alert ul {
+    margin: 0;
+    padding-left: 20px;
+    text-align: left;
+}
+
+.alert li {
+    margin-bottom: 5px;
+}
+
+.alert li:last-child {
+    margin-bottom: 0;
+}
+
+/* FIXED: Smoother step transitions */
+.register-step, .login-step {
+    display: none;
+    opacity: 0;
+    transform: translateX(50px) scale(0.97);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.register-step.active, .login-step.active {
+    display: block;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+/* Stagger animation for form elements */
+.register-step.active .input-group,
+.register-step.active .checkbox-group,
+.register-step.active .submit-btn,
+.login-step.active .input-group,
+.login-step.active .checkbox-group,
+.login-step.active .submit-btn,
+.login-step.active .forgot-password {
+    animation: slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.register-step.active .input-group:nth-child(2),
+.login-step.active .input-group:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.register-step.active .input-group:nth-child(3),
+.login-step.active .input-group:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.register-step.active .checkbox-group,
+.login-step.active .forgot-password {
+    animation-delay: 0.15s;
+}
+
+.register-step.active .submit-btn,
+.login-step.active .submit-btn {
+    animation-delay: 0.2s;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.captcha-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.captcha-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.g-recaptcha {
+    transform: scale(0.95);
+    transform-origin: center;
+    margin: 10px 0;
+}
+
+@media (max-width: 768px) {
+    .g-recaptcha {
+        transform: scale(0.85);
+    }
+}
+#captcha-image:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#reload-captcha-btn:hover {
+    background: #2d5a4a;
+    color: white;
+    border-color: #2d5a4a;
+    transform: translateY(-1px);
+}
+
+.captcha-group input {
+    margin-top: 0;
+}
+
+/* IMPROVED: Modal animations */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    visibility: visible;
+}
+
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 20px;
+    padding: 40px;
+    border: none;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal.show .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-content h2 {
+    color: #1e4d3d;
+    margin-bottom: 20px;
+    font-size: 28px;
+    text-align: left;
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 20px;
+    padding: 40px;
+    border: none;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    transform: translateY(-50px) scale(0.9);
+    opacity: 0;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal.show .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-content h2 {
+    color: #1e4d3d;
+    margin-bottom: 20px;
+    font-size: 28px;
+    text-align: center;
+}
+
+.modal-content p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+    color: #374151;
+    text-align: center;
+}
+
+.modal-content ul {
+    margin: 0 auto 20px;
+    padding-left: 20px;
+    line-height: 1.7;
+    color: #374151;
+    text-align: left;
+    display: inline-block;
+    max-width: 500px;
+}
+
+.modal-content li {
+    margin-bottom: 10px;
+}
+
+.modal-close-btn {
+    color: #9ca3af;
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    line-height: 1;
+}
+
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+    color: #1e4d3d;
+    transform: rotate(90deg) scale(1.1);
+}
+/* Resend OTP Container and Button Styling */
+.resend-otp-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    margin-top: -5px;
+}
+
+.resend-otp-btn {
+    background: transparent;
+    border: none;
+    color: #2d5a4a;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: underline;
+}
+
+.resend-otp-btn:hover:not(:disabled) {
+    background: #f0f5f3;
+    color: #1e4d3d;
+    text-decoration: none;
+}
+
+.resend-otp-btn:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.5;
+    text-decoration: none;
+}
+
+.resend-timer {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Forgot Password Link Styling */
+.back-to-login {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.back-to-login a {
+    color: #2d5a4a;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.back-to-login a:hover {
+    color: #1e4d3d;
+    text-decoration: underline;
+}
+
+/* Forgot Password Steps */
+.forgot-step {
+    display: none;
+    opacity: 0;
+    transform: translateX(50px) scale(0.97);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.forgot-step.active {
+    display: block;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.forgot-step.active .input-group,
+.forgot-step.active .submit-btn,
+.forgot-step.active .back-to-login,
+.forgot-step.active .resend-otp-container {
+    animation: slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.forgot-step.active .input-group:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.forgot-step.active .input-group:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.forgot-step.active .resend-otp-container {
+    animation-delay: 0.15s;
+}
+
+.forgot-step.active .submit-btn {
+    animation-delay: 0.2s;
+}
+
+.forgot-step.active .back-to-login {
+    animation-delay: 0.25s;
+}
+
+@media (max-width: 768px) {
+    .auth-container {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-section {
+        padding: 30px 20px;
+        min-height: 180px;
+    }
+
+    .form-section {
+        padding: 30px 20px;
+        min-height: 450px;
+    }
+
+    .logo {
+        font-size: 28px;
+    }
+
+    .brand-tagline {
+        font-size: 14px;
+    }
+
+    .captcha-group {
+        align-items: flex-start;
+    }
+
+    #captcha-image {
+        width: 180px;
+        height: 60px;
+    }
+
+    #reload-captcha-btn {
+        width: 100%;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
