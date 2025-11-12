@@ -1,6 +1,7 @@
 <?php
+// app/Core/Controller.php
 
-namespace app\Core;
+namespace App\Core;
 
 class Controller {
     public function __construct() {
@@ -14,12 +15,9 @@ class Controller {
             require_once $viewPath;
         } else {
             // Handle error: view not found
-            $viewPath = '../app/Views/errors/404.php';
-            require_once $viewPath;
+            http_response_code(404);
+            echo "View not found: {$viewName}";
             exit;
         }
     }
-
-
-
 }

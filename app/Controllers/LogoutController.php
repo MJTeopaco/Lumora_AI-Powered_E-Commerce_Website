@@ -22,7 +22,12 @@ class LogoutController {
         // Destroy the session
         Session::destroy();
         
-        // Redirect to login page
-        RedirectHelper::redirectWithSuccess('You have been logged out.', 'login', 'credentials');
+        // Delete the remember me cookie
+        if (isset($_COOKIE['remember_me'])) {
+            setcookie('remember_me', '', time() - 3600, '/', '', false, true);
+        }
+        
+        // Redirect to home page with success message
+        RedirectHelper::redirectToIndexSuccess('You have been logged out successfully.');
     }
 }

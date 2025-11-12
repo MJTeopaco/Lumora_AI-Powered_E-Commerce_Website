@@ -12,7 +12,7 @@ use App\Models\User;
 use App\Models\RememberMeToken;
 use DateTime;
 
-class AuthController {
+class AuthController extends \App\Core\Controller {
     
     protected $userModel;
 
@@ -44,7 +44,7 @@ class AuthController {
         ];
         
         // Load the view
-        require __DIR__ . '/../../views/auth/login.php';
+        require_once __DIR__ . '/../../views/auth/login.php';
     }
 
     /**

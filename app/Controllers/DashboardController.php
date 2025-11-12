@@ -7,7 +7,7 @@ use App\Core\Session;
 use App\Helpers\RedirectHelper;
 use App\Models\RememberMeToken;
 
-class DashboardController {
+class DashboardController extends \App\Core\Controller {
 
     public function __construct() {
         // Check session

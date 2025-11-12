@@ -1,28 +1,4 @@
 <?php
-<<<<<<< HEAD
-namespace App\Core;
-
-class DBConnection {
-    protected \mysqli $connection;
-    public function __construct(string $host, string $username, string $password, string $database) {
-        $this->connection = new \mysqli($host, $username, $password, $database);
-
-        if ($this->connection->connect_error) {
-            die("Connection failed: " . $this->connection->connect_error);
-        } 
-    }
-
-    public function getConnection(): \mysqli {
-        return $this->connection;
-    }
-
-    public function closeConnection(): void {
-        $this->connection->close();
-    }
-}
-
-?>
-=======
 // app/Core/Database.php
 
 namespace App\Core;
@@ -36,7 +12,7 @@ define('DB_PASS', '');
 define('DB_NAME', 'lumora_db');
 
 class Database {
-    public static $conn;
+    private static $conn;
 
     /**
      * Establishes and returns the database connection.
@@ -59,4 +35,3 @@ class Database {
 
 // Initialize connection immediately
 Database::getConnection();
->>>>>>> 2ed22e9a07fc419ced8d797e5473e56dc0f71137
