@@ -10,9 +10,10 @@ use App\Helpers\RedirectHelper;
 use App\Helpers\ValidationHelper;
 use App\Models\User;
 use App\Models\RememberMeToken;
+use App\Core\Controller;
 use DateTime;
 
-class AuthController {
+class AuthController extends Controller {
     
     protected $userModel;
 
@@ -44,7 +45,7 @@ class AuthController {
         ];
         
         // Load the view
-        require __DIR__ . '/../../views/auth/login.php';
+        require __DIR__ . '/../../app/Views/layouts/auth/login.view.php';
     }
 
     /**

@@ -2,7 +2,7 @@
 // routes/web.php
 
 // GET routes
-$router->get('/', 'DashboardController@index');
+$router->get('/', 'HomeController@index');
 $router->get('/login', 'AuthController@showLogin');
 
 // POST routes (Form submissions)
