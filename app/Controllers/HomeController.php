@@ -3,124 +3,50 @@
 
 namespace App\Controllers;
 
-use App\Core\Controller;
 use App\Core\Session;
+use App\Core\Controller;
+use App\Models\Product;
+use App\Models\RememberMeToken;
 
 class HomeController extends Controller {
-    
+
+    protected $productModel;
+
     public function __construct() {
-        parent::__construct();
-        // Remove any echo or debug statements
+        $this->productModel = new Product();
+        
+        // Check for remember-me cookie (but don't force login)
+        if (!Session::has('user_id')) {
+            $tokenModel = new RememberMeToken();
+            $tokenModel->validate(); // This will set session if valid
+        }
     }
 
     /**
-     * Display the main shop page
+     * Show the main landing page (accessible to everyone).
      */
     public function index() {
         // Check if user is logged in
         $isLoggedIn = Session::has('user_id');
-        $username = Session::get('username', '');
-        
-        // Get featured/all products (mock data for now)
-        $products = $this->getMockProducts();
-        
-        // Get any status messages from URL parameters
-        $statusMessage = null;
-        $statusType = null;
-        if (isset($_GET['status']) && isset($_GET['message'])) {
-            $statusType = $_GET['status']; // 'success' or 'error'
-            $statusMessage = urldecode($_GET['message']);
-        }
-        
-        // Prepare data for view
+        $username = $isLoggedIn ? Session::get('username') : null;
+
+        // Get all products (or featured products)
+        $products = $this->productModel->getAllProducts();
+
+        // Check for status messages from URL
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
+
+        // Pass data to view
         $data = [
-            'title' => 'Lumora - Exquisite Accessories',
             'isLoggedIn' => $isLoggedIn,
             'username' => $username,
             'products' => $products,
             'statusMessage' => $statusMessage,
             'statusType' => $statusType
         ];
-        
+
         // Load the view
-        $this->view('home/index', $data);
-    }
-    
-    /**
-     * Mock product data (replace with actual database call later)
-     */
-    private function getMockProducts() {
-        return [
-            [
-                'id' => 1,
-                'name' => 'Elegant Pearl Necklace',
-                'price' => 2499.00,
-                'image' => '/assets/images/products/necklace1.jpg',
-                'category' => 'Necklaces'
-            ],
-            [
-                'id' => 2,
-                'name' => 'Diamond Stud Earrings',
-                'price' => 3999.00,
-                'image' => '/assets/images/products/earrings1.jpg',
-                'category' => 'Earrings'
-            ],
-            [
-                'id' => 3,
-                'name' => 'Gold Charm Bracelet',
-                'price' => 1899.00,
-                'image' => '/assets/images/products/bracelet1.jpg',
-                'category' => 'Bracelets'
-            ],
-            [
-                'id' => 4,
-                'name' => 'Silver Ring Set',
-                'price' => 1299.00,
-                'image' => '/assets/images/products/ring1.jpg',
-                'category' => 'Rings'
-            ],
-            [
-                'id' => 5,
-                'name' => 'Leather Handbag',
-                'price' => 4599.00,
-                'image' => '/assets/images/products/bag1.jpg',
-                'category' => 'Bags'
-            ],
-            [
-                'id' => 6,
-                'name' => 'Designer Sunglasses',
-                'price' => 2199.00,
-                'image' => '/assets/images/products/sunglasses1.jpg',
-                'category' => 'Accessories'
-            ]
-        ];
-    }
-    
-    /**
-     * Handle "Add to Cart" action
-     * Redirects to login if not authenticated
-     */
-    public function addToCart() {
-        // Check if user is logged in
-        if (!Session::has('user_id')) {
-            // Redirect to login with message
-            $message = urlencode('Please login to add items to your cart');
-            header("Location: /login?status=error&message={$message}&tab=login");
-            exit();
-        }
-        
-        // Handle add to cart logic here
-        $productId = $_POST['product_id'] ?? null;
-        
-        if ($productId) {
-            // Add to cart logic (you'll implement this later)
-            // For now, just show success message
-            $message = urlencode('Item added to cart successfully!');
-            header("Location: /?status=success&message={$message}");
-            exit();
-        }
-        
-        header("Location: /");
-        exit();
+        $this->view('main_page/index', $data);
     }
 }

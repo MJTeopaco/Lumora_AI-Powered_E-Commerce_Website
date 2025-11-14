@@ -4,20 +4,37 @@
 namespace App\Core;
 
 class Controller {
-    public function __construct() {
-        // Base controller constructor
-    }
-
-    public function view($viewName, $data = []) {
-        $viewPath = '../app/Views/' . $viewName . '.php';
-        if (file_exists($viewPath)) {
-            extract($data);
-            require_once $viewPath;
+    
+    /**
+     * Load a view file with data
+     * @param string $view - Path to view (e.g., 'main_page/index')
+     * @param array $data - Data to pass to the view
+     */
+    protected function view($view, $data = []) {
+        // Extract data array to variables
+        extract($data);
+        
+        // Build the view file path
+        $viewFile = __DIR__ . '/../Views/layouts/' . $view . '.view.php';
+        
+        // Check if view file exists
+        if (file_exists($viewFile)) {
+            require $viewFile;
         } else {
-            // Handle error: view not found
-            http_response_code(404);
-            echo "View not found: {$viewName}";
-            exit;
+            die("View not found: $viewFile");
         }
+    }
+    
+    /**
+     * Load a model
+     * @param string $model - Model name
+     * @return object - Model instance
+     */
+    protected function model($model) {
+        $modelClass = "App\\Models\\$model";
+        if (class_exists($modelClass)) {
+            return new $modelClass();
+        }
+        die("Model not found: $model");
     }
 }
