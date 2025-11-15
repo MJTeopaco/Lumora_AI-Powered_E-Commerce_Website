@@ -1,0 +1,291 @@
+/* ========== LOGGED-IN HOME PAGE ========== */
+
+.user-home-main {
+  background-color: #faf7f4;
+}
+
+/* HERO */
+.user-hero {
+  background: linear-gradient(135deg, #111 0%, #222 100%);
+  color: #fff;
+  padding-block: 3.2rem 3.8rem;
+}
+
+.user-hero-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.user-hero-text {
+  flex: 2 1 320px;
+}
+
+.user-hero-eyebrow {
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 0.6rem;
+}
+
+.user-hero-text h1 {
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+}
+
+.user-hero-subtitle {
+  font-size: 0.96rem;
+  max-width: 520px;
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+.user-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.6rem;
+}
+
+.btn.user-hero-btn-primary {
+  background-color: var(--primary);
+  color: #fff;
+  padding: 0.75rem 1.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  border: none;
+  cursor: pointer;
+}
+
+.btn.user-hero-btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn.user-hero-btn-ghost {
+  background-color: transparent;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.55);
+  color: #fff;
+  padding: 0.75rem 1.6rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.btn.user-hero-btn-ghost:hover {
+  background-color: rgba(255,255,255,0.12);
+}
+
+/* HERO SUMMARY CARDS */
+.user-hero-summary {
+  flex: 1.2 1 240px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+
+.summary-card {
+  background-color: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.summary-label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.summary-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* QUICK ACTIONS */
+.user-quick-actions {
+  padding-block: 3rem;
+  background-color: #faf7f4;
+}
+
+.section-title-small {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1.4rem;
+  color: #2b2b2b;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.quick-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 1.2rem 1.1rem 1.3rem;
+  border: 1px solid #eee2d5;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.quick-card h3 {
+  font-size: 0.98rem;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.quick-card p {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.quick-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.08);
+}
+
+/* RECOMMENDED PRODUCTS */
+.user-recommended {
+  padding-block: 0 3.5rem;
+  background-color: #faf7f4;
+}
+
+.user-recommended-subtitle {
+  font-size: 0.92rem;
+  color: #666;
+  max-width: 520px;
+  margin-bottom: 1.6rem;
+}
+
+.user-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.user-product-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 1.4rem 1.2rem 1.5rem;
+  border: 1px solid #eee2d5;
+  text-align: center;
+}
+
+.user-product-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f9ede1, #f6d6c3);
+  margin-bottom: 0.9rem;
+}
+
+.user-product-card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.user-product-price {
+  font-size: 0.95rem;
+  color: #444;
+  margin-bottom: 0.8rem;
+}
+
+.btn.user-product-btn {
+  background-color: #fff;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  padding: 0.45rem 1.4rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn.user-product-btn:hover {
+  border-color: var(--primary);
+  background-color: #f9f1e4;
+}
+
+/* Top bar username tweak */
+.top-user {
+  font-size: 0.82rem;
+  color: #7a5d38;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .user-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .user-hero-inner {
+    flex-direction: column;
+  }
+
+  .user-hero-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-grid,
+  .user-product-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========== PROFILE DROPDOWN ========== */
+
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-trigger {
+  position: relative;
+}
+
+/* hidden by default */
+.profile-menu {
+  position: absolute;
+  top: 115%;
+  right: 0;
+  min-width: 160px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eee2d5;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+  padding: 0.4rem 0;
+  display: none;
+  z-index: 1500;
+}
+
+.profile-menu a {
+  display: block;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  color: #444;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.profile-menu a:hover {
+  background-color: #faf7f4;
+  color: #222;
+}
+
+/* when open */
+.profile-dropdown.open .profile-menu {
+  display: block;
+}

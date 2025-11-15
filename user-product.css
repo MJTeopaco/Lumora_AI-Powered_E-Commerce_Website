@@ -1,0 +1,44 @@
+
+/* ========== PROFILE DROPDOWN ========== */
+
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-trigger {
+  position: relative;
+}
+
+/* hidden by default */
+.profile-menu {
+  position: absolute;
+  top: 115%;
+  right: 0;
+  min-width: 160px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eee2d5;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+  padding: 0.4rem 0;
+  display: none;
+  z-index: 1500;
+}
+
+.profile-menu a {
+  display: block;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  color: #444;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.profile-menu a:hover {
+  background-color: #faf7f4;
+  color: #222;
+}
+
+/* when open */
+.profile-dropdown.open .profile-menu {
+  display: block;
+}
