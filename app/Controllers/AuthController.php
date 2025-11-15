@@ -135,7 +135,14 @@ class AuthController extends Controller {
         Session::unset('login_otp');
         Session::unset('login_otp_expiry');
 
-        RedirectHelper::redirect('/'); // Redirect to dashboard
+        $role = $this->userModel->getUserRoles(Session::get('user_id'));
+        
+        if (in_array('admin', $role)) {
+            RedirectHelper::redirect('/admin/dashboard'); 
+        } else {
+            RedirectHelper::redirect('/'); 
+        }
+
     }
 
     /**

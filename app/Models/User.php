@@ -33,6 +33,19 @@ class User {
         return $user;
     }
     
+    public function getUserRoles($user_id) {
+        $stmt = $this->conn->prepare("SELECT r.name FROM roles r JOIN user_roles ur ON r.role_id = ur.role_id WHERE ur.user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $roles = [];
+        while ($row = $result->fetch_assoc()) {
+            $roles[] = $row['name'];
+        }
+        $stmt->close();
+        return $roles;
+    }
+
     public function findByUsername($username) {
         $stmt = $this->conn->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
@@ -80,13 +93,26 @@ class User {
         }
     }
 
+// app/Models/User.php
+
     public function create($username, $email, $password) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->conn->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'buyer', NOW())");
+        $stmt = $this->conn->prepare("INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, NOW())");
         $stmt->bind_param("sss", $username, $email, $hashed_password);
-        $result = $stmt->execute();
+        $user_result = $stmt->execute();
         $stmt->close();
-        return $result;
+
+        if ($user_result) {
+            $new_user_id = $this->conn->insert_id;
+            $buyer_role_id = 1; 
+            $stmt_role = $this->conn->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+            $stmt_role->bind_param("ii", $new_user_id, $buyer_role_id);
+            $role_result = $stmt_role->execute();
+            $stmt_role->close();
+            return $role_result;
+        }
+        
+        return false;
     }
 
     public function updatePassword($user_id, $password) {

@@ -1,13 +1,22 @@
 <?php
 namespace App\Helpers;
 
-use App\Core\Controller;
-use App\Core\Session;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-class HomeController extends Controller {
-    
-    public function __construct() {
-        parent::__construct();
+class EmailHelper {
+
+    private static function configureMailer() {
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'lumora.auth@gmail.com';
+        $mail->Password   = 'lftkvhebzmcuqllu'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+        $mail->setFrom('lumora.auth@gmail.com', 'Lumora');
+        return $mail;
     }
 
     /**
@@ -41,17 +50,6 @@ class HomeController extends Controller {
             error_log('PHPMailer error: ' . $mail->ErrorInfo);
             return false;
         }
-        
-        $data = [
-            'title' => 'Lumora - Exquisite Accessories',
-            'isLoggedIn' => $isLoggedIn,
-            'username' => $username,
-            'products' => $products,
-            'statusMessage' => $statusMessage,
-            'statusType' => $statusType
-        ];
-        
-        $this->view('home/index', $data);
     }
 
     public static function sendLoginOTPEmail($email, $otp, $username) {
@@ -87,9 +85,6 @@ class HomeController extends Controller {
             error_log('PHPMailer error: ' . $mail->ErrorInfo);
             return false;
         }
-        
-        header("Location: /");
-        exit();
     }
 
     public static function sendForgotPasswordOTPEmail($email, $otp, $username) {

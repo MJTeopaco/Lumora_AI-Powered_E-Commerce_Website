@@ -67,6 +67,7 @@
             text-decoration: none;
             display: inline-block;
             transition: all 0.3s ease;
+            font-family: inherit;
         }
 
         .btn-primary {
@@ -320,8 +321,14 @@
             <div class="nav-actions">
                 <?php if ($isLoggedIn): ?>
                     <span class="user-info">Welcome, <?= htmlspecialchars($username) ?>!</span>
+
+                    <!-- Cart -->
                     <a href="/cart" class="btn btn-secondary">🛒 Cart</a>
-                    <a href="/logout" class="btn btn-primary">Logout</a>
+                    
+                    <!-- Log out -->
+                    <form method="GET" action="/logout" style="display: inline;">
+                        <button type="submit" class="btn btn-primary">Logout</button>
+                    </form>
                 <?php else: ?>
                     <a href="/login" class="btn btn-primary">Login / Sign Up</a>
                 <?php endif; ?>

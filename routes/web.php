@@ -4,6 +4,8 @@
 // GET routes
 $router->get('/', 'HomeController@index');
 $router->get('/login', 'AuthController@showLogin');
+$router->get('/logout', 'LogoutController@logout');
+$router->get('/admin/dashboard', 'AdminController@dashboard');
 
 // POST routes (Form submissions)
 $router->post('/auth/login-step-1', 'AuthController@handleLoginStep1');
