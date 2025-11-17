@@ -215,34 +215,71 @@ document.querySelectorAll('.back-to-login-link').forEach(link => {
     });
 });
 
-// Terms & Conditions Modal
-const termsModal = document.getElementById('terms-modal');
-const termsLink = document.getElementById('terms-link');
-const modalCloseBtn = document.querySelector('.modal-close-btn');
+// Terms & Conditions and Privacy Policy Modals
+document.addEventListener('DOMContentLoaded', function() {
+    const termsModal = document.getElementById('terms-modal');
+    const privacyModal = document.getElementById('privacy-modal');
+    const termsLink = document.getElementById('terms-link');
+    const privacyLink = document.getElementById('privacy-link');
 
-termsLink?.addEventListener('click', function(e) {
-    e.preventDefault();
-    termsModal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-});
-
-function closeModal() {
-    termsModal?.classList.remove('show');
-    document.body.style.overflow = '';
-}
-
-modalCloseBtn?.addEventListener('click', closeModal);
-
-window.addEventListener('click', function(e) {
-    if (e.target == termsModal) {
-        closeModal();
+    // Open Terms Modal
+    if (termsLink) {
+        termsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (termsModal) {
+                termsModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        });
     }
-});
 
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && termsModal?.classList.contains('show')) {
-        closeModal();
+    // Open Privacy Modal
+    if (privacyLink) {
+        privacyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (privacyModal) {
+                privacyModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        });
     }
+
+    // Close any modal
+    function closeModal(modal) {
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Close buttons for all modals
+    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const modalId = this.getAttribute('data-modal');
+            const modal = document.getElementById(modalId);
+            closeModal(modal);
+        });
+    });
+
+    // Click outside to close
+    window.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            closeModal(e.target);
+        }
+    });
+
+    // ESC key to close any open modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (termsModal && termsModal.classList.contains('show')) {
+                closeModal(termsModal);
+            }
+            if (privacyModal && privacyModal.classList.contains('show')) {
+                closeModal(privacyModal);
+            }
+        }
+    });
 });
 
 // *** MODIFIED: This logic is now handled by PHP in login.php ***
@@ -370,8 +407,8 @@ document.getElementById('register-form-element')?.addEventListener('submit', fun
     }
     
     if (!terms) {
-        errors.push('You must agree to the Terms & Conditions');
-    }
+    errors.push('You must agree to the Terms & Conditions and Privacy Policy');
+}   
 
     if (errors.length > 0) {
         e.preventDefault();
