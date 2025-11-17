@@ -7,13 +7,19 @@ use App\Core\Session;
 use App\Core\Controller;
 use App\Models\Product;
 use App\Models\RememberMeToken;
+use App\Models\User;
+use App\Models\UserProfile;
 
 class HomeController extends Controller {
 
     protected $productModel;
+    protected $userModel;
+    protected $profileModel;
 
     public function __construct() {
         $this->productModel = new Product();
+        $this->userModel = new User();
+        $this->profileModel = new UserProfile();
         
         // Check for remember-me cookie (but don't force login)
         if (!Session::has('user_id')) {
@@ -28,7 +34,42 @@ class HomeController extends Controller {
     public function index() {
         // Check if user is logged in
         $isLoggedIn = Session::has('user_id');
-        $username = $isLoggedIn ? Session::get('username') : null;
+        $username = null;
+        $email = null;
+        $userProfile = null;
+        $notificationCount = 0;
+        $cartCount = 0;
+
+        if ($isLoggedIn) {
+            $userId = Session::get('user_id');
+            $username = Session::get('username');
+            
+            // Get user data for email
+            $user = $this->userModel->findById($userId);
+            $email = $user['email'] ?? '';
+            
+            // Get user profile
+            $userProfile = $this->profileModel->getByUserId($userId);
+            
+            // If no profile exists, create default structure
+            if (!$userProfile) {
+                $userProfile = [
+                    'profile_pic' => '',
+                    'full_name' => '',
+                    'phone_number' => '',
+                    'gender' => '',
+                    'birth_date' => ''
+                ];
+            }
+            
+            // TODO: Get actual notification count from notifications table
+            // $notificationCount = $this->getUnreadNotificationCount($userId);
+            $notificationCount = 0; // Placeholder
+            
+            // TODO: Get actual cart count from cart table
+            // $cartCount = $this->getCartItemCount($userId);
+            $cartCount = 0; // Placeholder
+        }
 
         // Get all products (or featured products)
         $products = $this->productModel->getAllProducts();
@@ -41,6 +82,10 @@ class HomeController extends Controller {
         $data = [
             'isLoggedIn' => $isLoggedIn,
             'username' => $username,
+            'email' => $email,
+            'userProfile' => $userProfile,
+            'notificationCount' => $notificationCount,
+            'cartCount' => $cartCount,
             'products' => $products,
             'statusMessage' => $statusMessage,
             'statusType' => $statusType
@@ -48,5 +93,23 @@ class HomeController extends Controller {
 
         // Load the view
         $this->view('main_page/index', $data);
+    }
+    
+    /**
+     * Get unread notification count for user
+     * TODO: Implement when notifications table is ready
+     */
+    private function getUnreadNotificationCount($userId) {
+        // Placeholder - implement when notifications feature is ready
+        return 0;
+    }
+    
+    /**
+     * Get cart item count for user
+     * TODO: Implement when cart functionality is ready
+     */
+    private function getCartItemCount($userId) {
+        // Placeholder - implement when cart is ready
+        return 0;
     }
 }

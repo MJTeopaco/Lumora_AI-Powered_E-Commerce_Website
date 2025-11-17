@@ -195,7 +195,7 @@
                     <p class="subtitle">Step 3 out of 4: Prove you are not a robot</p>
                     <form id="register-captcha-form-element" action="/auth/register-step-3" method="POST">
                         <div class="input-group captcha-group">
-                            <div class="g-recaptcha" data-sitekey="6Le_BgksAAAAAAVI215cvP5yjI3pKUEu2253JfRz"></div>
+                            <div class="g-recaptcha" data-sitekey="6LdpbwwsAAAAAGUr6X_3imAtgnaSBzwyzs20Lpdi"></div>
                         </div>
                         <button type="submit" class="submit-btn">Verify</button>
                     </form>
@@ -241,10 +241,10 @@
                             </div>
                         </div>
 
-                        <div class="checkbox-group">
-                            <input type="checkbox" name="terms" id="terms" required>
-                            <label for="terms">I agree to the <a href="#" id="terms-link">Terms & Conditions</a></label>
-                        </div>
+                       <div class="checkbox-group">
+    <input type="checkbox" name="terms" id="terms" required>
+    <label for="terms">I agree to the <a href="#" id="terms-link">Terms & Conditions</a> and <a href="#" id="privacy-link">Privacy Policy</a></label>
+</div>
 
                         <button type="submit" class="submit-btn">Create Account</button>
                     </form>

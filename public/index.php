@@ -3,6 +3,11 @@
 // The one and only entry point for all web requests.
 
 // Load Composer's autoloader FIRST
+
+// Clear OpCache
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+}
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Request;

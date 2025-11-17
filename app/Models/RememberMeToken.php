@@ -113,4 +113,21 @@ class RememberMeToken {
             ]);
         }
     }
+
+    // ADD THIS NEW METHOD HERE (after the delete method, before the closing })
+    /**
+     * Delete token by selector (used by logout)
+     */
+    public function deleteBySelector($cookieValue) {
+        if (empty($cookieValue)) {
+            return;
+        }
+        
+        // Extract selector from cookie value
+        $parts = explode(':', $cookieValue, 2);
+        if (count($parts) === 2) {
+            $selector = $parts[0];
+            $this->delete($selector, false);
+        }
+    }
 }

@@ -52,9 +52,89 @@
             gap: 1rem;
         }
 
-        .user-info {
+        /* Icon Buttons */
+        .icon-btn {
+            position: relative;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+        }
+
+        .icon-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .icon-btn img {
+            width: 28px;
+            height: 28px;
+            filter: brightness(0) invert(1);
+        }
+
+        .icon-btn .badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* Profile Button */
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
             color: #ffffff;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .profile-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .profile-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1e4d3d;
             font-size: 14px;
+            border: 2px solid #ffffff;
+            overflow: hidden;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .btn {
@@ -77,16 +157,6 @@
         .btn-primary:hover {
             background-color: #f0f5f3;
             transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: #ffffff;
-            border: 2px solid #ffffff;
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(255, 255, 255, 0.1);
         }
 
         .btn-add-cart {
@@ -306,8 +376,16 @@
             }
 
             .nav-container {
-                flex-direction: column;
-                gap: 1rem;
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .profile-name {
+                display: none;
+            }
+
+            .nav-actions {
+                gap: 0.5rem;
             }
         }
     </style>
@@ -319,9 +397,33 @@
             <a href="/" class="logo">LUMORA</a>
             <div class="nav-actions">
                 <?php if ($isLoggedIn): ?>
-                    <span class="user-info">Welcome, <?= htmlspecialchars($username) ?>!</span>
-                    <a href="/cart" class="btn btn-secondary">🛒 Cart</a>
-                    <a href="/logout" class="btn btn-primary">Logout</a>
+                    <!-- Notification Icon -->
+                    <button class="icon-btn" onclick="window.location.href='/notifications'" title="Notifications">
+                        <img src="/img/notif-icon.png" alt="Notifications">
+                        <?php if (isset($notificationCount) && $notificationCount > 0): ?>
+                            <span class="badge"><?= $notificationCount > 99 ? '99+' : $notificationCount ?></span>
+                        <?php endif; ?>
+                    </button>
+
+                    <!-- Cart Icon -->
+                    <button class="icon-btn" onclick="window.location.href='/cart'" title="Shopping Cart">
+                        <img src="/img/cart-icon.png" alt="Cart">
+                        <?php if (isset($cartCount) && $cartCount > 0): ?>
+                            <span class="badge"><?= $cartCount > 99 ? '99+' : $cartCount ?></span>
+                        <?php endif; ?>
+                    </button>
+
+                    <!-- Profile Link -->
+                    <a href="/profile" class="profile-btn">
+                        <div class="profile-avatar">
+                            <?php if (!empty($userProfile['profile_pic'])): ?>
+                                <img src="/<?= htmlspecialchars($userProfile['profile_pic']) ?>" alt="Profile">
+                            <?php else: ?>
+                                <?= strtoupper(substr($username, 0, 1)) ?>
+                            <?php endif; ?>
+                        </div>
+                        <span class="profile-name"><?= htmlspecialchars($username) ?></span>
+                    </a>
                 <?php else: ?>
                     <a href="/login" class="btn btn-primary">Login / Sign Up</a>
                 <?php endif; ?>
