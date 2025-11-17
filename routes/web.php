@@ -7,6 +7,12 @@ $router->get('/login', 'AuthController@showLogin');
 $router->get('/logout', 'LogoutController@logout');
 $router->get('/admin/dashboard', 'AdminController@dashboard');
 
+// Admin Settings Routes
+$router->get('/admin/settings', 'AdminController@settings');
+$router->post('/admin/add-category', 'AdminController@addCategory');
+$router->post('/admin/update-category', 'AdminController@updateCategory');
+$router->post('/admin/delete-category', 'AdminController@deleteCategory');
+
 // Profile routes
 $router->get('/profile', 'ProfileController@index');
 $router->post('/profile/update', 'ProfileController@update');

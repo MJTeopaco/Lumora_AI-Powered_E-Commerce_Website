@@ -379,11 +379,11 @@ $admin_role = $_SESSION['role'] ?? 'Administrator';
                 <p>Admin Panel</p>
             </div>
             <ul class="sidebar-menu">
-                <li><a href="admin/dashboard" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
-                <li><a href="admin/users"><i class="fas fa-users"></i><span>Users</span></a></li>
-                <li><a href="admin/sellers"><i class="fas fa-user-tag"></i><span>Sellers</span></a></li>
-                <li><a href="admin/settings"><i class="fas fa-cog"></i><span>Configure Settings</span></a></li>
-                <li><a href="admin/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a></li>
+                <li><a href="/admin/dashboard" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                <li><a href="/admin/users"><i class="fas fa-users"></i><span>Users</span></a></li>
+                <li><a href="/admin/sellers"><i class="fas fa-user-tag"></i><span>Sellers</span></a></li>
+                <li><a href="/admin/settings"><i class="fas fa-cog"></i><span>Configure Settings</span></a></li>
+                <li><a href="/admin/reports"><i class="fas fa-chart-bar"></i><span>Reports</span></a></li>
                 <li><a href="/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
             </ul>
         </aside>

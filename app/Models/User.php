@@ -105,7 +105,7 @@ class User {
         if ($user_result) {
             $new_user_id = $this->conn->insert_id;
             $buyer_role_id = 1; 
-            $stmt_role = $this->conn->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
+            $stmt_role = $this->conn->prepare("INSERT INTO user_roles (user_id, role_id, is_approved) VALUES (?, ?, TRUE)");
             $stmt_role->bind_param("ii", $new_user_id, $buyer_role_id);
             $role_result = $stmt_role->execute();
             $stmt_role->close();

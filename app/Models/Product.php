@@ -18,27 +18,39 @@ class Product {
      * Get all published products with their variants
      */
     public function getAllProducts() {
-        $query = "SELECT 
-                    p.product_id as id,
-                    p.name,
-                    p.short_description,
-                    p.description,
-                    p.cover_picture as image,
-                    pc.name as category,
-                    MIN(pv.price) as price,
-                    SUM(pv.quantity) as stock,
-                    p.slug
-                  FROM products p
-                  LEFT JOIN product_categories pc ON p.category_id = pc.category_id
-                  LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
-                  WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
-                  GROUP BY p.product_id
-                  ORDER BY p.created_at DESC";
-        
-        // FIX: Use mysqli's query and fetch_all
+        $query = "
+            SELECT 
+                p.product_id AS id,
+                p.name,
+                p.short_description,
+                p.description,
+                p.cover_picture AS image,
+                GROUP_CONCAT(pc.name SEPARATOR ', ') AS categories,
+                MIN(pv.price) AS price,
+                SUM(pv.quantity) AS stock,
+                p.slug
+            FROM products p
+            LEFT JOIN product_variants pv 
+                ON p.product_id = pv.product_id 
+                AND pv.is_active = 1
+
+            LEFT JOIN product_category_links pcl 
+                ON pcl.product_id = p.product_id
+
+            LEFT JOIN product_categories pc 
+                ON pc.category_id = pcl.category_id
+
+            WHERE p.status = 'PUBLISHED' 
+            AND p.is_deleted = 0
+
+            GROUP BY p.product_id
+            ORDER BY p.created_at DESC
+        ";
+
         $result = $this->db->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+
 
     /**
      * Get featured products (limit to specific number)
@@ -195,8 +207,7 @@ class Product {
         $query = "SELECT 
                     category_id as id,
                     name,
-                    slug,
-                    parent_category_id
+                    slug 
                   FROM product_categories
                   ORDER BY name ASC";
         
