@@ -12,6 +12,11 @@ ini_set('display_errors', 1);
 
 
 // Load Composer's autoloader FIRST
+
+// Clear OpCache
+if (function_exists('opcache_reset')) {
+    opcache_reset();
+}
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Request;

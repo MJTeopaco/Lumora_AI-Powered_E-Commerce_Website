@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Session;
+use App\Core\Database;
 use App\Helpers\EmailHelper;
 use App\Helpers\RedirectHelper;
 use App\Helpers\ValidationHelper;
@@ -77,6 +78,7 @@ class AuthController extends Controller {
                 Session::set('login_username_pending', $user['username']);
                 Session::set('login_otp', $otp);
                 Session::set('login_otp_expiry', time() + 120);
+                Session::set('login_otp_attempts', 0); // Initialize attempt counter
 
                 if(EmailHelper::sendLoginOTPEmail($user['email'], $otp, $user['username'])) {
                     RedirectHelper::redirectWithSuccess('Verification code sent to your email.', 'login', 'otp');
@@ -113,10 +115,27 @@ class AuthController extends Controller {
         }
         if (time() > Session::get('login_otp_expiry')) {
             Session::unset('login_otp');
+            Session::unset('login_otp_attempts');
             RedirectHelper::redirectWithError('OTP expired. Please login again.', 'login', 'credentials');
         }
+
+        // Check attempts
+        $attempts = (int) Session::get('login_otp_attempts', 0);
+        if ($attempts >= 3) {
+            // Clear session and redirect
+            Session::unset('login_user_id_pending');
+            Session::unset('login_remember_me_pending');
+            Session::unset('login_username_pending');
+            Session::unset('login_otp');
+            Session::unset('login_otp_expiry');
+            Session::unset('login_otp_attempts');
+            RedirectHelper::redirectWithError('Too many invalid OTP attempts. Please login again.', 'login', 'credentials');
+        }
+
         if ($otp != Session::get('login_otp')) {
-            RedirectHelper::redirectWithError('Invalid OTP.', 'login', 'otp');
+            Session::set('login_otp_attempts', $attempts + 1); // Increment attempts
+            $remaining = 3 - ($attempts + 1);
+            RedirectHelper::redirectWithError("Invalid OTP. $remaining attempt(s) remaining.", 'login', 'otp');
         }
 
         Session::regenerate();
@@ -134,6 +153,7 @@ class AuthController extends Controller {
         Session::unset('login_username_pending');
         Session::unset('login_otp');
         Session::unset('login_otp_expiry');
+        Session::unset('login_otp_attempts');
 
         $role = $this->userModel->getUserRoles(Session::get('user_id'));
         
@@ -163,6 +183,7 @@ class AuthController extends Controller {
         Session::set('reg_email', $email);
         Session::set('reg_otp', $otp);
         Session::set('reg_otp_expiry', time() + 120);
+        Session::set('reg_otp_attempts', 0); // Initialize attempt counter
 
         if (EmailHelper::sendRegistrationOTPEmail($email, $otp)) {
             RedirectHelper::redirectWithSuccess('Verification code sent! Please check your email.', 'register', 'otp');
@@ -185,14 +206,29 @@ class AuthController extends Controller {
         }
         if (time() > Session::get('reg_otp_expiry')) {
             Session::unset('reg_otp');
+            Session::unset('reg_otp_attempts');
             RedirectHelper::redirectWithError('OTP expired. Please start over.', 'register', 'email');
         }
+
+        // Check attempts
+        $attempts = (int) Session::get('reg_otp_attempts', 0);
+        if ($attempts >= 3) {
+            Session::unset('reg_email');
+            Session::unset('reg_otp');
+            Session::unset('reg_otp_expiry');
+            Session::unset('reg_otp_attempts');
+            RedirectHelper::redirectWithError('Too many invalid OTP attempts. Please start over.', 'register', 'email');
+        }
+
         if ($otp != Session::get('reg_otp')) {
-            RedirectHelper::redirectWithError('Invalid OTP.', 'register', 'otp');
+            Session::set('reg_otp_attempts', $attempts + 1); // Increment attempts
+            $remaining = 3 - ($attempts + 1);
+            RedirectHelper::redirectWithError("Invalid OTP. $remaining attempt(s) remaining.", 'register', 'otp');
         }
 
         Session::unset('reg_otp');
         Session::unset('reg_otp_expiry');
+        Session::unset('reg_otp_attempts');
         Session::set('reg_otp_verified', true);
         
         RedirectHelper::redirectWithSuccess('Email verified! Please complete the security check.', 'register', 'captcha');
@@ -270,6 +306,7 @@ class AuthController extends Controller {
         Session::set('forgot_username', $user['username']);
         Session::set('forgot_otp', $otp);
         Session::set('forgot_otp_expiry', time() + 120);
+        Session::set('forgot_otp_attempts', 0); // Initialize attempt counter
 
         if (EmailHelper::sendForgotPasswordOTPEmail($email, $otp, $user['username'])) {
             RedirectHelper::redirectWithSuccess('Password reset code sent to your email.', 'forgot', 'otp');
@@ -291,14 +328,31 @@ class AuthController extends Controller {
         }
         if (time() > Session::get('forgot_otp_expiry')) {
             Session::unset('forgot_otp');
+            Session::unset('forgot_otp_attempts');
             RedirectHelper::redirectWithError('OTP expired. Please start over.', 'forgot', 'email');
         }
+
+        // Check attempts
+        $attempts = (int) Session::get('forgot_otp_attempts', 0);
+        if ($attempts >= 3) {
+            Session::unset('forgot_email');
+            Session::unset('forgot_user_id');
+            Session::unset('forgot_username');
+            Session::unset('forgot_otp');
+            Session::unset('forgot_otp_expiry');
+            Session::unset('forgot_otp_attempts');
+            RedirectHelper::redirectWithError('Too many invalid OTP attempts. Please start over.', 'forgot', 'email');
+        }
+
         if ($otp != Session::get('forgot_otp')) {
-            RedirectHelper::redirectWithError('Invalid OTP.', 'forgot', 'otp');
+            Session::set('forgot_otp_attempts', $attempts + 1); // Increment attempts
+            $remaining = 3 - ($attempts + 1);
+            RedirectHelper::redirectWithError("Invalid OTP. $remaining attempt(s) remaining.", 'forgot', 'otp');
         }
 
         Session::unset('forgot_otp');
         Session::unset('forgot_otp_expiry');
+        Session::unset('forgot_otp_attempts');
         Session::set('forgot_otp_verified', true);
 
         RedirectHelper::redirectWithSuccess('Code verified! Create your new password.', 'forgot', 'reset');
@@ -365,6 +419,7 @@ class AuthController extends Controller {
         Session::set('login_otp', $otp);
         Session::set('login_otp_expiry', time() + 120);
         Session::set('login_otp_resend_time', time());
+        Session::set('login_otp_attempts', 0); // Reset attempts
         
         if (EmailHelper::sendLoginOTPEmail($user['email'], $otp, $user['username'])) {
             $this->jsonResponse(true, 'A new code has been sent.');
@@ -385,6 +440,7 @@ class AuthController extends Controller {
         Session::set('reg_otp', $otp);
         Session::set('reg_otp_expiry', time() + 120);
         Session::set('reg_otp_resend_time', time());
+        Session::set('reg_otp_attempts', 0); // Reset attempts
         
         if (EmailHelper::sendRegistrationOTPEmail(Session::get('reg_email'), $otp)) {
             $this->jsonResponse(true, 'A new code has been sent.');
@@ -405,11 +461,45 @@ class AuthController extends Controller {
         Session::set('forgot_otp', $otp);
         Session::set('forgot_otp_expiry', time() + 120);
         Session::set('forgot_otp_resend_time', time());
+        Session::set('forgot_otp_attempts', 0); // Reset attempts
         
         if (EmailHelper::sendForgotPasswordOTPEmail(Session::get('forgot_email'), $otp, Session::get('forgot_username'))) {
             $this->jsonResponse(true, 'A new code has been sent.');
         } else {
             $this->jsonResponse(false, 'Failed to send code. Try again.');
         }
+    }
+    /**
+     * Handle user logout
+     */
+    public function logout() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            RedirectHelper::redirect('/');
+            return;
+        }
+        
+        // Get user info for audit log before destroying session
+        $userId = Session::get('user_id');
+        
+        // Delete remember-me token if exists
+        if (isset($_COOKIE['remember_me'])) {
+            $tokenModel = new RememberMeToken();
+            $tokenModel->deleteBySelector($_COOKIE['remember_me']);
+            
+            // Delete the cookie
+            setcookie('remember_me', '', time() - 3600, '/', '', false, true);
+        }
+        
+        // Log the logout action
+       // if ($userId) {
+       //     $auditModel = new UserAuditLog();
+       //     $auditModel->log($userId, 'LOGOUT', 'SUCCESS');
+       // }
+        
+        // Destroy session
+        Session::destroy();
+        
+        // Redirect to home page
+        RedirectHelper::redirect('/?status=success&message=' . urlencode('You have been logged out successfully'));
     }
 }
