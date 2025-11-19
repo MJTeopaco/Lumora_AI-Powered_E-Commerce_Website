@@ -18,7 +18,7 @@
                         <tr>
                             <td style="padding: 40px 30px; text-align: center;">
                                 <h2 style="margin: 0 0 16px; color: #1e4d3d; font-size: 28px; font-weight: 600;">Welcome to Lumora!</h2>
-                                <p style="margin: 0 0 24px; color: #1f2937; font-size: 18px; font-weight: 500;">Hello, ' . htmlspecialchars($username) . '!</p>
+                                <p style="margin: 0 0 24px; color: #1f2937; font-size: 18px; font-weight: 500;">Hello, <?= htmlspecialchars($username) ?>!</p>
                                 <p style="margin: 0 0 32px; color: #6b7280; font-size: 15px; line-height: 1.6;">Thank you for joining our community. We\'re thrilled to have you here and can\'t wait for you to explore our exquisite collection of accessories.</p>
                                 
                                 <div style="margin: 32px 0; padding: 24px; background-color: #f0f5f3; border-radius: 12px;">
