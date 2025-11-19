@@ -39,6 +39,7 @@ class HomeController extends Controller {
         $userProfile = null;
         $notificationCount = 0;
         $cartCount = 0;
+        $userId = null;
 
         if ($isLoggedIn) {
             $userId = Session::get('user_id');
@@ -97,7 +98,7 @@ class HomeController extends Controller {
         ];
 
         // Load the view
-        $this->view('main_page/index', $data);
+        $this->view('main/main', $data);
     }
     
     /**

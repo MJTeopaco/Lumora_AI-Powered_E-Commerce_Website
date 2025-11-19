@@ -3,26 +3,23 @@
 
 namespace App\Core;
 
+use App\Core\View; // <--- ADD THIS
+
 class Controller {
     
     /**
-     * Load a view file with data
+     * Load a view file with data using the OOP View System.
      * @param string $view - Path to view (e.g., 'main_page/index')
      * @param array $data - Data to pass to the view
+     * @param string $layout - Layout name (default is 'default')
      */
-    protected function view($view, $data = []) {
-        // Extract data array to variables
-        extract($data);
+    protected function view($view, $data = [], $layout = 'default') { 
         
-        // Build the view file path
-        $viewFile = __DIR__ . '/../Views/layouts/' . $view . '.view.php';
+        // Use the new View class to handle rendering
+        $viewInstance = View::make($view, $data)->setLayout($layout);
         
-        // Check if view file exists
-        if (file_exists($viewFile)) {
-            require $viewFile;
-        } else {
-            die("View not found: $viewFile");
-        }
+        // Render the view and send output to the browser
+        $viewInstance->render();
     }
     
     /**

@@ -16,20 +16,17 @@ $router->post('/admin/delete-category', 'AdminController@deleteCategory');
 // Profile routes
 $router->get('/profile', 'ProfileController@index');
 $router->post('/profile/update', 'ProfileController@update');
-$router->get('/profile/addresses', 'ProfileController@addresses');
 $router->get('/profile/settings', 'ProfileController@settings');
 $router->post('/profile/change-password', 'ProfileController@changePassword');
-$router->get('/profile/addresses/add', 'ProfileController@addAddressForm');
-$router->post('/profile/addresses/add', 'ProfileController@addAddress');
 
 // Address routes
 $router->get('/profile/addresses', 'AddressController@index');
 $router->get('/profile/addresses/add', 'AddressController@add');
 $router->post('/profile/addresses/add', 'AddressController@store');
-$router->get('/profile/addresses/edit/{id}', 'AddressController@edit');
-$router->post('/profile/addresses/edit/{id}', 'AddressController@update');
-$router->post('/profile/addresses/delete/{id}', 'AddressController@delete');
-$router->post('/profile/addresses/set-default/{id}', 'AddressController@setDefault');
+$router->get('/profile/addresses/edit', 'AddressController@edit');
+$router->post('/profile/addresses/edit', 'AddressController@update');
+$router->post('/profile/addresses/delete', 'AddressController@delete');
+$router->post('/profile/addresses/set-default', 'AddressController@setDefault');
 
 // Logout route
 $router->post('/logout', 'AuthController@logout');
