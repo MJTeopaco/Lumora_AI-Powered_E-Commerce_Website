@@ -5,9 +5,9 @@
 $router->get('/', 'HomeController@index');
 $router->get('/login', 'AuthController@showLogin');
 $router->get('/logout', 'LogoutController@logout');
-$router->get('/admin/dashboard', 'AdminController@dashboard');
 
 // Admin Settings Routes
+$router->get('/admin/dashboard', 'AdminController@dashboard');
 $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
@@ -53,3 +53,8 @@ $router->post('/auth/resend-forgot-otp', 'AuthController@resendForgotOtp');
 // Placeholder routes for cart and notifications (to be implemented)
 $router->get('/cart', 'CartController@index');
 $router->get('/notifications', 'NotificationsController@index');
+
+
+// seller registration routes
+$router->get('/seller/register', 'SellerController@registerForm');
+$router->post('/seller/register', 'SellerController@registerSubmit');

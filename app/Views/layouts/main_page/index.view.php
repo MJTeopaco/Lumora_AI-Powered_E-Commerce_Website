@@ -1,5 +1,6 @@
 <?php
 // app/Views/layouts/main_page/index.view.php
+include __DIR__ . '/includes/success.popup.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -413,7 +414,8 @@
                             <span class="badge"><?= $cartCount > 99 ? '99+' : $cartCount ?></span>
                         <?php endif; ?>
                     </button>
-
+            
+                    
                     <!-- Profile Link -->
                     <a href="/profile" class="profile-btn">
                         <div class="profile-avatar">
@@ -428,6 +430,25 @@
                 <?php else: ?>
                     <a href="/login" class="btn btn-primary">Login / Sign Up</a>
                 <?php endif; ?>
+
+                
+                <!-- Become a Seller (if not a seller) -->
+                <?php if (empty($isSeller) || $isSeller === false): ?>
+                    <a href="/seller/register" class="btn btn-primary" style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Become a Seller</span>
+                    </a>
+                <?php endif; ?>
+
+                <!-- Seller Dashboard (if seller) -->
+                <?php if (!empty($isSeller) && $isSeller === true): ?>
+                    <a href="/seller/dashboard" class="btn btn-success" style="display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-store"></i>
+                        <span>Seller Dashboard</span>
+                    </a>
+                <?php endif; ?>
+
+
             </div>
         </nav>
     </header>

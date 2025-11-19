@@ -46,6 +46,20 @@ class User {
         return $roles;
     }
 
+    public function checkRole($user_id) {
+        $stmt = $this->conn->prepare("
+            SELECT 1 
+            FROM user_roles 
+            WHERE user_id = ? AND role_id = 2 AND is_approved = 1
+        ");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result->num_rows > 0;  // ✔ return TRUE or FALSE
+    }
+
+
     public function findByUsername($username) {
         $stmt = $this->conn->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);

@@ -71,6 +71,10 @@ class HomeController extends Controller {
             $cartCount = 0; // Placeholder
         }
 
+
+        // Check if user is a seller
+        $isSeller = $this->userModel->checkRole($userId);
+
         // Get all products (or featured products)
         $products = $this->productModel->getAllProducts();
 
@@ -88,7 +92,8 @@ class HomeController extends Controller {
             'cartCount' => $cartCount,
             'products' => $products,
             'statusMessage' => $statusMessage,
-            'statusType' => $statusType
+            'statusType' => $statusType,
+            'isSeller' => $isSeller
         ];
 
         // Load the view
