@@ -3,9 +3,9 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Session;
 use App\Models\Seller;
 use App\Models\User;
-
 
 class SellerController extends Controller {
 
@@ -14,126 +14,251 @@ class SellerController extends Controller {
 
     public function __construct() {
         $this->sellerModel = new Seller(); 
-        $this->userModel = new User;
+        $this->userModel = new User();
     }
 
-    # Seller Registration Controller
+    /**
+     * Display seller registration form or appropriate status page
+     */
     public function registerForm() {
-        $data = [
+        // Check if user is logged in
+        if (!Session::has('user_id')) {
+            Session::set('error', 'You must be logged in to register as a seller');
+            header('Location: /login');
+            exit();
+        }
 
+        $userId = Session::get('user_id');
+
+        // Check seller status
+        $sellerStatus = $this->sellerModel->getSellerStatus($userId);
+
+        // Route based on status
+        switch ($sellerStatus['status']) {
+            case 'approved':
+                // Redirect to seller dashboard
+                header('Location: /seller/dashboard');
+                exit();
+                
+            case 'pending':
+                // Show pending approval page
+                $data = [
+                    'shopName' => $sellerStatus['shop_name'],
+                    'appliedAt' => $sellerStatus['applied_at']
+                ];
+                $this->view('seller/pending-approval', $data);
+                break;
+                
+            case 'none':
+            default:
+                // Show registration form
+                $data = [
+                    'regions' => $this->getPhilippineRegions()
+                ];
+                $this->view('seller/register', $data);
+                break;
+        }
+    }
+
+    /**
+     * Handle seller registration form submission
+     */
+    public function registerSubmit() {
+        // Check if user is logged in
+        if (!Session::has('user_id')) {
+            Session::set('error', 'You must be logged in to register as a seller');
+            header('Location: /login');
+            exit();
+        }
+
+        $userId = Session::get('user_id');
+
+        // Check if user already has a shop
+        $sellerStatus = $this->sellerModel->getSellerStatus($userId);
+        if ($sellerStatus['status'] !== 'none') {
+            Session::set('error', 'You already have a seller application');
+            header('Location: /seller/register');
+            exit();
+        }
+
+        // Validate and sanitize input
+        $validationResult = $this->validateRegistrationInput($_POST);
+        if (!$validationResult['valid']) {
+            Session::set('error', $validationResult['error']);
+            header('Location: /seller/register');
+            exit();
+        }
+
+        $data = $validationResult['data'];
+
+        // Begin transaction
+        $this->sellerModel->beginTransaction();
+
+        try {
+            // Save shop information
+            $shopSaved = $this->sellerModel->saveRegister(
+                $userId,
+                $data['shop_name'],
+                $data['contact_email'],
+                $data['contact_phone'],
+                $data['shop_description'],
+                $data['slug']
+            );
+
+            if (!$shopSaved) {
+                throw new \Exception('Failed to register shop');
+            }
+
+            // Save shop address
+            $addressSaved = $this->sellerModel->saveShopAddress(
+                $userId,
+                $data['address_line_1'],
+                $data['address_line_2'],
+                $data['barangay'],
+                $data['city'],
+                $data['province'],
+                $data['region'],
+                $data['postal_code']
+            );
+
+            if (!$addressSaved) {
+                throw new \Exception('Failed to save shop address');
+            }
+
+            // Request seller role approval
+            $approvalRequested = $this->sellerModel->requestApproval($userId);
+
+            if (!$approvalRequested) {
+                throw new \Exception('Failed to request approval');
+            }
+
+            // Commit transaction
+            $this->sellerModel->commit();
+
+            // Success message
+            Session::set('success', 'Your seller application has been submitted successfully! Our team will review your application within 24-48 hours.');
+            header('Location: /seller/register');
+            exit();
+
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            $this->sellerModel->rollback();
+            Session::set('error', $e->getMessage());
+            header('Location: /seller/register');
+            exit();
+        }
+    }
+
+    /**
+     * Validate registration input
+     */
+    private function validateRegistrationInput($post) {
+        $errors = [];
+
+        // Required fields
+        $requiredFields = [
+            'shop_name', 'contact_email', 'contact_phone',
+            'address_line_1', 'barangay', 'city', 'province', 'region', 'postal_code'
         ];
 
-        $this->view('seller/register', $data);
+        foreach ($requiredFields as $field) {
+            if (empty($post[$field])) {
+                return ['valid' => false, 'error' => 'Please fill in all required fields'];
+            }
+        }
+
+        // Validate terms checkbox
+        if (!isset($post['terms'])) {
+            return ['valid' => false, 'error' => 'You must agree to the Terms and Conditions'];
+        }
+
+        // Validate email format
+        if (!filter_var($post['contact_email'], FILTER_VALIDATE_EMAIL)) {
+            return ['valid' => false, 'error' => 'Invalid email format'];
+        }
+
+        // Validate postal code format (4 digits)
+        if (!preg_match('/^\d{4}$/', $post['postal_code'])) {
+            return ['valid' => false, 'error' => 'Postal code must be 4 digits'];
+        }
+
+        // Validate phone number
+        if (!preg_match('/^[\+]?[0-9\s\-\(\)]{10,}$/', $post['contact_phone'])) {
+            return ['valid' => false, 'error' => 'Invalid phone number format'];
+        }
+
+        // Sanitize and prepare data
+        $data = [
+            'shop_name' => trim($post['shop_name']),
+            'contact_email' => trim($post['contact_email']),
+            'contact_phone' => trim($post['contact_phone']),
+            'shop_description' => trim($post['shop_description'] ?? ''),
+            'address_line_1' => trim($post['address_line_1']),
+            'address_line_2' => trim($post['address_line_2'] ?? ''),
+            'barangay' => trim($post['barangay']),
+            'city' => trim($post['city']),
+            'province' => trim($post['province']),
+            'region' => trim($post['region']),
+            'postal_code' => trim($post['postal_code']),
+            'slug' => strtolower(str_replace(' ', '-', trim($post['shop_name'])))
+        ];
+
+        return ['valid' => true, 'data' => $data];
     }
 
-    public function registerSubmit() {
-    // Check if user is logged in
-    if (!isset($_SESSION['user_id'])) {
-        $_SESSION['error'] = 'You must be logged in to register as a seller';
-        header('Location: /login');
-        exit();
+    /**
+     * Get Philippine regions
+     */
+    private function getPhilippineRegions() {
+        return [
+            'NCR' => 'NCR - National Capital Region',
+            'CAR' => 'CAR - Cordillera Administrative Region',
+            'Region I' => 'Region I - Ilocos Region',
+            'Region II' => 'Region II - Cagayan Valley',
+            'Region III' => 'Region III - Central Luzon',
+            'Region IV-A' => 'Region IV-A - CALABARZON',
+            'Region IV-B' => 'Region IV-B - MIMAROPA',
+            'Region V' => 'Region V - Bicol Region',
+            'Region VI' => 'Region VI - Western Visayas',
+            'Region VII' => 'Region VII - Central Visayas',
+            'Region VIII' => 'Region VIII - Eastern Visayas',
+            'Region IX' => 'Region IX - Zamboanga Peninsula',
+            'Region X' => 'Region X - Northern Mindanao',
+            'Region XI' => 'Region XI - Davao Region',
+            'Region XII' => 'Region XII - SOCCSKSARGEN',
+            'Region XIII' => 'Region XIII - Caraga',
+            'BARMM' => 'BARMM - Bangsamoro Autonomous Region'
+        ];
     }
 
-    // Check if user is already a seller
-    $userId = $_SESSION['user_id'];
-    
-    // Validate required fields
-    if (empty($_POST['shop_name']) || empty($_POST['contact_email']) || 
-        empty($_POST['contact_phone']) || empty($_POST['address_line_1']) || 
-        empty($_POST['barangay']) || empty($_POST['city']) || 
-        empty($_POST['province']) || empty($_POST['region']) || 
-        empty($_POST['postal_code'])) {
+    /**
+     * Seller Dashboard
+     */
+    public function dashboard() {
+        // Check if user is logged in
+        if (!Session::has('user_id')) {
+            header('Location: /login');
+            exit();
+        }
+
+        $userId = Session::get('user_id');
         
-        $_SESSION['error'] = 'Please fill in all required fields';
-        header('Location: /seller/register');
-        exit();
+        // Check if user is an approved seller
+        $sellerStatus = $this->sellerModel->getSellerStatus($userId);
+        
+        if ($sellerStatus['status'] !== 'approved') {
+            Session::set('error', 'You do not have access to the seller dashboard');
+            header('Location: /');
+            exit();
+        }
+
+        // Get shop data
+        $shopData = $this->sellerModel->getShopByUserId($userId);
+
+        $data = [
+            'shop' => $shopData
+        ];
+
+        $this->view('seller/dashboard', $data);
     }
-
-    // Validate terms checkbox
-    if (!isset($_POST['terms'])) {
-        $_SESSION['error'] = 'You must agree to the Terms and Conditions';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Sanitize inputs
-    $shopName = trim($_POST['shop_name']);
-    $contactEmail = trim($_POST['contact_email']);
-    $contactPhone = trim($_POST['contact_phone']);
-    $shopDesc = trim($_POST['shop_description'] ?? '');
-    $addressLine1 = trim($_POST['address_line_1']);
-    $addressLine2 = trim($_POST['address_line_2'] ?? '');
-    $barangay = trim($_POST['barangay']);
-    $city = trim($_POST['city']);
-    $province = trim($_POST['province']);
-    $region = trim($_POST['region']);
-    $postalCode = trim($_POST['postal_code']);
-
-    // Validate email format
-    if (!filter_var($contactEmail, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error'] = 'Invalid email format';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Validate postal code format (4 digits)
-    if (!preg_match('/^\d{4}$/', $postalCode)) {
-        $_SESSION['error'] = 'Postal code must be 4 digits';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Generate slug
-    $slug = strtolower(str_replace(' ', '-', $shopName));
-
-    // Save shop information
-    $shopSaved = $this->sellerModel->saveRegister(
-        $userId, 
-        $shopName, 
-        $contactEmail, 
-        $contactPhone, 
-        $shopDesc, 
-        $slug
-    );
-
-    if (!$shopSaved) {
-        $_SESSION['error'] = 'Failed to register shop. Please try again.';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Save shop address (using user_id and address_type='shop')
-    $addressSaved = $this->sellerModel->saveShopAddress(
-        $userId,
-        $addressLine1,
-        $addressLine2,
-        $barangay,
-        $city,
-        $province,
-        $region,
-        $postalCode
-    );
-
-    if (!$addressSaved) {
-        $_SESSION['error'] = 'Shop created but failed to save address';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Request seller role approval
-    $approvalRequested = $this->sellerModel->requestApproval($userId);
-
-    if (!$approvalRequested) {
-        $_SESSION['error'] = 'Shop created but failed to request approval';
-        header('Location: /seller/register');
-        exit();
-    }
-
-    // Success - set session message for popup
-    $_SESSION['seller_registration_success'] = 'Your seller application has been submitted successfully! Our team will review your application within 24-48 hours. You will receive a confirmation email once approved.';
-    
-    header('Location: /');
-    exit();
-}
-
 }
