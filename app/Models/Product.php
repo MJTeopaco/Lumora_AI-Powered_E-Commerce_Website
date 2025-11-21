@@ -214,4 +214,369 @@ class Product {
         $result = $this->db->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
+
+        /**
+     * Create a new product
+     * @param array $data
+     * @return int|false Product ID on success, false on failure
+     */
+    public function createProduct($data) {
+        $stmt = $this->conn->prepare("
+            INSERT INTO products (
+                shop_id, name, slug, short_description, description, 
+                cover_picture, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->bind_param(
+            "issssss",
+            $data['shop_id'],
+            $data['name'],
+            $data['slug'],
+            $data['short_description'],
+            $data['description'],
+            $data['cover_picture'],
+            $data['status']
+        );
+        
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Update product
+     * @param int $productId
+     * @param array $data
+     * @return bool
+     */
+    public function updateProduct($productId, $data) {
+        $stmt = $this->conn->prepare("
+            UPDATE products 
+            SET name = ?, 
+                short_description = ?, 
+                description = ?, 
+                cover_picture = ?, 
+                status = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE product_id = ?
+        ");
+        
+        $stmt->bind_param(
+            "sssssi",
+            $data['name'],
+            $data['short_description'],
+            $data['description'],
+            $data['cover_picture'],
+            $data['status'],
+            $productId
+        );
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Get product by ID
+     * @param int $productId
+     * @return array|null
+     */
+    public function getProductById($productId) {
+        $stmt = $this->conn->prepare("
+            SELECT p.*, s.shop_name, s.shop_id
+            FROM products p
+            INNER JOIN shops s ON p.shop_id = s.shop_id
+            WHERE p.product_id = ? AND p.is_deleted = 0
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return $result->fetch_assoc();
+    }
+
+    /**
+     * Delete product (soft delete)
+     * @param int $productId
+     * @return bool
+     */
+    public function deleteProduct($productId) {
+        $stmt = $this->conn->prepare("
+            UPDATE products 
+            SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP
+            WHERE product_id = ?
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Create product variant
+     * @param array $data
+     * @return int|false Variant ID on success, false on failure
+     */
+    public function createProductVariant($data) {
+        $stmt = $this->conn->prepare("
+            INSERT INTO product_variants (
+                product_id, variant_name, sku, price, quantity, 
+                color, size, material, image, is_active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->bind_param(
+            "issdissssi",
+            $data['product_id'],
+            $data['variant_name'],
+            $data['sku'],
+            $data['price'],
+            $data['quantity'],
+            $data['color'],
+            $data['size'],
+            $data['material'],
+            $data['image'],
+            $data['is_active']
+        );
+        
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Update product variant
+     * @param int $variantId
+     * @param array $data
+     * @return bool
+     */
+    public function updateProductVariant($variantId, $data) {
+        $stmt = $this->conn->prepare("
+            UPDATE product_variants 
+            SET variant_name = ?,
+                sku = ?, 
+                price = ?, 
+                quantity = ?,
+                color = ?,
+                size = ?,
+                material = ?,
+                image = ?,
+                is_active = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE variant_id = ?
+        ");
+        
+        $stmt->bind_param(
+            "ssdiissssii",
+            $data['variant_name'],
+            $data['sku'],
+            $data['price'],
+            $data['quantity'],
+            $data['color'],
+            $data['size'],
+            $data['material'],
+            $data['image'],
+            $data['is_active'],
+            $variantId
+        );
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Delete product variant
+     * @param int $variantId
+     * @return bool
+     */
+    public function deleteProductVariant($variantId) {
+        $stmt = $this->conn->prepare("
+            DELETE FROM product_variants WHERE variant_id = ?
+        ");
+        
+        $stmt->bind_param("i", $variantId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Link product to category
+     * @param int $productId
+     * @param int $categoryId
+     * @return bool
+     */
+    public function linkProductToCategory($productId, $categoryId) {
+        $stmt = $this->conn->prepare("
+            INSERT INTO product_category_links (product_id, category_id)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE category_id = category_id
+        ");
+        
+        $stmt->bind_param("ii", $productId, $categoryId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Remove product category link
+     * @param int $productId
+     * @return bool
+     */
+    public function removeProductCategoryLinks($productId) {
+        $stmt = $this->conn->prepare("
+            DELETE FROM product_category_links WHERE product_id = ?
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Get or create tag
+     * @param string $tagName
+     * @return int|false Tag ID on success, false on failure
+     */
+    public function getOrCreateTag($tagName) {
+        // Check if tag exists
+        $stmt = $this->conn->prepare("
+            SELECT tag_id FROM product_tags WHERE name = ?
+        ");
+        
+        $stmt->bind_param("s", $tagName);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            return $row['tag_id'];
+        }
+        
+        // Create new tag
+        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $tagName), '-'));
+        
+        $stmt = $this->conn->prepare("
+            INSERT INTO product_tags (name, slug) VALUES (?, ?)
+        ");
+        
+        $stmt->bind_param("ss", $tagName, $slug);
+        
+        if ($stmt->execute()) {
+            return $this->conn->insert_id;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Link product to tag
+     * @param int $productId
+     * @param int $tagId
+     * @return bool
+     */
+    public function linkProductToTag($productId, $tagId) {
+        $stmt = $this->conn->prepare("
+            INSERT INTO product_tag_links (product_id, tag_id)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE tag_id = tag_id
+        ");
+        
+        $stmt->bind_param("ii", $productId, $tagId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Remove product tag links
+     * @param int $productId
+     * @return bool
+     */
+    public function removeProductTagLinks($productId) {
+        $stmt = $this->conn->prepare("
+            DELETE FROM product_tag_links WHERE product_id = ?
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        
+        return $stmt->execute();
+    }
+
+    /**
+     * Get product tags
+     * @param int $productId
+     * @return array
+     */
+    public function getProductTags($productId) {
+        $stmt = $this->conn->prepare("
+            SELECT pt.tag_id, pt.name, pt.slug
+            FROM product_tags pt
+            INNER JOIN product_tag_links ptl ON pt.tag_id = ptl.tag_id
+            WHERE ptl.product_id = ?
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $tags = [];
+        while ($row = $result->fetch_assoc()) {
+            $tags[] = $row;
+        }
+        
+        return $tags;
+    }
+
+    /**
+     * Get product categories
+     * @param int $productId
+     * @return array
+     */
+    public function getProductCategories($productId) {
+        $stmt = $this->conn->prepare("
+            SELECT pc.category_id, pc.name, pc.slug
+            FROM product_categories pc
+            INNER JOIN product_category_links pcl ON pc.category_id = pcl.category_id
+            WHERE pcl.product_id = ?
+        ");
+        
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $categories = [];
+        while ($row = $result->fetch_assoc()) {
+            $categories[] = $row;
+        }
+        
+        return $categories;
+    }
+
+    /**
+     * Check if SKU exists
+     * @param string $sku
+     * @param int|null $excludeVariantId
+     * @return bool
+     */
+    public function skuExists($sku, $excludeVariantId = null) {
+        if ($excludeVariantId) {
+            $stmt = $this->conn->prepare("
+                SELECT COUNT(*) as count FROM product_variants 
+                WHERE sku = ? AND variant_id != ?
+            ");
+            $stmt->bind_param("si", $sku, $excludeVariantId);
+        } else {
+            $stmt = $this->conn->prepare("
+                SELECT COUNT(*) as count FROM product_variants WHERE sku = ?
+            ");
+            $stmt->bind_param("s", $sku);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        
+        return $row['count'] > 0;
+    }
 }

@@ -10,7 +10,7 @@ class View {
 
     /**
      * View constructor.
-     * @param string $view - Path to view (e.g., 'main_page/index')
+     * @param string $view - Path to view (e.g., 'main/main' or 'admin/index')
      * @param array $data - Data to pass to the view
      */
     public function __construct($view, $data = []) {
@@ -20,7 +20,7 @@ class View {
 
     /**
      * Sets the layout file to use.
-     * @param string $layout - Layout name (e.g., 'auth', 'admin', etc.)
+     * @param string $layout - Layout name (e.g., 'default', 'admin', 'auth', etc.)
      * @return self
      */
     public function setLayout($layout) {
@@ -29,16 +29,17 @@ class View {
     }
     
     /**
-     * Static method to create and render a view (fluent interface).
+     * Static method to create a view (fluent interface).
      * @param string $view - Path to view
      * @param array $data - Data to pass
+     * @return self
      */
     public static function make($view, $data = []) {
         return new static($view, $data);
     }
 
     /**
-     * Renders the view.
+     * Renders the view with layout.
      */
     public function render() {
         // Extract data array to variables for use in the view files
@@ -53,7 +54,7 @@ class View {
         if (file_exists($layoutFile)) {
             require $layoutFile;
         } else {
-            die("Layout not found: $layoutFile");
+            die("Layout not found: {$this->layout} at {$layoutFile}");
         }
     }
 
@@ -62,10 +63,13 @@ class View {
      * @return string
      */
     protected function getRenderedViewContent() {
-        $viewFile = __DIR__ . '/../Views/layouts/' . $this->view . '.view.php';
+        // FIXED: Look for views in the correct directory structure
+        // For 'admin/index' -> looks in Views/admin/index.view.php
+        // For 'main/main' -> looks in Views/main/main.view.php
+        $viewFile = __DIR__ . '/../Views/' . $this->view . '.view.php';
         
         if (!file_exists($viewFile)) {
-            die("View not found: $viewFile");
+            die("View not found: {$this->view} at {$viewFile}");
         }
         
         // Start output buffering
@@ -81,10 +85,24 @@ class View {
         return ob_get_clean();
     }
     
-    // Allows object to be treated as a string (e.g., echo View::make(...))
+    /**
+     * Render without layout (just the view content)
+     * @return string
+     */
+    public function renderContent() {
+        return $this->getRenderedViewContent();
+    }
+    
+    /**
+     * Allows object to be treated as a string (e.g., echo View::make(...))
+     */
     public function __toString() {
-        // Render and return the output
-        $this->render(); 
-        return '';
+        try {
+            ob_start();
+            $this->render();
+            return ob_get_clean();
+        } catch (\Exception $e) {
+            return "Error rendering view: " . $e->getMessage();
+        }
     }
 }

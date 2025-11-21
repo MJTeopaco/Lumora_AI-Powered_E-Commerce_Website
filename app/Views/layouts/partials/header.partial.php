@@ -66,8 +66,8 @@ $isSeller = $isSeller ?? false;
             <a href="/stores" class="nav-link">Stores</a>
             
             <?php if (!empty($isSeller) && $isSeller === true): ?>
-                <a href="/seller/dashboard" class="nav-link">
-                    <i class="fas fa-store"></i> Seller Dashboard
+                <a href="/shop/dashboard" class="nav-link">
+                    <i class="fas fa-store"></i> Shop Dashboard
                 </a>
             <?php else: ?>
                 <a href="/seller/register" class="nav-link">Sell on Lumora</a>

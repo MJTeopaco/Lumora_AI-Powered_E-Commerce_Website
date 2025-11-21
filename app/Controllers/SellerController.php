@@ -259,6 +259,6 @@ class SellerController extends Controller {
             'shop' => $shopData
         ];
 
-        $this->view('seller/dashboard', $data);
+        $this->view('seller/shop-dashboard', $data, 'seller');
     }
 }

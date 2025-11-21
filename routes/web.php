@@ -1,17 +1,12 @@
 <?php
 // routes/web.php
 
+// <----------------------------------------------------------------------------------------->
+
 // GET routes
 $router->get('/', 'HomeController@index');
 $router->get('/login', 'AuthController@showLogin');
 $router->get('/logout', 'LogoutController@logout');
-
-// Admin Settings Routes
-$router->get('/admin/dashboard', 'AdminController@dashboard');
-$router->get('/admin/settings', 'AdminController@settings');
-$router->post('/admin/add-category', 'AdminController@addCategory');
-$router->post('/admin/update-category', 'AdminController@updateCategory');
-$router->post('/admin/delete-category', 'AdminController@deleteCategory');
 
 // Profile routes
 $router->get('/profile', 'ProfileController@index');
@@ -51,7 +46,35 @@ $router->post('/auth/resend-forgot-otp', 'AuthController@resendForgotOtp');
 $router->get('/cart', 'CartController@index');
 $router->get('/notifications', 'NotificationsController@index');
 
-
-// seller registration routes
+// <----------------------------------------------------------------------------------------->
+// SELLER REGISTRATION ROUTES
 $router->get('/seller/register', 'SellerController@registerForm');
 $router->post('/seller/register', 'SellerController@registerSubmit');
+
+// <----------------------------------------------------------------------------------------->
+// SHOP ROUTES
+$router->get('/shop/dashboard', 'ShopController@dashboard');
+$router->get('/shop/products', 'ShopController@products');
+$router->get('/shop/add-product', 'ShopController@addProduct');
+$router->post('/shop/products/store', 'ShopController@storeProduct');
+$router->get('/shop/orders', 'ShopController@orders');
+$router->get('/shop/cancellations', 'ShopController@cancellations');
+$router->get('/shop/addresses', 'ShopController@addresses');
+
+// <----------------------------------------------------------------------------------------->
+// ADMIN ROUTES
+
+// Admin Dashboard
+$router->get('/admin/dashboard', 'AdminController@dashboard');
+
+// Admin Sellers Management
+$router->get('/admin/sellers', 'AdminController@sellers');
+$router->post('/admin/approve-seller', 'AdminController@approveSeller');
+$router->post('/admin/reject-seller', 'AdminController@rejectSeller');
+$router->post('/admin/suspend-seller', 'AdminController@suspendSeller');
+
+// Admin Settings
+$router->get('/admin/settings', 'AdminController@settings');
+$router->post('/admin/add-category', 'AdminController@addCategory');
+$router->post('/admin/update-category', 'AdminController@updateCategory');
+$router->post('/admin/delete-category', 'AdminController@deleteCategory');

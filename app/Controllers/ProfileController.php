@@ -36,6 +36,7 @@ class ProfileController extends Controller
     public function index()
     {
         // user data
+        $isLoggedIn = Session::has('user_id');
         $userId = Session::get('user_id');
         $user = $this->userModel->findById($userId);
         $profile = $this->profileModel->getByUserId($userId) ?: ['full_name' => '', 'phone_number' => '', 'gender' => '', 'birth_date' => '', 'profile_pic' => ''];
@@ -62,7 +63,9 @@ class ProfileController extends Controller
             'statusMessage' => $statusMessage,
             'statusType' => $statusType,
             'activeTab' => 'info',
-            'pageTitle' => 'Personal Information'
+            'pageTitle' => 'Personal Information',
+
+            'isLoggedIn' => true
         ];
 
         $this->view('profile/index', $data, 'profile');
