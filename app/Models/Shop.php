@@ -459,33 +459,6 @@ class Shop {
         return false;
     }
 
-    /**
-     * Create product variant
-     * @param array $data
-     * @return int|false Variant ID on success, false on failure
-     */
-    public function createProductVariant($data) {
-        $stmt = $this->conn->prepare("
-            INSERT INTO product_variants (
-                product_id, sku, price, quantity, is_active
-            ) VALUES (?, ?, ?, ?, ?)
-        ");
-        
-        $stmt->bind_param(
-            "isdii",
-            $data['product_id'],
-            $data['sku'],
-            $data['price'],
-            $data['quantity'],
-            $data['is_active']
-        );
-        
-        if ($stmt->execute()) {
-            return $this->conn->insert_id;
-        }
-        
-        return false;
-    }
 
     /**
      * Link product to category

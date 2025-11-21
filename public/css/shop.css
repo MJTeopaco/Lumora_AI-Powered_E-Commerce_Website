@@ -1275,3 +1275,111 @@
         text-align: right;
     }
 }
+
+/* style part of add product */
+
+.variant-item {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.variant-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.variant-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.btn-remove-variant {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+}
+
+.btn-remove-variant:hover {
+    background: #c82333;
+}
+
+.variant-image-upload {
+    margin-bottom: 15px;
+}
+
+.variant-file-upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+    position: relative;
+}
+
+.variant-file-upload-area:hover,
+.variant-file-upload-area.drag-over {
+    border-color: #007bff;
+    background: #f0f8ff;
+}
+
+.variant-file-input {
+    display: none;
+}
+
+.variant-file-preview {
+    display: none;
+    position: relative;
+}
+
+.variant-file-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 5px;
+}
+
+.variant-remove-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-add-variant {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.variant-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .variant-fields-grid {
+        grid-template-columns: 1fr;
+    }
+}

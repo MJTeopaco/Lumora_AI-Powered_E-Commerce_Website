@@ -7,11 +7,15 @@ use App\Core\Database;
 
 class Product {
     
-    private $db;
+    protected $conn;
 
     public function __construct() {
         // FIX: Use the static getConnection() method for mysqli
-        $this->db = Database::getConnection();
+        $this->conn = Database::getConnection();
+    }
+
+    public function getConnection() {
+        return $this->conn;
     }
 
     /**
@@ -47,7 +51,7 @@ class Product {
             ORDER BY p.created_at DESC
         ";
 
-        $result = $this->db->query($query);
+        $result = $this->conn->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
@@ -70,7 +74,7 @@ class Product {
                   LIMIT ?";
         
         // FIX: Use mysqli prepared statement and bind_param
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -85,7 +89,7 @@ class Product {
     /**
      * Get a single product details by slug
      */
-    public function getSingleProduct($slug) {
+public function getSingleProduct($slug) {
         $query = "SELECT 
                     p.product_id as id,
                     p.name,
@@ -97,10 +101,11 @@ class Product {
                     p.meta_title,
                     p.meta_description
                   FROM products p
-                  LEFT JOIN product_categories pc ON p.category_id = pc.category_id
-                  WHERE p.slug = ? AND p.status = 'PUBLISHED' AND p.is_deleted = 0";
+                  LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+                  LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+                  WHERE p.slug = ? AND p.status = 'PUBLISHED' AND p.is_deleted = 0"; 
         
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("s", $slug);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -126,7 +131,7 @@ class Product {
                   WHERE product_id = ? AND is_active = 1
                   ORDER BY price ASC";
         
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $productId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -139,7 +144,7 @@ class Product {
     /**
      * Get products by search term
      */
-    public function getProductsBySearch($searchTerm) {
+public function getProductsBySearch($searchTerm) {
         $query = "SELECT 
                     p.product_id as id,
                     p.name,
@@ -148,7 +153,8 @@ class Product {
                     SUM(pv.quantity) as stock,
                     p.slug
                   FROM products p
-                  LEFT JOIN product_categories pc ON p.category_id = pc.category_id
+                  LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+                  LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
                   LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
                   WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
                     AND (p.name LIKE ? OR p.short_description LIKE ?)
@@ -156,8 +162,7 @@ class Product {
                   ORDER BY p.created_at DESC";
         
         $likeSearchTerm = '%' . $searchTerm . '%';
-        $stmt = $this->db->prepare($query);
-        // FIX: bind_param takes two 's' for two string parameters
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("ss", $likeSearchTerm, $likeSearchTerm); 
         $stmt->execute();
         $result = $stmt->get_result();
@@ -172,7 +177,7 @@ class Product {
      */
     public function hasStock($variantId, $quantity = 1) {
         $query = "SELECT quantity FROM product_variants WHERE variant_id = ? AND is_active = 1";
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $variantId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -191,7 +196,7 @@ class Product {
                       updated_at = CURRENT_TIMESTAMP
                   WHERE variant_id = ? AND quantity >= ?";
         
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->conn->prepare($query);
         // FIX: bind_param takes three 'i' for three integer parameters
         $stmt->bind_param("iii", $quantity, $variantId, $quantity);
         $result = $stmt->execute();
@@ -211,7 +216,7 @@ class Product {
                   FROM product_categories
                   ORDER BY name ASC";
         
-        $result = $this->db->query($query);
+        $result = $this->conn->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
@@ -319,11 +324,12 @@ class Product {
      * @param array $data
      * @return int|false Variant ID on success, false on failure
      */
+// app/Models/Product.php
     public function createProductVariant($data) {
         $stmt = $this->conn->prepare("
             INSERT INTO product_variants (
                 product_id, variant_name, sku, price, quantity, 
-                color, size, material, image, is_active
+                color, size, material, product_picture, is_active
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
@@ -337,13 +343,21 @@ class Product {
             $data['color'],
             $data['size'],
             $data['material'],
-            $data['image'],
+            $data['product_picture'],
             $data['is_active']
         );
         
         if ($stmt->execute()) {
             return $this->conn->insert_id;
         }
+        
+        // --- CRITICAL FIX: THROW DATABASE ERROR ---
+        $error = $this->conn->error;
+        if ($error) {
+            // Throw the specific MySQL error message
+            throw new \Exception("SQL Error in createProductVariant: " . $error);
+        }
+        // ----------------------------------------
         
         return false;
     }

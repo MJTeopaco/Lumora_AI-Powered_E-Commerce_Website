@@ -266,7 +266,7 @@ class ProfileController extends Controller
         $userId = Session::get('user_id');
         $user = $this->userModel->findById($userId);
         $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
-        $addresses = $this->addressModel->getAddressesByUserId($userId);
+        $addresses = $this->addressModel->getAddressesByUserId_User($userId);
         $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
         $statusType = $_GET['status'] ?? 'success';
 
@@ -276,7 +276,7 @@ class ProfileController extends Controller
 
         // Get addresses from database
         // These are now retrieved as plain text from the model
-        $addresses = $this->addressModel->getAddressesByUserId($userId);
+        $addresses = $this->addressModel->getAddressesByUserId_User($userId);
 
         // Check for status messages
         $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;

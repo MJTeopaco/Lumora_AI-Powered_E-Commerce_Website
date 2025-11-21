@@ -37,6 +37,6 @@
     
    
     
-    <script src="/public/js/shop.js"></script>
+    <script src="/js/shop.js"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@ use App\Core\Session;
 use App\Models\Shop;
 use App\Models\Product;
 use App\Models\User;
+use App\Helpers\AddProductHelper;
 
 class ShopController extends Controller {
 
@@ -24,15 +25,12 @@ class ShopController extends Controller {
      * Display the shop dashboard
      */
     public function dashboard() {
-        // Check if user is logged in
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access the shop dashboard');
             $this->redirect('/login');
         }
 
         $userId = Session::get('user_id');
-        
-        // Check if user is an approved seller
         $sellerStatus = $this->shopModel->getSellerStatus($userId);
         
         if (!$sellerStatus || $sellerStatus['is_approved'] != 1) {
@@ -40,7 +38,6 @@ class ShopController extends Controller {
             $this->redirect('/seller/register');
         }
 
-        // Get shop data
         $shopData = $this->shopModel->getShopByUserId($userId);
         
         if (!$shopData) {
@@ -48,13 +45,8 @@ class ShopController extends Controller {
             $this->redirect('/');
         }
 
-        // Get dashboard statistics
         $stats = $this->shopModel->getDashboardStats($shopData['shop_id']);
-        
-        // Get recent orders
         $recentOrders = $this->shopModel->getRecentOrders($shopData['shop_id'], 5);
-        
-        // Get top selling products
         $topProducts = $this->shopModel->getTopProducts($shopData['shop_id'], 5);
 
         $data = [
@@ -115,7 +107,6 @@ class ShopController extends Controller {
             $this->redirect('/');
         }
 
-        // Get all categories
         $categories = $this->shopModel->getAllCategories();
 
         $data = [
@@ -137,7 +128,6 @@ class ShopController extends Controller {
             $this->redirect('/login');
         }
 
-        // Validate POST request
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             Session::set('error', 'Invalid request method');
             $this->redirect('/shop/add-product');
@@ -151,58 +141,34 @@ class ShopController extends Controller {
             $this->redirect('/');
         }
 
-        // Validate required fields
-        $requiredFields = ['product_name', 'short_description', 'description', 'category_id', 'status'];
-        $errors = [];
+        // Validate form data using helper
+        $validation = AddProductHelper::validateProductData($_POST, $_FILES);
         
-        foreach ($requiredFields as $field) {
-            if (empty($_POST[$field])) {
-                $errors[] = ucfirst(str_replace('_', ' ', $field)) . ' is required';
-            }
-        }
-
-        // Validate variants
-        if (empty($_POST['variants']) || !is_array($_POST['variants'])) {
-            $errors[] = 'At least one product variant is required';
-        }
-
-        if (!empty($errors)) {
-            Session::set('error', implode(', ', $errors));
+        if (!$validation['valid']) {
+            Session::set('error', implode('<br>', $validation['errors']));
             $this->redirect('/shop/add-product');
         }
 
         // Handle cover image upload
-        $coverPicture = null;
-        if (isset($_FILES['cover_picture']) && $_FILES['cover_picture']['error'] === UPLOAD_ERR_OK) {
-            $uploadResult = $this->uploadProductImage($_FILES['cover_picture'], $shopData['shop_id']);
-            
-            if ($uploadResult['success']) {
-                $coverPicture = $uploadResult['filename'];
-            } else {
-                Session::set('error', 'Cover image upload failed: ' . $uploadResult['message']);
-                $this->redirect('/shop/add-product');
-            }
-        } else {
-            Session::set('error', 'Cover image is required');
+        $coverUploadResult = AddProductHelper::uploadProductImage(
+            $_FILES['cover_picture'], 
+            $shopData['shop_id']
+        );
+        
+        if (!$coverUploadResult['success']) {
+            Session::set('error', 'Cover image upload failed: ' . $coverUploadResult['message']);
             $this->redirect('/shop/add-product');
         }
 
-        // Generate slug from product name
-        $slug = $this->generateSlug($_POST['product_name']);
-
         // Prepare product data
-        $productData = [
-            'shop_id' => $shopData['shop_id'],
-            'name' => trim($_POST['product_name']),
-            'slug' => $slug,
-            'short_description' => trim($_POST['short_description']),
-            'description' => trim($_POST['description']),
-            'cover_picture' => $coverPicture,
-            'status' => $_POST['status']
-        ];
+        $productData = AddProductHelper::prepareProductData(
+            $_POST, 
+            $shopData['shop_id'], 
+            $coverUploadResult['filename']
+        );
 
         // Start transaction
-        $this->productModel->conn->begin_transaction();
+        $this->productModel->getConnection()->begin_transaction();
 
         try {
             // Create product
@@ -217,58 +183,36 @@ class ShopController extends Controller {
                 throw new \Exception('Failed to link product to category');
             }
 
+            // Process variant images
+            $variantImages = AddProductHelper::processVariantImages($_FILES, $shopData['shop_id']);
+
             // Process variants
             $variantsProcessed = 0;
+            $uploadedFiles = [$coverUploadResult['filename']];
+            
             foreach ($_POST['variants'] as $variantIndex => $variantData) {
-                // Validate variant required fields
+                // Skip invalid variants
                 if (empty($variantData['price']) || empty($variantData['quantity'])) {
-                    continue; // Skip invalid variants
+                    continue;
                 }
 
-                // Handle variant image upload
-                $variantImage = null;
-                $fileKey = "variants_{$variantIndex}_image";
-                
-                if (isset($_FILES['variants']['name'][$variantIndex]['image']) && 
-                    $_FILES['variants']['error'][$variantIndex]['image'] === UPLOAD_ERR_OK) {
-                    
-                    // Restructure the file array for easier handling
-                    $variantFile = [
-                        'name' => $_FILES['variants']['name'][$variantIndex]['image'],
-                        'type' => $_FILES['variants']['type'][$variantIndex]['image'],
-                        'tmp_name' => $_FILES['variants']['tmp_name'][$variantIndex]['image'],
-                        'error' => $_FILES['variants']['error'][$variantIndex]['image'],
-                        'size' => $_FILES['variants']['size'][$variantIndex]['image']
-                    ];
-                    
-                    $uploadResult = $this->uploadProductImage($variantFile, $shopData['shop_id'], 'variant');
-                    
-                    if ($uploadResult['success']) {
-                        $variantImage = $uploadResult['filename'];
-                    }
-                }
+                // Get variant image if uploaded
+                $variantImage = isset($variantImages[$variantIndex]) && $variantImages[$variantIndex]['success']
+                    ? $variantImages[$variantIndex]['filename']
+                    : null;
 
-                // Generate SKU if not provided
-                $sku = !empty($variantData['sku']) ? trim($variantData['sku']) : $this->generateSKU($productId, $variantsProcessed + 1);
-
-                // Check for duplicate SKU
-                if ($this->productModel->skuExists($sku)) {
-                    $sku = $this->generateSKU($productId, $variantsProcessed + 1);
+                if ($variantImage) {
+                    $uploadedFiles[] = $variantImage;
                 }
 
                 // Prepare variant data
-                $variantInsertData = [
-                    'product_id' => $productId,
-                    'variant_name' => !empty($variantData['name']) ? trim($variantData['name']) : null,
-                    'sku' => $sku,
-                    'price' => floatval($variantData['price']),
-                    'quantity' => intval($variantData['quantity']),
-                    'color' => !empty($variantData['color']) ? trim($variantData['color']) : null,
-                    'size' => !empty($variantData['size']) ? trim($variantData['size']) : null,
-                    'material' => !empty($variantData['material']) ? trim($variantData['material']) : null,
-                    'image' => $variantImage,
-                    'is_active' => isset($variantData['status']) ? intval($variantData['status']) : 1
-                ];
+                $variantInsertData = AddProductHelper::prepareVariantData(
+                    $variantData,
+                    $productId,
+                    $variantsProcessed + 1,
+                    $variantImage,
+                    $this->productModel
+                );
 
                 $variantId = $this->productModel->createProductVariant($variantInsertData);
 
@@ -279,102 +223,31 @@ class ShopController extends Controller {
                 $variantsProcessed++;
             }
 
-            // Check if at least one variant was created
             if ($variantsProcessed === 0) {
                 throw new \Exception('No valid variants were created. Please check variant data.');
             }
 
-            // Handle tags if provided
+            // Process tags
             if (!empty($_POST['tags'])) {
-                $tags = array_map('trim', explode(',', $_POST['tags']));
-                foreach ($tags as $tagName) {
-                    if (!empty($tagName)) {
-                        $tagId = $this->productModel->getOrCreateTag($tagName);
-                        if ($tagId) {
-                            $this->productModel->linkProductToTag($productId, $tagId);
-                        }
-                    }
-                }
+                AddProductHelper::processTags($_POST['tags'], $productId, $this->productModel);
             }
 
             // Commit transaction
-            $this->productModel->conn->commit();
+            $this->productModel->getConnection()->commit();
 
             Session::set('success', "Product created successfully with {$variantsProcessed} variant(s)!");
             $this->redirect('/shop/products');
 
         } catch (\Exception $e) {
             // Rollback transaction
-            $this->productModel->conn->rollback();
+            $this->productModel->getConnection()->rollback();
             
-            // Clean up uploaded images
-            if ($coverPicture && file_exists($coverPicture)) {
-                unlink($coverPicture);
-            }
+            // Clean up uploaded files
+            AddProductHelper::cleanupFiles($uploadedFiles);
 
             Session::set('error', 'Failed to create product: ' . $e->getMessage());
             $this->redirect('/shop/add-product');
         }
-    }
-
-    /**
-     * Upload product image
-     * @param array $file
-     * @param int $shopId
-     * @param string $type ('product' or 'variant')
-     * @return array
-     */
-    private function uploadProductImage($file, $shopId, $type = 'product') {
-        $uploadDir = 'uploads/products/' . $shopId . '/' . $type . 's/';
-        
-        // Create directory if it doesn't exist
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        // Validate file type
-        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            return ['success' => false, 'message' => 'Invalid file type. Only JPG, PNG, GIF, and WebP allowed.'];
-        }
-
-        // Validate file size (5MB max)
-        if ($file['size'] > 5 * 1024 * 1024) {
-            return ['success' => false, 'message' => 'File size exceeds 5MB limit.'];
-        }
-
-        // Generate unique filename
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = $type . '_' . time() . '_' . rand(1000, 9999) . '.' . $extension;
-        $filepath = $uploadDir . $filename;
-
-        // Move uploaded file
-        if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            return ['success' => true, 'filename' => $filepath];
-        }
-
-        return ['success' => false, 'message' => 'Failed to move uploaded file.'];
-    }
-
-    /**
-     * Generate URL-friendly slug
-     * @param string $text
-     * @return string
-     */
-    private function generateSlug($text) {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $text), '-'));
-        $slug = $slug . '-' . time();
-        return $slug;
-    }
-
-    /**
-     * Generate SKU
-     * @param int $productId
-     * @param int $variantNumber
-     * @return string
-     */
-    private function generateSKU($productId, $variantNumber = 1) {
-        return 'PRD-' . str_pad($productId, 6, '0', STR_PAD_LEFT) . '-V' . str_pad($variantNumber, 2, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -452,7 +325,6 @@ class ShopController extends Controller {
             $this->redirect('/');
         }
 
-        // Get shop address
         $shopAddress = $this->shopModel->getShopAddress($shopData['shop_id']);
 
         $data = [
