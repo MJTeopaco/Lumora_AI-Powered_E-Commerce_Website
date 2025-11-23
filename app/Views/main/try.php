@@ -292,3 +292,6 @@ $isSeller = $isSeller ?? false;
     </div>
   </div>
 </section>
+
+<!-- Link to home-specific JavaScript -->
+<script src="/public/js/home.js" defer></script>

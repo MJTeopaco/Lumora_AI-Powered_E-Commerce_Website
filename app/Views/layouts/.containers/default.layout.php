@@ -9,6 +9,7 @@ $partialsPath = __DIR__ . '/../partials/';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'Lumora - Exquisite Accessories' ?></title>
     <link rel="stylesheet" href="/css/new-main.css">
+    <link rel="stylesheet" href="/css/home.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -29,4 +30,8 @@ $partialsPath = __DIR__ . '/../partials/';
         <?php include $partialsPath . 'footer.partial.php'; ?>
     </footer>
 </body>
+
+<!-- Link to JavaScript -->
+<script src="/public/js/home.js" defer></script>
+
 </html>
