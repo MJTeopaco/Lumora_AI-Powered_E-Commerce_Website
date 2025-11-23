@@ -32,6 +32,6 @@ $partialsPath = __DIR__ . '/../partials/';
 </body>
 
 <!-- Link to JavaScript -->
-<script src="/public/js/home.js" defer></script>
+<script src="/js/home.js" defer></script>
 
 </html>

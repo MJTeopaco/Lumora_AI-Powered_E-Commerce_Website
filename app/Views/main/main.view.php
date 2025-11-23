@@ -6,6 +6,7 @@
 $categoryCounts = $categoryCounts ?? [];
 $products = $products ?? [];
 $isSeller = $isSeller ?? false;
+$isLoggedIn = $isLoggedIn ?? false;
 ?>
 
 <!-- ===================== HERO CAROUSEL ===================== -->
@@ -15,7 +16,7 @@ $isSeller = $isSeller ?? false;
 
       <!-- Slide 1 -->
       <div class="carousel-slide is-active">
-        <img src="/public/img/banner-gold-earrings.jpg" alt="Gold Earrings Collection" />
+        <img src="/img/banner-gold-earrings.jpg" alt="Gold Earrings Collection" />
         <div class="hero-overlay"></div>
         <div class="carousel-text align-right">
           <p class="hero-eyebrow">SIGNATURE GOLD PIECES</p>
@@ -29,7 +30,7 @@ $isSeller = $isSeller ?? false;
 
       <!-- Slide 2 -->
       <div class="carousel-slide">
-        <img src="/public/img/banner-earrings.jpg" alt="Elegant Earring Banner" />
+        <img src="/img/banner-earrings.jpg" alt="Elegant Earring Banner" />
         <div class="hero-overlay"></div>
         <div class="carousel-text align-right">
           <p class="hero-eyebrow">EVERYDAY LUXURY</p>
@@ -43,7 +44,7 @@ $isSeller = $isSeller ?? false;
 
       <!-- Slide 3 -->
       <div class="carousel-slide">
-        <img src="/public/img/banner-hero.jpg" alt="Jewelry Collection Banner" />
+        <img src="/img/banner-hero.jpg" alt="Jewelry Collection Banner" />
         <div class="hero-overlay"></div>
         <div class="carousel-text align-right">
           <p class="hero-eyebrow">CRAFTED BY ARTISANS</p>
@@ -57,7 +58,7 @@ $isSeller = $isSeller ?? false;
 
       <!-- Slide 4 -->
       <div class="carousel-slide">
-        <img src="/public/img/banner-necklace-2.jpg" alt="Necklace Banner" />
+        <img src="/img/banner-necklace-2.jpg" alt="Necklace Banner" />
         <div class="hero-overlay"></div>
         <div class="carousel-text align-right">
           <p class="hero-eyebrow">SHINE IN YOUR OWN LIGHT</p>
@@ -96,7 +97,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=bracelets" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-bracelets.jpg" alt="Bracelets" class="category-thumb">
+          <img src="/img/placeholder-bracelets.jpg" alt="Bracelets" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Bracelets</span>
@@ -108,7 +109,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=urban-staples" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-urban.jpg" alt="Urban &amp; Staples" class="category-thumb">
+          <img src="/img/placeholder-urban.jpg" alt="Urban &amp; Staples" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Urban &amp; Staples</span>
@@ -120,7 +121,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=charms" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-charms.jpg" alt="Charms" class="category-thumb">
+          <img src="/img/placeholder-charms.jpg" alt="Charms" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Charms</span>
@@ -132,7 +133,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=engagement-rings" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-rings.jpg" alt="Engagement Rings" class="category-thumb">
+          <img src="/img/placeholder-rings.jpg" alt="Engagement Rings" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Engagement Rings</span>
@@ -144,7 +145,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=necklaces" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-necklaces.jpg" alt="Necklaces" class="category-thumb">
+          <img src="/img/placeholder-necklaces.jpg" alt="Necklaces" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Necklaces</span>
@@ -156,7 +157,7 @@ $isSeller = $isSeller ?? false;
 
       <a href="/collections?category=pendants" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/public/img/placeholder-pendants.jpg" alt="Pendants" class="category-thumb">
+          <img src="/img/placeholder-pendants.jpg" alt="Pendants" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Pendants</span>
@@ -176,7 +177,7 @@ $isSeller = $isSeller ?? false;
 
     <div class="feature-card">
       <div class="feature-image">
-        <img src="/public/img/flutter-butterfly.jpg" alt="Flutter & Butterfly Pendant">
+        <img src="/img/flutter-butterfly.jpg" alt="Flutter & Butterfly Pendant">
       </div>
       <div class="feature-content">
         <h3>Flutter &amp; Butterfly Pendant</h3>
@@ -186,7 +187,7 @@ $isSeller = $isSeller ?? false;
 
     <div class="feature-card">
       <div class="feature-image">
-        <img src="/public/img/gold-filled-bracelet.jpg" alt="Gold Filled Bracelet">
+        <img src="/img/gold-filled-bracelet.jpg" alt="Gold Filled Bracelet">
       </div>
       <div class="feature-content">
         <h3>Best Gold Filled Bracelet</h3>
@@ -242,7 +243,7 @@ $isSeller = $isSeller ?? false;
 
 <!-- ===================== SELLER PROMO BANNER ===================== -->
 <section class="promo-banner promo-seller">
-  <img src="/public/img/banner-silver-earrings.jpg" alt="Sell on Lumora Banner" />
+  <img src="/img/banner-silver-earrings.jpg" alt="Sell on Lumora Banner" />
 
   <div class="promo-text container">
     <p class="promo-eyebrow">BECOME A LUMORA CREATOR</p>
