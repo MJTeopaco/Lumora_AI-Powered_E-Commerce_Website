@@ -236,12 +236,14 @@ class AddProductHelper {
     
     /**
      * Process and link tags to product
+     * NOTE: This now accepts a model that has getOrCreateTag and linkProductToTag methods
+     * Can be either Shop model or Product model
      * @param string $tagsString
      * @param int $productId
-     * @param object $productModel
+     * @param object $model (Shop or Product model with tag methods)
      * @return int Number of tags linked
      */
-    public static function processTags($tagsString, $productId, $productModel) {
+    public static function processTags($tagsString, $productId, $model) {
         if (empty($tagsString)) {
             return 0;
         }
@@ -251,8 +253,8 @@ class AddProductHelper {
         
         foreach ($tags as $tagName) {
             if (!empty($tagName)) {
-                $tagId = $productModel->getOrCreateTag($tagName);
-                if ($tagId && $productModel->linkProductToTag($productId, $tagId)) {
+                $tagId = $model->getOrCreateTag($tagName);
+                if ($tagId && $model->linkProductToTag($productId, $tagId)) {
                     $linkedCount++;
                 }
             }

@@ -13,6 +13,14 @@ class Shop {
     }
 
     /**
+     * Get database connection
+     * @return mysqli
+     */
+    public function getConnection() {
+        return $this->conn;
+    }
+
+    /**
      * Get seller status for a user
      * @param int $userId
      * @return array|null

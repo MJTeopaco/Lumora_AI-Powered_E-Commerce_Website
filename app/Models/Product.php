@@ -262,44 +262,22 @@ public function getProductsBySearch($searchTerm) {
             UPDATE products 
             SET name = ?, 
                 short_description = ?, 
-                description = ?, 
-                cover_picture = ?, 
+                description = ?,
                 status = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE product_id = ?
         ");
         
         $stmt->bind_param(
-            "sssssi",
+            "ssssi",
             $data['name'],
             $data['short_description'],
             $data['description'],
-            $data['cover_picture'],
             $data['status'],
             $productId
         );
         
         return $stmt->execute();
-    }
-
-    /**
-     * Get product by ID
-     * @param int $productId
-     * @return array|null
-     */
-    public function getProductById($productId) {
-        $stmt = $this->conn->prepare("
-            SELECT p.*, s.shop_name, s.shop_id
-            FROM products p
-            INNER JOIN shops s ON p.shop_id = s.shop_id
-            WHERE p.product_id = ? AND p.is_deleted = 0
-        ");
-        
-        $stmt->bind_param("i", $productId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        return $result->fetch_assoc();
     }
 
     /**
@@ -320,12 +298,14 @@ public function getProductsBySearch($searchTerm) {
     }
 
     /**
-     * Create product variant
+     * Create a product variant
+     * CRITICAL FIX: Removed variant_id from INSERT (it's AUTO_INCREMENT)
+     * and corrected bind_param type string to match 9 parameters
      * @param array $data
      * @return int|false Variant ID on success, false on failure
      */
-// app/Models/Product.php
     public function createProductVariant($data) {
+        // FIXED: Removed variant_id from INSERT statement
         $stmt = $this->conn->prepare("
             INSERT INTO product_variants (
                 product_id, variant_name, sku, price, quantity, 
@@ -333,8 +313,25 @@ public function getProductsBySearch($searchTerm) {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
+        if (!$stmt) {
+            error_log("Prepare failed: " . $this->conn->error);
+            return false;
+        }
+        
+        // FIXED: Changed from "issdissssi" (10 params) to "issdiisssi" (10 params)
+        // Type string breakdown:
+        // i - product_id (int)
+        // s - variant_name (string)
+        // s - sku (string)
+        // d - price (decimal/double)
+        // i - quantity (int)
+        // s - color (string)
+        // s - size (string)
+        // s - material (string)
+        // s - product_picture (string)
+        // i - is_active (int)
         $stmt->bind_param(
-            "issdissssi",
+            "issdiisssi",
             $data['product_id'],
             $data['variant_name'],
             $data['sku'],
@@ -348,16 +345,19 @@ public function getProductsBySearch($searchTerm) {
         );
         
         if ($stmt->execute()) {
-            return $this->conn->insert_id;
+            $variantId = $this->conn->insert_id;
+            $stmt->close();
+            return $variantId;
         }
         
-        // --- CRITICAL FIX: THROW DATABASE ERROR ---
-        $error = $this->conn->error;
+        // Get error message for debugging
+        $error = $stmt->error;
+        $stmt->close();
+        
         if ($error) {
-            // Throw the specific MySQL error message
-            throw new \Exception("SQL Error in createProductVariant: " . $error);
+            error_log("SQL Error in createProductVariant: " . $error);
+            throw new \Exception("Failed to create product variant: " . $error);
         }
-        // ----------------------------------------
         
         return false;
     }
@@ -378,14 +378,14 @@ public function getProductsBySearch($searchTerm) {
                 color = ?,
                 size = ?,
                 material = ?,
-                image = ?,
+                product_picture = ?,
                 is_active = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE variant_id = ?
         ");
         
         $stmt->bind_param(
-            "ssdiissssii",
+            "ssdiisssii",
             $data['variant_name'],
             $data['sku'],
             $data['price'],
@@ -393,7 +393,7 @@ public function getProductsBySearch($searchTerm) {
             $data['color'],
             $data['size'],
             $data['material'],
-            $data['image'],
+            $data['product_picture'],
             $data['is_active'],
             $variantId
         );
@@ -469,13 +469,11 @@ public function getProductsBySearch($searchTerm) {
         }
         
         // Create new tag
-        $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $tagName), '-'));
-        
         $stmt = $this->conn->prepare("
-            INSERT INTO product_tags (name, slug) VALUES (?, ?)
+            INSERT INTO product_tags (name) VALUES (?)
         ");
         
-        $stmt->bind_param("ss", $tagName, $slug);
+        $stmt->bind_param("s", $tagName);
         
         if ($stmt->execute()) {
             return $this->conn->insert_id;
@@ -524,7 +522,7 @@ public function getProductsBySearch($searchTerm) {
      */
     public function getProductTags($productId) {
         $stmt = $this->conn->prepare("
-            SELECT pt.tag_id, pt.name, pt.slug
+            SELECT pt.tag_id, pt.name
             FROM product_tags pt
             INNER JOIN product_tag_links ptl ON pt.tag_id = ptl.tag_id
             WHERE ptl.product_id = ?

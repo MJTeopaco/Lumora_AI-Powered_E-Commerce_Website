@@ -167,19 +167,22 @@ class ShopController extends Controller {
             $coverUploadResult['filename']
         );
 
+        // Get database connection for transaction
+        $conn = $this->shopModel->getConnection();
+        
         // Start transaction
-        $this->productModel->getConnection()->begin_transaction();
+        $conn->begin_transaction();
 
         try {
-            // Create product
-            $productId = $this->productModel->createProduct($productData);
+            // Create product using shopModel (which has the createProduct method)
+            $productId = $this->shopModel->createProduct($productData);
 
             if (!$productId) {
                 throw new \Exception('Failed to create product');
             }
 
-            // Link product to category
-            if (!$this->productModel->linkProductToCategory($productId, $_POST['category_id'])) {
+            // Link product to category using shopModel
+            if (!$this->shopModel->linkProductToCategory($productId, $_POST['category_id'])) {
                 throw new \Exception('Failed to link product to category');
             }
 
@@ -227,20 +230,20 @@ class ShopController extends Controller {
                 throw new \Exception('No valid variants were created. Please check variant data.');
             }
 
-            // Process tags
+            // Process tags using shopModel
             if (!empty($_POST['tags'])) {
-                AddProductHelper::processTags($_POST['tags'], $productId, $this->productModel);
+                AddProductHelper::processTags($_POST['tags'], $productId, $this->shopModel);
             }
 
             // Commit transaction
-            $this->productModel->getConnection()->commit();
+            $conn->commit();
 
             Session::set('success', "Product created successfully with {$variantsProcessed} variant(s)!");
             $this->redirect('/shop/products');
 
         } catch (\Exception $e) {
             // Rollback transaction
-            $this->productModel->getConnection()->rollback();
+            $conn->rollback();
             
             // Clean up uploaded files
             AddProductHelper::cleanupFiles($uploadedFiles);

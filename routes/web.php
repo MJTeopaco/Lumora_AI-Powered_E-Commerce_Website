@@ -61,6 +61,14 @@ $router->get('/shop/orders', 'ShopController@orders');
 $router->get('/shop/cancellations', 'ShopController@cancellations');
 $router->get('/shop/addresses', 'ShopController@addresses');
 
+// My Products Routes
+$router->get('/shop/products', 'ProductManagementController@index');
+$router->get('/shop/products/show/{id}', 'ProductManagementController@show');
+$router->post('/shop/products/update-status', 'ProductManagementController@updateStatus');
+$router->post('/shop/products/delete', 'ProductManagementController@delete');
+$router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
+$router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
+
 // <----------------------------------------------------------------------------------------->
 // ADMIN ROUTES
 
@@ -78,3 +86,5 @@ $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
 $router->post('/admin/delete-category', 'AdminController@deleteCategory');
+
+
