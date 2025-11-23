@@ -1,27 +1,27 @@
 <?php
 // routes/web.php
 
+// <----------------------------------------------------------------------------------------->
+
 // GET routes
 $router->get('/', 'HomeController@index');
 $router->get('/login', 'AuthController@showLogin');
+$router->get('/logout', 'LogoutController@logout');
 
 // Profile routes
 $router->get('/profile', 'ProfileController@index');
 $router->post('/profile/update', 'ProfileController@update');
-$router->get('/profile/addresses', 'ProfileController@addresses');
 $router->get('/profile/settings', 'ProfileController@settings');
 $router->post('/profile/change-password', 'ProfileController@changePassword');
-$router->get('/profile/addresses/add', 'ProfileController@addAddressForm');
-$router->post('/profile/addresses/add', 'ProfileController@addAddress');
 
 // Address routes
 $router->get('/profile/addresses', 'AddressController@index');
 $router->get('/profile/addresses/add', 'AddressController@add');
 $router->post('/profile/addresses/add', 'AddressController@store');
-$router->get('/profile/addresses/edit/{id}', 'AddressController@edit');
-$router->post('/profile/addresses/edit/{id}', 'AddressController@update');
-$router->post('/profile/addresses/delete/{id}', 'AddressController@delete');
-$router->post('/profile/addresses/set-default/{id}', 'AddressController@setDefault');
+$router->get('/profile/addresses/edit', 'AddressController@edit');
+$router->post('/profile/addresses/edit', 'AddressController@update');
+$router->post('/profile/addresses/delete', 'AddressController@delete');
+$router->post('/profile/addresses/set-default', 'AddressController@setDefault');
 
 // Logout route
 $router->post('/logout', 'AuthController@logout');
@@ -45,3 +45,46 @@ $router->post('/auth/resend-forgot-otp', 'AuthController@resendForgotOtp');
 // Placeholder routes for cart and notifications (to be implemented)
 $router->get('/cart', 'CartController@index');
 $router->get('/notifications', 'NotificationsController@index');
+
+// <----------------------------------------------------------------------------------------->
+// SELLER REGISTRATION ROUTES
+$router->get('/seller/register', 'SellerController@registerForm');
+$router->post('/seller/register', 'SellerController@registerSubmit');
+
+// <----------------------------------------------------------------------------------------->
+// SHOP ROUTES
+$router->get('/shop/dashboard', 'ShopController@dashboard');
+$router->get('/shop/products', 'ShopController@products');
+$router->get('/shop/add-product', 'ShopController@addProduct');
+$router->post('/shop/products/store', 'ShopController@storeProduct');
+$router->get('/shop/orders', 'ShopController@orders');
+$router->get('/shop/cancellations', 'ShopController@cancellations');
+$router->get('/shop/addresses', 'ShopController@addresses');
+
+// My Products Routes
+$router->get('/shop/products', 'ProductManagementController@index');
+$router->get('/shop/products/show/{id}', 'ProductManagementController@show');
+$router->post('/shop/products/update-status', 'ProductManagementController@updateStatus');
+$router->post('/shop/products/delete', 'ProductManagementController@delete');
+$router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
+$router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
+
+// <----------------------------------------------------------------------------------------->
+// ADMIN ROUTES
+
+// Admin Dashboard
+$router->get('/admin/dashboard', 'AdminController@dashboard');
+
+// Admin Sellers Management
+$router->get('/admin/sellers', 'AdminController@sellers');
+$router->post('/admin/approve-seller', 'AdminController@approveSeller');
+$router->post('/admin/reject-seller', 'AdminController@rejectSeller');
+$router->post('/admin/suspend-seller', 'AdminController@suspendSeller');
+
+// Admin Settings
+$router->get('/admin/settings', 'AdminController@settings');
+$router->post('/admin/add-category', 'AdminController@addCategory');
+$router->post('/admin/update-category', 'AdminController@updateCategory');
+$router->post('/admin/delete-category', 'AdminController@deleteCategory');
+
+

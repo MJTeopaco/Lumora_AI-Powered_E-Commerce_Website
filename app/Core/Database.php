@@ -12,7 +12,7 @@ define('DB_PASS', '');
 define('DB_NAME', 'lumora_db');
 
 class Database {
-    public static $conn;
+    private static $conn;
 
     /**
      * Establishes and returns the database connection.

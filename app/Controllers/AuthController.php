@@ -155,7 +155,14 @@ class AuthController extends Controller {
         Session::unset('login_otp_expiry');
         Session::unset('login_otp_attempts');
 
-        RedirectHelper::redirect('/'); // Redirect to dashboard
+        $role = $this->userModel->getUserRoles(Session::get('user_id'));
+        
+        if (in_array('admin', $role)) {
+            RedirectHelper::redirect('/admin/dashboard'); 
+        } else {
+            RedirectHelper::redirect('/'); 
+        }
+
     }
 
     /**
@@ -438,7 +445,7 @@ class AuthController extends Controller {
         if (EmailHelper::sendRegistrationOTPEmail(Session::get('reg_email'), $otp)) {
             $this->jsonResponse(true, 'A new code has been sent.');
         } else {
-            $this.jsonResponse(false, 'Failed to send code. Try again.');
+            $this->jsonResponse(false, 'Failed to send code. Try again.');
         }
     }
     

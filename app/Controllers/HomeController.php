@@ -39,6 +39,7 @@ class HomeController extends Controller {
         $userProfile = null;
         $notificationCount = 0;
         $cartCount = 0;
+        $userId = null;
 
         if ($isLoggedIn) {
             $userId = Session::get('user_id');
@@ -71,6 +72,10 @@ class HomeController extends Controller {
             $cartCount = 0; // Placeholder
         }
 
+
+        // Check if user is a seller
+        $isSeller = $this->userModel->checkRole($userId);
+
         // Get all products (or featured products)
         $products = $this->productModel->getAllProducts();
 
@@ -88,11 +93,12 @@ class HomeController extends Controller {
             'cartCount' => $cartCount,
             'products' => $products,
             'statusMessage' => $statusMessage,
-            'statusType' => $statusType
+            'statusType' => $statusType,
+            'isSeller' => $isSeller
         ];
 
         // Load the view
-        $this->view('main_page/index', $data);
+        $this->view('main/main', $data);
     }
     
     /**

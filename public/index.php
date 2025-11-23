@@ -2,6 +2,15 @@
 // Lumora - public/index.php
 // The one and only entry point for all web requests.
 
+
+// Start output buffering to prevent header errors
+ob_start();
+
+// Error Reporting (disable in production)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+
 // Load Composer's autoloader FIRST
 
 // Clear OpCache

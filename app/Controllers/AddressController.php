@@ -3,21 +3,29 @@
 
 namespace App\Controllers;
 
+use App\Core\Controller;  
+use App\Core\Session;     
 use App\Models\Address;
+use App\Models\User;      
 use App\Models\UserProfile;
+use App\Helpers\RedirectHelper;
 
-class AddressController
+class AddressController extends Controller  
 {
     private $addressModel;
     private $userProfileModel;
+    private $userModel;  
 
     public function __construct()
     {
-        $this->addressModel = new Address();
-        // Only initialize UserProfile if the class exists
-        if (class_exists('App\Models\UserProfile')) {
-            $this->userProfileModel = new UserProfile();
+        
+        if (!Session::has('user_id')) {
+            RedirectHelper::redirect('/login');
         }
+
+        $this->addressModel = new Address();
+        $this->userModel = new User();
+        $this->userProfileModel = new UserProfile();
     }
 
     /**
@@ -25,30 +33,23 @@ class AddressController
      */
     public function index()
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        $addresses = $this->addressModel->getAddressesByUserId_User($userId);
 
-        $userId = $_SESSION['user_id'];
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'addresses' => $addresses,
+            'statusMessage' => $_GET['message'] ?? null,
+            'statusType' => $_GET['status'] ?? 'success',
+            'activeTab' => 'addresses',
+            'pageTitle' => 'My Addresses'
+        ];
 
-        // Get user data
-        $user = $this->getUserData($userId);
         
-        // Get user profile (if available)
-        $profile = $this->getUserProfile($userId);
-
-        // Get all addresses for the user
-        $addresses = $this->addressModel->getAddressesByUserId($userId);
-
-        // Get status message from session if exists
-        $statusMessage = $_SESSION['status_message'] ?? null;
-        $statusType = $_SESSION['status_type'] ?? null;
-        unset($_SESSION['status_message'], $_SESSION['status_type']);
-
-        // Load the view
-        require_once __DIR__ . '/../Views/layouts/profile/addresses.view.php';
+        $this->view('profile/addresses', $data, '/profile');
     }
 
     /**
@@ -56,25 +57,22 @@ class AddressController
      */
     public function add()
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
 
-        $userId = $_SESSION['user_id'];
-        $user = $this->getUserData($userId);
-        $profile = $this->getUserProfile($userId);
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'isEdit' => false,
+            'statusMessage' => $_GET['message'] ?? null,
+            'statusType' => $_GET['status'] ?? 'success',
+            'activeTab' => 'addresses',
+            'pageTitle' => 'Add New Address'
+        ];
 
-        $isEdit = false;
-
-        // Get status message from session if exists
-        $statusMessage = $_SESSION['status_message'] ?? null;
-        $statusType = $_SESSION['status_type'] ?? null;
-        unset($_SESSION['status_message'], $_SESSION['status_type']);
-
-        // Load the add form view
-        require_once __DIR__ . '/../Views/layouts/profile/address-form.view.php';
+        
+        $this->view('profile/address-form', $data, '/profile');
     }
 
     /**
@@ -82,18 +80,11 @@ class AddressController
      */
     public function store()
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /profile/addresses/add');
-            exit;
+            RedirectHelper::redirect('profile/addresses/add');
         }
 
-        $userId = $_SESSION['user_id'];
+        $userId = Session::get('user_id');
 
         // Get form data
         $data = [
@@ -111,10 +102,8 @@ class AddressController
         // Validate required fields
         if (empty($data['address_line_1']) || empty($data['barangay']) || 
             empty($data['city']) || empty($data['province']) || empty($data['region'])) {
-            $_SESSION['status_message'] = 'Please fill in all required fields.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses/add');
-            exit;
+            $this->redirectWithError('Please fill in all required fields.');
+            return;
         }
 
         // If this address is set as default, unset other defaults
@@ -126,15 +115,10 @@ class AddressController
         $result = $this->addressModel->createAddress($data);
 
         if ($result) {
-            $_SESSION['status_message'] = 'Address added successfully!';
-            $_SESSION['status_type'] = 'success';
-            header('Location: /profile/addresses');
+            $this->redirectWithSuccess('Address added successfully!');
         } else {
-            $_SESSION['status_message'] = 'Failed to add address. Please try again.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses/add');
+            $this->redirectWithError('Failed to add address. Please try again.');
         }
-        exit;
     }
 
     /**
@@ -142,35 +126,31 @@ class AddressController
      */
     public function edit($addressId)
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
-        $userId = $_SESSION['user_id'];
-        $user = $this->getUserData($userId);
-        $profile = $this->getUserProfile($userId);
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
 
         // Get the address
         $address = $this->addressModel->getAddressById($addressId, $userId);
 
         if (!$address) {
-            $_SESSION['status_message'] = 'Address not found.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses');
-            exit;
+            $this->redirectWithError('Address not found.');
+            return;
         }
 
-        $isEdit = true;
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'address' => $address,
+            'isEdit' => true,
+            'statusMessage' => $_GET['message'] ?? null,
+            'statusType' => $_GET['status'] ?? 'success',
+            'activeTab' => 'addresses',
+            'pageTitle' => 'Edit Address'
+        ];
 
-        // Get status message from session if exists
-        $statusMessage = $_SESSION['status_message'] ?? null;
-        $statusType = $_SESSION['status_type'] ?? null;
-        unset($_SESSION['status_message'], $_SESSION['status_type']);
-
-        // Load the edit form view
-        require_once __DIR__ . '/../Views/layouts/profile/address-form.view.php';
+        
+        $this->view('profile/address-form', $data, '/profile');
     }
 
     /**
@@ -178,26 +158,17 @@ class AddressController
      */
     public function update($addressId)
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /profile/addresses/edit/' . $addressId);
-            exit;
+            RedirectHelper::redirect('profile/addresses/edit/' . $addressId);
         }
 
-        $userId = $_SESSION['user_id'];
+        $userId = Session::get('user_id');
 
         // Verify the address belongs to the user
         $existingAddress = $this->addressModel->getAddressById($addressId, $userId);
         if (!$existingAddress) {
-            $_SESSION['status_message'] = 'Address not found.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses');
-            exit;
+            $this->redirectWithError('Address not found.');
+            return;
         }
 
         // Get form data
@@ -215,10 +186,8 @@ class AddressController
         // Validate required fields
         if (empty($data['address_line_1']) || empty($data['barangay']) || 
             empty($data['city']) || empty($data['province']) || empty($data['region'])) {
-            $_SESSION['status_message'] = 'Please fill in all required fields.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses/edit/' . $addressId);
-            exit;
+            $this->redirectWithError('Please fill in all required fields.');
+            return;
         }
 
         // If this address is set as default, unset other defaults
@@ -230,15 +199,10 @@ class AddressController
         $result = $this->addressModel->updateAddress($addressId, $userId, $data);
 
         if ($result) {
-            $_SESSION['status_message'] = 'Address updated successfully!';
-            $_SESSION['status_type'] = 'success';
-            header('Location: /profile/addresses');
+            $this->redirectWithSuccess('Address updated successfully!');
         } else {
-            $_SESSION['status_message'] = 'Failed to update address. Please try again.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses/edit/' . $addressId);
+            $this->redirectWithError('Failed to update address. Please try again.');
         }
-        exit;
     }
 
     /**
@@ -246,41 +210,27 @@ class AddressController
      */
     public function delete($addressId)
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /profile/addresses');
-            exit;
+            RedirectHelper::redirect('profile/addresses');
         }
 
-        $userId = $_SESSION['user_id'];
+        $userId = Session::get('user_id');
 
         // Verify the address belongs to the user
         $address = $this->addressModel->getAddressById($addressId, $userId);
         if (!$address) {
-            $_SESSION['status_message'] = 'Address not found.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses');
-            exit;
+            $this->redirectWithError('Address not found.');
+            return;
         }
 
         // Delete the address
         $result = $this->addressModel->deleteAddress($addressId, $userId);
 
         if ($result) {
-            $_SESSION['status_message'] = 'Address deleted successfully!';
-            $_SESSION['status_type'] = 'success';
+            $this->redirectWithSuccess('Address deleted successfully!');
         } else {
-            $_SESSION['status_message'] = 'Failed to delete address. Please try again.';
-            $_SESSION['status_type'] = 'error';
+            $this->redirectWithError('Failed to delete address. Please try again.');
         }
-
-        header('Location: /profile/addresses');
-        exit;
     }
 
     /**
@@ -288,26 +238,17 @@ class AddressController
      */
     public function setDefault($addressId)
     {
-        // Check if user is logged in
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit;
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /profile/addresses');
-            exit;
+            RedirectHelper::redirect('profile/addresses');
         }
 
-        $userId = $_SESSION['user_id'];
+        $userId = Session::get('user_id');
 
         // Verify the address belongs to the user
         $address = $this->addressModel->getAddressById($addressId, $userId);
         if (!$address) {
-            $_SESSION['status_message'] = 'Address not found.';
-            $_SESSION['status_type'] = 'error';
-            header('Location: /profile/addresses');
-            exit;
+            $this->redirectWithError('Address not found.');
+            return;
         }
 
         // Unset all default addresses for this user
@@ -317,48 +258,30 @@ class AddressController
         $result = $this->addressModel->setAsDefault($addressId, $userId);
 
         if ($result) {
-            $_SESSION['status_message'] = 'Default address updated successfully!';
-            $_SESSION['status_type'] = 'success';
+            $this->redirectWithSuccess('Default address updated successfully!');
         } else {
-            $_SESSION['status_message'] = 'Failed to set default address. Please try again.';
-            $_SESSION['status_type'] = 'error';
+            $this->redirectWithError('Failed to set default address. Please try again.');
         }
-
-        header('Location: /profile/addresses');
-        exit;
     }
 
-    /**
-     * Helper method to get user data
-     */
-    private function getUserData($userId)
+    
+    private function redirectWithError($message)
     {
-        // You'll need to implement this based on your User model
-        // For now, returning basic session data
-        return [
-            'user_id' => $userId,
-            'username' => $_SESSION['username'] ?? 'User',
-            'email' => $_SESSION['email'] ?? ''
+        $params = [
+            'status' => 'error',
+            'message' => urlencode($message)
         ];
+        $url = 'profile/addresses?' . http_build_query($params);
+        RedirectHelper::redirect($url);
     }
 
-    /**
-     * Helper method to get user profile
-     */
-    private function getUserProfile($userId)
+    private function redirectWithSuccess($message)
     {
-        // FIXED: Changed 'getProfileByUserId' to 'getByUserId'
-        if ($this->userProfileModel && method_exists($this->userProfileModel, 'getByUserId')) {
-            return $this->userProfileModel->getByUserId($userId);
-        }
-        
-        // Return empty profile if no model available
-        return [
-            'profile_pic' => '',
-            'full_name' => '',
-            'phone_number' => '',
-            'gender' => '',
-            'birth_date' => ''
+        $params = [
+            'status' => 'success',
+            'message' => urlencode($message)
         ];
+        $url = 'profile/addresses?' . http_build_query($params);
+        RedirectHelper::redirect($url);
     }
 }

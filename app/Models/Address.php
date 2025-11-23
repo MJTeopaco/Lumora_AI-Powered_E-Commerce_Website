@@ -42,14 +42,21 @@ class Address
     /**
      * Get all addresses for a user
      */
-    public function getAddressesByUserId($userId)
+    public function getAddressesByUserId_User($userId)
     {
+        // FIX: Added 'AND address_type != :shop_type' to exclude 'shop' addresses.
         $sql = "SELECT * FROM addresses 
                 WHERE user_id = :user_id 
+                AND address_type != :shop_type
                 ORDER BY is_default DESC, created_at DESC";
         
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['user_id' => $userId]);
+        
+        // Execute with both parameters
+        $stmt->execute([
+            'user_id' => $userId,
+            'shop_type' => 'shop' // Parameter to exclude the 'shop' type
+        ]);
         
         $addresses = $stmt->fetchAll();
         

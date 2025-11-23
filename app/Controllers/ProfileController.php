@@ -35,16 +35,14 @@ class ProfileController extends Controller
      */
     public function index()
     {
+        // user data
+        $isLoggedIn = Session::has('user_id');
         $userId = Session::get('user_id');
-
-        // Get user data
         $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['full_name' => '', 'phone_number' => '', 'gender' => '', 'birth_date' => '', 'profile_pic' => ''];
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
 
-        // Get or create profile
-        // Data is retrieved as plain text
-        $profile = $this->profileModel->getByUserId($userId);
-
-        // If profile doesn't exist, create empty one
         if (!$profile) {
             $profile = [
                 'full_name' => '',
@@ -63,10 +61,14 @@ class ProfileController extends Controller
             'user' => $user,
             'profile' => $profile,
             'statusMessage' => $statusMessage,
-            'statusType' => $statusType
+            'statusType' => $statusType,
+            'activeTab' => 'info',
+            'pageTitle' => 'Personal Information',
+
+            'isLoggedIn' => true
         ];
 
-        $this->view('profile/index', $data);
+        $this->view('profile/index', $data, 'profile');
     }
 
     /**
@@ -260,20 +262,21 @@ class ProfileController extends Controller
      */
     public function addresses()
     {
+        // user data
         $userId = Session::get('user_id');
-
-        // Get user data
         $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        $addresses = $this->addressModel->getAddressesByUserId_User($userId);
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
 
-        // Get profile
-        $profile = $this->profileModel->getByUserId($userId);
         if (!$profile) {
             $profile = ['profile_pic' => ''];
         }
 
         // Get addresses from database
         // These are now retrieved as plain text from the model
-        $addresses = $this->addressModel->getAddressesByUserId($userId);
+        $addresses = $this->addressModel->getAddressesByUserId_User($userId);
 
         // Check for status messages
         $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
@@ -284,10 +287,12 @@ class ProfileController extends Controller
             'profile' => $profile,
             'addresses' => $addresses,
             'statusMessage' => $statusMessage,
-            'statusType' => $statusType
+            'statusType' => $statusType,
+            'activeTab' => 'addresses', // <--- IMPORTANT for sidebar highlight
+            'pageTitle' => 'My Addresses'
         ];
 
-        $this->view('profile/addresses', $data);
+        $this->view('profile/addresses', $data, 'profile');
     }
 
     /**
@@ -295,13 +300,13 @@ class ProfileController extends Controller
      */
     public function settings()
     {
-        $userId = Session::get('user_id');
-
         // Get user data
+        $userId = Session::get('user_id');
         $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
 
-        // Get profile
-        $profile = $this->profileModel->getByUserId($userId);
         if (!$profile) {
             $profile = ['profile_pic' => ''];
         }
@@ -314,13 +319,37 @@ class ProfileController extends Controller
             'user' => $user,
             'profile' => $profile,
             'statusMessage' => $statusMessage,
-            'statusType' => $statusType
+            'statusType' => $statusType,
+            'activeTab' => 'settings', // <--- IMPORTANT for sidebar highlight
+            'pageTitle' => 'Account Settings'
         ];
 
-        $this->view('profile/settings', $data);
+        $this->view('profile/settings', $data, 'profile');
     }
 
-    // ... (keep changePassword, redirectToSettings, redirectToAddresses) ...
+
+    public function addAddressForm() {
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
+
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'isEdit' => false,
+            // $address variable is not set here for 'add' form
+            'statusMessage' => $statusMessage,
+            'statusType' => $statusType,
+            'activeTab' => 'addresses',
+            'pageTitle' => 'Add New Address'
+        ];
+
+        // FIX: Ensure the view is wrapped by the profile layout
+        $this->view('profile/address-form', $data, 'profile');
+    }
+
 
     public function changePassword()
     {
