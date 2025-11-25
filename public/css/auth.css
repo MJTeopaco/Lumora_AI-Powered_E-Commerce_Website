@@ -4,9 +4,19 @@
     box-sizing: border-box;
 }
 
+/* Define the new color variables for clarity */
+:root {
+    --primary-color: #1a1a1a; /* Deep Black */
+    --accent-color: #ffd700; /* Gold */
+    --light-bg: #f5f5f5;
+    --dark-text: #333333;
+    --light-text: #ffffff;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #e8f0e8 0%, #d4e4d4 50%, #c8dbd8 100%);
+    /* Updated background to a gold gradient similar to the image */
+    background: radial-gradient(white, #f5c98f);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -28,13 +38,14 @@ body {
 }
 
 .brand-section {
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    /* Updated background to deep black gradient */
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2a2a2a 100%);
     padding: 40px 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: var(--light-text);
     position: relative;
     overflow: hidden;
 }
@@ -62,6 +73,8 @@ body {
     position: relative;
     z-index: 1;
     letter-spacing: 2px;
+    /* Changed logo color to gold accent */
+    color: var(--accent-color);
 }
 
 .brand-tagline {
@@ -93,7 +106,7 @@ body {
     flex: 1;
     padding: 12px;
     border: none;
-    background: #f3f4f6;
+    background: var(--light-bg);
     color: #6b7280;
     font-size: 15px;
     font-weight: 600;
@@ -109,9 +122,11 @@ body {
 }
 
 .tab-btn.active {
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(30, 77, 61, 0.2);
+    /* Updated active tab background to black gradient */
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2a2a2a 100%);
+    color: var(--light-text);
+    /* Shadow uses a slightly lighter black for visibility */
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
 }
 
 /* FIXED: Better form content positioning and transitions */
@@ -135,7 +150,7 @@ body {
 h2 {
     font-size: 24px;
     margin-bottom: 8px;
-    color: #1f2937;
+    color: var(--dark-text);
     text-align: center;
 }
 
@@ -154,7 +169,7 @@ h2 {
 label {
     display: block;
     margin-bottom: 8px;
-    color: #374151;
+    color: var(--dark-text);
     font-size: 14px;
     font-weight: 600;
 }
@@ -171,9 +186,10 @@ input {
 }
 
 input:focus {
-    border-color: #2d5a4a;
-    background: #f0f5f3;
-    box-shadow: 0 0 0 3px rgba(45, 90, 74, 0.1);
+    /* Updated focus border and shadow to use black/gold theme */
+    border-color: var(--primary-color);
+    background: var(--light-bg);
+    box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1);
 }
 
 input::placeholder {
@@ -206,7 +222,8 @@ input::placeholder {
 }
 
 .toggle-password:hover {
-    color: #2d5a4a;
+    /* Updated hover color to gold accent */
+    color: var(--accent-color);
 }
 
 .eye-icon {
@@ -239,7 +256,8 @@ input::placeholder {
 }
 
 .forgot-password a {
-    color: #2d5a4a;
+    /* Updated link color to gold accent */
+    color: var(--accent-color);
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
@@ -247,7 +265,8 @@ input::placeholder {
 }
 
 .forgot-password a:hover {
-    color: #1e4d3d;
+    /* Updated hover color to a darker gold/yellow */
+    color: #ccac00;
     text-decoration: underline;
 }
 
@@ -255,7 +274,8 @@ input::placeholder {
     width: 100%;
     padding: 14px;
     border: none;
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    /* Updated submit button background to black gradient */
+    background: linear-gradient(135deg, var(--primary-color) 0%, #2a2a2a 100%);
     color: white;
     font-size: 16px;
     font-weight: 600;
@@ -267,7 +287,8 @@ input::placeholder {
 
 .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(30, 77, 61, 0.3);
+    /* Updated submit button shadow to a lighter black */
+    box-shadow: 0 8px 20px rgba(26, 26, 26, 0.3);
 }
 
 .submit-btn:active {
@@ -303,7 +324,8 @@ input::placeholder {
 }
 
 .checkbox-group a {
-    color: #2d5a4a;
+    /* Updated link color to gold accent */
+    color: var(--accent-color);
     text-decoration: none;
     font-weight: 600;
 }
@@ -328,9 +350,10 @@ input::placeholder {
 }
 
 .alert.success {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
-    border-color: #6ee7b7;
+    /* Kept a light green for success but muted it slightly */
+    background: linear-gradient(135deg, #e6ffe6 0%, #ccffcc 100%);
+    color: #008000;
+    border-color: #90ee90;
 }
 
 .alert.error {
@@ -446,9 +469,10 @@ input::placeholder {
 }
 
 #reload-captcha-btn:hover {
-    background: #2d5a4a;
-    color: white;
-    border-color: #2d5a4a;
+    /* Updated reload button hover to black/gold */
+    background: var(--primary-color);
+    color: var(--accent-color);
+    border-color: var(--primary-color);
     transform: translateY(-1px);
 }
 
@@ -533,16 +557,19 @@ input::placeholder {
 }
 
 .modal-body::-webkit-scrollbar-thumb {
-    background: #2d5a4a;
+    /* Updated scrollbar thumb to black */
+    background: var(--primary-color);
     border-radius: 10px;
 }
 
 .modal-body::-webkit-scrollbar-thumb:hover {
-    background: #1e4d3d;
+    /* Updated scrollbar thumb hover to a darker black */
+    background: #000000;
 }
 
 .modal-content h2 {
-    color: #1e4d3d;
+    /* Updated modal title color to black */
+    color: var(--primary-color);
     margin: 0;
     font-size: 28px;
     text-align: center;
@@ -556,7 +583,8 @@ input::placeholder {
 }
 
 .modal-content h3 {
-    color: #1e4d3d;
+    /* Updated modal section header color to black */
+    color: var(--primary-color);
     font-size: 18px;
     margin: 25px 0 12px;
     font-weight: 600;
@@ -584,7 +612,8 @@ input::placeholder {
 }
 
 .modal-content strong {
-    color: #1e4d3d;
+    /* Updated strong text color to black */
+    color: var(--primary-color);
     font-weight: 600;
 }
 
@@ -603,7 +632,8 @@ input::placeholder {
 
 .modal-close-btn:hover,
 .modal-close-btn:focus {
-    color: #1e4d3d;
+    /* Updated close button hover to black */
+    color: var(--primary-color);
     transform: rotate(90deg) scale(1.1);
 }
 
@@ -645,7 +675,8 @@ input::placeholder {
 .resend-otp-btn {
     background: transparent;
     border: none;
-    color: #2d5a4a;
+    /* Updated resend button color to gold accent */
+    color: var(--accent-color);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -656,8 +687,9 @@ input::placeholder {
 }
 
 .resend-otp-btn:hover:not(:disabled) {
-    background: #f0f5f3;
-    color: #1e4d3d;
+    /* Updated resend button hover background to light gray and text to black */
+    background: var(--light-bg);
+    color: var(--primary-color);
     text-decoration: none;
 }
 
@@ -684,14 +716,16 @@ input::placeholder {
 }
 
 .back-to-login a {
-    color: #2d5a4a;
+    /* Updated back to login link to gold accent */
+    color: var(--accent-color);
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s;
 }
 
 .back-to-login a:hover {
-    color: #1e4d3d;
+    /* Updated back to login link hover to black */
+    color: var(--primary-color);
     text-decoration: underline;
 }
 
