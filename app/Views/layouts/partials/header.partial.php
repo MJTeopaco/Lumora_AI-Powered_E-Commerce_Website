@@ -62,7 +62,7 @@ $isSeller = $isSeller ?? false;
     <div class="nav-bottom">
         <div class="nav-links">
             <a href="/" class="nav-link">Home</a>
-            <a href="/shop" class="nav-link">Shop</a>
+            <a href="/collections/index" class="nav-link">Collections</a>
             <a href="/stores" class="nav-link">Stores</a>
             
             <?php if (!empty($isSeller) && $isSeller === true): ?>
@@ -70,7 +70,8 @@ $isSeller = $isSeller ?? false;
                     <i class="fas fa-store"></i> Shop Dashboard
                 </a>
             <?php else: ?>
-                <a href="/seller/register" class="nav-link">Sell on Lumora</a>
+                <!-- dating /seller/register -->
+                <a href="/main/seller-guidelines" class="nav-link">Sell on Lumora</a>
             <?php endif; ?>
         </div>
     </div>

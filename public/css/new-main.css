@@ -11,6 +11,10 @@
     --color-primary: #D4AF37;        /* Gold */
     --color-primary-dark: #B8942C;   /* Darker Gold */
     --color-primary-light: #E6C859;  /* Lighter Gold */
+
+    /* Button seller guidelines colors */
+    --primary: #d59f49; 
+    --primary-dark: #c08c3e; /* A slightly darker shade for the hover state */
     
     /* Neutral Colors */
     --color-black: #1A1A1A;          /* Rich Black */

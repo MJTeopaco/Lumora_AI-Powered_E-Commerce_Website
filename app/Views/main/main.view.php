@@ -266,7 +266,7 @@ $isLoggedIn = $isLoggedIn ?? false;
         </a>
       <?php endif; ?>
 
-      <a href="/seller/guidelines" class="btn btn-outline-light">
+      <a href="/main/seller-guidelines" class="btn btn-outline-light">
         View Seller Guidelines
       </a>
 
