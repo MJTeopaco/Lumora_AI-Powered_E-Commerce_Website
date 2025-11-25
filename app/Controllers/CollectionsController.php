@@ -1,5 +1,5 @@
 <?php
-// app/Controllers/HomeController.php
+// app/Controllers/CollectionsController.php
 
 namespace App\Controllers;
 
@@ -20,8 +20,43 @@ class CollectionsController extends Controller {
     
     // Display the collections index page
     public function index() {
-        $this->view('collections/index');
+        // Get all categories
+        $categories = $this->collectionsModel->getAllCategories();
+        
+        // Get all products (default view)
+        $products = $this->collectionsModel->getAllProducts(24);
+        
+        // Pass data to view
+        $data = [
+            'categories' => $categories,
+            'products' => $products,
+            'selectedCategory' => 'all',
+            'pageTitle' => 'Collections - Lumora',
+            'pageStyle' => 'collections', // Load collections.css
+            'pageScript' => 'collections' // Load collections.js
+        ];
+        
+        $this->view('collections/index', $data);
     }
     
+    // Get products by category (AJAX endpoint)
+    public function getByCategory() {
+        header('Content-Type: application/json');
+        
+        if (!isset($_GET['category_id'])) {
+            echo json_encode(['error' => 'Category ID is required']);
+            return;
+        }
+        
+        $categoryId = $_GET['category_id'];
+        
+        if ($categoryId === 'all') {
+            $products = $this->collectionsModel->getAllProducts(24);
+        } else {
+            $products = $this->collectionsModel->getProductsByCategory($categoryId);
+        }
+        
+        echo json_encode(['products' => $products]);
+    }
 
 }
