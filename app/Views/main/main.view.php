@@ -95,74 +95,74 @@ $isLoggedIn = $isLoggedIn ?? false;
 
     <div class="category-grid">
 
-      <a href="/collections?category=bracelets" class="category-item">
+      <a href="/collections?category=bags" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-bracelets.jpg" alt="Bracelets" class="category-thumb">
+          <img src="/img/placeholder-bags.jpg" alt="Bags" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Bracelets</span>
+          <span class="category-name">Bags</span>
           <span class="category-count">
-            <?= $categoryCounts['Bracelets'] ?? 0 ?> items
+            <?= $categoryCounts['Bags'] ?? 0 ?> items
           </span>
         </div>
       </a>
 
-      <a href="/collections?category=urban-staples" class="category-item">
+      <a href="/collections?category=jewelry" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-urban.jpg" alt="Urban &amp; Staples" class="category-thumb">
+          <img src="/img/placeholder-jewelry.jpg" alt="Jewelry" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Urban &amp; Staples</span>
+          <span class="category-name">Jewelry</span>
           <span class="category-count">
-            <?= $categoryCounts['Urban & Staples'] ?? 0 ?> items
+            <?= $categoryCounts['Jewelry'] ?? 0 ?> items
           </span>
         </div>
       </a>
 
-      <a href="/collections?category=charms" class="category-item">
+      <a href="/collections?category=vintage" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-charms.jpg" alt="Charms" class="category-thumb">
+          <img src="/img/placeholder-vintage.jpg" alt="Vintage" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Charms</span>
+          <span class="category-name">Vintage</span>
           <span class="category-count">
-            <?= $categoryCounts['Charms'] ?? 0 ?> items
+            <?= $categoryCounts['Vintage'] ?? 0 ?> items
           </span>
         </div>
       </a>
 
-      <a href="/collections?category=engagement-rings" class="category-item">
+      <a href="/collections?category=ornaments" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-rings.jpg" alt="Engagement Rings" class="category-thumb">
+          <img src="/img/placeholder-ornaments.jpg" alt="Ornaments" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Engagement Rings</span>
+          <span class="category-name">Ornaments</span>
           <span class="category-count">
-            <?= $categoryCounts['Engagement Rings'] ?? 0 ?> items
+            <?= $categoryCounts['Ornaments'] ?? 0 ?> items
           </span>
         </div>
       </a>
 
-      <a href="/collections?category=necklaces" class="category-item">
+      <a href="/collections?category=stickers" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-necklaces.jpg" alt="Necklaces" class="category-thumb">
+          <img src="/img/placeholder-stickers.jpg" alt="Stickers" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Necklaces</span>
+          <span class="category-name">Sticker</span>
           <span class="category-count">
-            <?= $categoryCounts['Necklaces'] ?? 0 ?> items
+            <?= $categoryCounts['Sticker'] ?? 0 ?> items
           </span>
         </div>
       </a>
 
-      <a href="/collections?category=pendants" class="category-item">
+      <a href="/collections?category=clothing" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-pendants.jpg" alt="Pendants" class="category-thumb">
+          <img src="/img/placeholder-clothing.jpg" alt="Clothing" class="category-thumb">
         </div>
         <div class="category-text">
-          <span class="category-name">Pendants</span>
+          <span class="category-name">Clothing</span>
           <span class="category-count">
-            <?= $categoryCounts['Pendants'] ?? 0 ?> items
+            <?= $categoryCounts['Clothing'] ?? 0 ?> items
           </span>
         </div>
       </a>
@@ -266,7 +266,7 @@ $isLoggedIn = $isLoggedIn ?? false;
         </a>
       <?php endif; ?>
 
-      <a href="/seller/guidelines" class="btn btn-outline-light">
+      <a href="/main/seller-guidelines" class="btn btn-outline-light">
         View Seller Guidelines
       </a>
 

@@ -48,8 +48,16 @@ $router->get('/notifications', 'NotificationsController@index');
 
 // <----------------------------------------------------------------------------------------->
 // SELLER REGISTRATION ROUTES
+$router->get('/main/seller-guidelines', 'SellerController@guidelines');
 $router->get('/seller/register', 'SellerController@registerForm');
 $router->post('/seller/register', 'SellerController@registerSubmit');
+
+
+// <----------------------------------------------------------------------------------------->
+// COLLECTIONS ROUTES
+$router->get('/collections/index', 'CollectionsController@index');
+
+
 
 // <----------------------------------------------------------------------------------------->
 // SHOP ROUTES

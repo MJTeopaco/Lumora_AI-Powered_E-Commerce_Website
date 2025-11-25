@@ -10,6 +10,8 @@ $partialsPath = __DIR__ . '/../partials/';
     <title><?= $pageTitle ?? 'Lumora - Exquisite Accessories' ?></title>
     <link rel="stylesheet" href="/css/new-main.css">
     <link rel="stylesheet" href="/css/home.css">
+    <link rel="stylesheet" href="/css/guidelines.css">
+    <link rel="stylesheet" href="/css/collections.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -33,5 +35,7 @@ $partialsPath = __DIR__ . '/../partials/';
 
 <!-- Link to JavaScript -->
 <script src="/js/home.js" defer></script>
+<script src="/js/guidelines.js" defer></script>
+<script src="/js/collections.js" defer></script>
 
 </html>

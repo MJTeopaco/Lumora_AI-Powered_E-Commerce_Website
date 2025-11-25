@@ -18,6 +18,15 @@ class SellerController extends Controller {
     }
 
     /**
+     * Display seller guidelines page
+     */
+    public function guidelines() {
+        $this->view('main/seller-guidelines');
+    }
+
+
+
+    /**
      * Display seller registration form or appropriate status page
      */
     public function registerForm() {
