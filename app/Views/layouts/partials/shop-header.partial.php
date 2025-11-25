@@ -90,7 +90,7 @@ $shopData = $shop ?? null;
                     
                     <div class="shop-profile-menu-divider"></div>
                     
-                    <a href="/profile" class="shop-profile-menu-item">
+                    <a href="/shop/shop-profile" class="shop-profile-menu-item">
                         <i class="fas fa-user-circle"></i>
                         <span>My Profile</span>
                     </a>

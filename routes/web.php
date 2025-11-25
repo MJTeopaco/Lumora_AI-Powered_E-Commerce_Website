@@ -77,6 +77,13 @@ $router->post('/shop/products/delete', 'ProductManagementController@delete');
 $router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
 $router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
 
+// Shop Profile Routes
+$router->get('/shop/shop-profile', 'ShopProfileController@index');
+$router->post('/shop/profile/update-basic-info', 'ShopProfileController@updateBasicInfo');
+$router->post('/shop/profile/update-address', 'ShopProfileController@updateAddress');
+$router->post('/shop/profile/upload-banner', 'ShopProfileController@uploadBanner');
+$router->post('/shop/profile/upload-profile', 'ShopProfileController@uploadProfile');
+
 // <----------------------------------------------------------------------------------------->
 // ADMIN ROUTES
 
@@ -94,5 +101,3 @@ $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
 $router->post('/admin/delete-category', 'AdminController@deleteCategory');
-
-
