@@ -8,17 +8,20 @@ use App\Models\Shop;
 use App\Models\Product;
 use App\Models\User;
 use App\Helpers\AddProductHelper;
+use App\Models\Services\TaggingService;
 
 class ShopController extends Controller {
 
     protected $shopModel;
     protected $productModel;
     protected $userModel;
+    protected $taggingService;
 
     public function __construct() {
         $this->shopModel = new Shop(); 
         $this->productModel = new Product();
         $this->userModel = new User();
+        $this->taggingService = new TaggingService();
     }
 
     /**
@@ -338,5 +341,43 @@ class ShopController extends Controller {
         ];
 
         $this->view('shop/addresses', $data, 'shop');
+    }
+
+        /**
+     * AJAX endpoint to get predicted tags
+     * This allows real-time tag suggestions in the frontend
+     */
+    public function predictTags() {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'error' => 'Invalid request method']);
+            return;
+        }
+
+        // Get JSON input
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        $productName = $input['product_name'] ?? '';
+        $description = $input['description'] ?? '';
+        $shortDescription = $input['short_description'] ?? '';
+
+        // Check if service is healthy
+        if (!$this->taggingService->isServiceHealthy()) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Tagging service is currently unavailable'
+            ]);
+            return;
+        }
+
+        // Get predictions
+        $result = $this->taggingService->predictTags(
+            $productName,
+            $description,
+            $shortDescription
+        );
+
+        echo json_encode($result);
     }
 }

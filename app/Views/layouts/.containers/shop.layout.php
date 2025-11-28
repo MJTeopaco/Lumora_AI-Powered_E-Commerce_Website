@@ -41,7 +41,7 @@
     
     <script defer src="/js/shop.js"></script>
     <script defer src="/js/product-management.js"></script>
-    <script src="/js/shop-profile.js"></script>
-    
+    <script defer src="/js/shop-profile.js"></script>
+    <script defer src="/js/add-product.js"></script>
 </body>
 </html>
