@@ -79,7 +79,7 @@ def health():
 
 @app.route('/predict-tags', methods=['POST'])
 def predict_tags():
-    """Predict tags for a single product"""
+    """Predict tags for a single product with configurable threshold"""
     try:
         # Check if models are loaded
         if not MODEL_LOADED:
@@ -101,6 +101,7 @@ def predict_tags():
         product_name = data.get('product_name', '')
         description = data.get('description', '')
         short_description = data.get('short_description', '')
+        threshold = data.get('threshold', 0.05)  # Lower threshold for better recall (default 0.3)
         
         # Validate input
         if not product_name and not description:
@@ -112,48 +113,72 @@ def predict_tags():
         # Combine text for prediction
         combined_text = f"{product_name} {short_description} {description}".strip()
         
-        logger.info(f"Predicting tags for: {combined_text[:100]}...")
+        logger.info(f"Predicting tags for: {combined_text[:100]}... (threshold: {threshold})")
         
         # Transform text
         text_vectorized = vectorizer.transform([combined_text])
         logger.debug(f"Text vectorized shape: {text_vectorized.shape}")
         
-        # Predict
-        predictions = model.predict(text_vectorized)
-        logger.debug(f"Predictions shape: {predictions.shape}")
-        logger.debug(f"MLB classes: {len(mlb.classes_)}")
-        
-        # Verify dimensions match
-        if predictions.shape[1] != len(mlb.classes_):
-            logger.error(f"Dimension mismatch! Predictions: {predictions.shape[1]}, MLB: {len(mlb.classes_)}")
-            return jsonify({
-                'success': False,
-                'error': f'Model dimension mismatch. Please retrain all models together.'
-            }), 500
-        
-        # Get predicted tags
-        predicted_labels = mlb.inverse_transform(predictions)[0]
-        
-        # Get confidence scores if available
-        confidences = {}
+        # Get probability predictions instead of binary predictions
         if hasattr(model, 'predict_proba'):
-            try:
-                probabilities = model.predict_proba(text_vectorized)[0]
-                # Get indices where prediction is 1
-                predicted_indices = np.where(predictions[0] == 1)[0]
-                confidences = {
-                    mlb.classes_[idx]: float(probabilities[idx]) 
-                    for idx in predicted_indices
-                }
-            except Exception as e:
-                logger.warning(f"Could not compute confidences: {str(e)}")
+            # Get probabilities for each tag
+            probabilities = model.predict_proba(text_vectorized)[0]
+            logger.debug(f"Probabilities shape: {probabilities.shape}")
+            
+            # Verify dimensions match
+            if len(probabilities) != len(mlb.classes_):
+                logger.error(f"Dimension mismatch! Probabilities: {len(probabilities)}, MLB: {len(mlb.classes_)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Model dimension mismatch. Please retrain all models together.'
+                }), 500
+            
+            # Apply custom threshold to get predictions
+            predictions = (probabilities >= threshold).astype(int)
+            predictions = predictions.reshape(1, -1)  # Reshape for inverse_transform
+            
+            # Get predicted tags
+            predicted_labels = mlb.inverse_transform(predictions)[0]
+            
+            # Get confidence scores for predicted tags
+            predicted_indices = np.where(predictions[0] == 1)[0]
+            confidences = {
+                mlb.classes_[idx]: float(probabilities[idx]) 
+                for idx in predicted_indices
+            }
+            
+            # Also return top probabilities for all tags (for debugging)
+            all_probs = {
+                mlb.classes_[idx]: float(probabilities[idx])
+                for idx in range(len(probabilities))
+            }
+            top_probs = dict(sorted(all_probs.items(), key=lambda x: x[1], reverse=True)[:10])
+            
+        else:
+            # Fallback to default predict if predict_proba not available
+            logger.warning("Model does not support predict_proba, using default threshold")
+            predictions = model.predict(text_vectorized)
+            logger.debug(f"Predictions shape: {predictions.shape}")
+            
+            if predictions.shape[1] != len(mlb.classes_):
+                logger.error(f"Dimension mismatch! Predictions: {predictions.shape[1]}, MLB: {len(mlb.classes_)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Model dimension mismatch. Please retrain all models together.'
+                }), 500
+            
+            predicted_labels = mlb.inverse_transform(predictions)[0]
+            confidences = {}
+            top_probs = {}
         
         logger.info(f"Predicted {len(predicted_labels)} tags: {', '.join(predicted_labels)}")
         
         return jsonify({
             'success': True,
             'tags': list(predicted_labels),
-            'confidences': confidences
+            'confidences': confidences,
+            'threshold_used': threshold,
+            'top_probabilities': top_probs  # For debugging threshold tuning
         }), 200
         
     except Exception as e:
@@ -167,7 +192,7 @@ def predict_tags():
 
 @app.route('/batch-predict-tags', methods=['POST'])
 def batch_predict_tags():
-    """Predict tags for multiple products"""
+    """Predict tags for multiple products with configurable threshold"""
     try:
         if not MODEL_LOADED:
             return jsonify({
@@ -177,6 +202,7 @@ def batch_predict_tags():
         
         data = request.get_json()
         products = data.get('products', [])
+        threshold = data.get('threshold', 0.3)  # Lower threshold for better recall
         
         if not products:
             return jsonify({
@@ -204,12 +230,30 @@ def batch_predict_tags():
                 
                 # Transform and predict
                 text_vectorized = vectorizer.transform([combined_text])
-                predictions = model.predict(text_vectorized)
-                predicted_labels = mlb.inverse_transform(predictions)[0]
+                
+                if hasattr(model, 'predict_proba'):
+                    # Use probability-based prediction with threshold
+                    probabilities = model.predict_proba(text_vectorized)[0]
+                    predictions = (probabilities >= threshold).astype(int)
+                    predictions = predictions.reshape(1, -1)
+                    predicted_labels = mlb.inverse_transform(predictions)[0]
+                    
+                    # Get confidences for predicted tags
+                    predicted_indices = np.where(predictions[0] == 1)[0]
+                    confidences = {
+                        mlb.classes_[idx]: float(probabilities[idx]) 
+                        for idx in predicted_indices
+                    }
+                else:
+                    # Fallback to default predict
+                    predictions = model.predict(text_vectorized)
+                    predicted_labels = mlb.inverse_transform(predictions)[0]
+                    confidences = {}
                 
                 results.append({
                     'product_name': product_name,
                     'tags': list(predicted_labels),
+                    'confidences': confidences,
                     'error': None
                 })
                 
@@ -223,7 +267,8 @@ def batch_predict_tags():
         
         return jsonify({
             'success': True,
-            'results': results
+            'results': results,
+            'threshold_used': threshold
         }), 200
         
     except Exception as e:
