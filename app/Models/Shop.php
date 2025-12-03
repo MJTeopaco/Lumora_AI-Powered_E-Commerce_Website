@@ -22,8 +22,6 @@ class Shop {
 
     /**
      * Get seller status for a user
-     * @param int $userId
-     * @return array|null
      */
     public function getSellerStatus($userId) {
         $stmt = $this->conn->prepare("
@@ -43,8 +41,6 @@ class Shop {
 
     /**
      * Get shop by user ID
-     * @param int $userId
-     * @return array|null
      */
     public function getShopByUserId($userId) {
         $stmt = $this->conn->prepare("
@@ -65,9 +61,45 @@ class Shop {
     }
 
     /**
+     * Get shop by ID
+     */
+    public function getShopById($shopId) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                s.shop_id,
+                s.user_id,
+                s.shop_name,
+                s.contact_email,
+                s.contact_phone,
+                s.shop_description,
+                s.shop_banner,
+                s.shop_profile,
+                s.slug,
+                s.status,
+                s.created_at,
+                a.address_line_1,
+                a.address_line_2,
+                a.barangay,
+                a.city,
+                a.province,
+                a.region,
+                a.postal_code
+            FROM shops s
+            LEFT JOIN addresses a ON s.address_id = a.address_id
+            WHERE s.shop_id = ?
+        ");
+        
+        $stmt->bind_param("i", $shopId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $shop = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $shop;
+    }
+
+    /**
      * Get dashboard statistics
-     * @param int $shopId
-     * @return array
      */
     public function getDashboardStats($shopId) {
         $stats = [
@@ -133,47 +165,7 @@ class Shop {
     }
 
     /**
-     * Get recent orders
-     * @param int $shopId
-     * @param int $limit
-     * @return array
-     */
-    public function getRecentOrders($shopId, $limit = 5) {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                o.order_id as id,
-                o.order_status as status,
-                o.total_amount as amount,
-                o.created_at,
-                u.username as customer_name,
-                p.name as product_name
-            FROM orders o
-            INNER JOIN users u ON o.user_id = u.user_id
-            LEFT JOIN order_items oi ON o.order_id = oi.order_id
-            LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id
-            LEFT JOIN products p ON pv.product_id = p.product_id
-            WHERE o.shop_id = ? AND o.is_deleted = 0
-            ORDER BY o.created_at DESC
-            LIMIT ?
-        ");
-        
-        $stmt->bind_param("ii", $shopId, $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $orders = [];
-        while ($row = $result->fetch_assoc()) {
-            $orders[] = $row;
-        }
-        
-        return $orders;
-    }
-
-    /**
      * Get top selling products
-     * @param int $shopId
-     * @param int $limit
-     * @return array
      */
     public function getTopProducts($shopId, $limit = 5) {
         $stmt = $this->conn->prepare("
@@ -210,8 +202,6 @@ class Shop {
 
     /**
      * Get all shop products
-     * @param int $shopId
-     * @return array
      */
     public function getShopProducts($shopId) {
         $stmt = $this->conn->prepare("
@@ -245,45 +235,277 @@ class Shop {
         return $products;
     }
 
+    // ========================================================================
+    // ORDER MANAGEMENT METHODS
+    // ========================================================================
+
     /**
-     * Get all shop orders
-     * @param int $shopId
-     * @return array
+     * Get all orders for a specific shop
      */
-    public function getShopOrders($shopId) {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                o.order_id,
-                o.order_status,
-                o.total_amount,
-                o.created_at,
-                o.updated_at,
-                u.username as customer_name,
-                COUNT(oi.order_item_id) as item_count
-            FROM orders o
-            INNER JOIN users u ON o.user_id = u.user_id
-            LEFT JOIN order_items oi ON o.order_id = oi.order_id
-            WHERE o.shop_id = ? AND o.is_deleted = 0
-            GROUP BY o.order_id
-            ORDER BY o.created_at DESC
-        ");
+    public function getShopOrders($shopId, $status = null, $searchTerm = null, $limit = 50, $offset = 0) {
+        $query = "SELECT 
+                    o.order_id,
+                    o.user_id,
+                    o.order_status,
+                    o.total_amount,
+                    o.shipping_fee,
+                    o.created_at,
+                    o.updated_at,
+                    up.full_name as customer_name,
+                    u.email as customer_email,
+                    up.phone_number as customer_phone,
+                    COUNT(DISTINCT oi.order_item_id) as item_count,
+                    SUM(oi.quantity) as total_items,
+                    CONCAT(a.address_line_1, ', ', a.city, ', ', a.province) as shipping_address
+                  FROM orders o
+                  LEFT JOIN users u ON o.user_id = u.user_id
+                  LEFT JOIN user_profiles up ON o.user_id = up.user_id
+                  LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                  LEFT JOIN addresses a ON o.shipping_address_id = a.address_id
+                  WHERE o.shop_id = ? 
+                  AND o.is_deleted = 0";
         
-        $stmt->bind_param("i", $shopId);
+        $params = [$shopId];
+        $types = "i";
+        
+        // Filter by status if provided
+        if ($status !== null && $status !== 'all') {
+            $query .= " AND o.order_status = ?";
+            $params[] = strtoupper($status);
+            $types .= "s";
+        }
+        
+        // Search by order ID or customer name
+        if ($searchTerm !== null && !empty($searchTerm)) {
+            $query .= " AND (o.order_id LIKE ? OR up.full_name LIKE ? OR u.email LIKE ?)";
+            $searchPattern = "%{$searchTerm}%";
+            $params[] = $searchPattern;
+            $params[] = $searchPattern;
+            $params[] = $searchPattern;
+            $types .= "sss";
+        }
+        
+        $query .= " GROUP BY o.order_id
+                    ORDER BY o.created_at DESC
+                    LIMIT ? OFFSET ?";
+        
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
         $stmt->execute();
         $result = $stmt->get_result();
-        
-        $orders = [];
-        while ($row = $result->fetch_assoc()) {
-            $orders[] = $row;
-        }
+        $orders = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
         
         return $orders;
     }
 
     /**
+     * Get recent orders for dashboard display
+     */
+    public function getRecentOrders($shopId, $limit = 5) {
+        $query = "SELECT 
+                    o.order_id,
+                    o.order_status,
+                    o.total_amount,
+                    o.created_at,
+                    up.full_name as customer_name,
+                    COUNT(oi.order_item_id) as item_count
+                  FROM orders o
+                  LEFT JOIN users u ON o.user_id = u.user_id
+                  LEFT JOIN user_profiles up ON o.user_id = up.user_id
+                  LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                  WHERE o.shop_id = ? 
+                  AND o.is_deleted = 0
+                  GROUP BY o.order_id
+                  ORDER BY o.created_at DESC
+                  LIMIT ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $shopId, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $orders = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $orders;
+    }
+
+    /**
+     * Get detailed order information
+     */
+    public function getOrderDetails($orderId, $shopId) {
+        $query = "SELECT 
+                    o.*,
+                    up.full_name as customer_name,
+                    u.email as customer_email,
+                    up.phone_number as customer_phone,
+                    a.address_line_1,
+                    a.address_line_2,
+                    a.barangay,
+                    a.city,
+                    a.province,
+                    a.region,
+                    a.postal_code
+                  FROM orders o
+                  LEFT JOIN users u ON o.user_id = u.user_id
+                  LEFT JOIN user_profiles up ON o.user_id = up.user_id
+                  LEFT JOIN addresses a ON o.shipping_address_id = a.address_id
+                  WHERE o.order_id = ? 
+                  AND o.shop_id = ?
+                  AND o.is_deleted = 0";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $orderId, $shopId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $order = $result->fetch_assoc();
+        $stmt->close();
+        
+        if (!$order) {
+            return null;
+        }
+        
+        // Get order items
+        $order['items'] = $this->getOrderItems($orderId);
+        
+        return $order;
+    }
+
+    /**
+     * Get all items for a specific order
+     */
+    public function getOrderItems($orderId) {
+        $query = "SELECT 
+                    oi.*,
+                    p.name as product_name,
+                    p.cover_picture,
+                    pv.color,
+                    pv.size,
+                    pv.material
+                  FROM order_items oi
+                  JOIN product_variants pv ON oi.variant_id = pv.variant_id
+                  JOIN products p ON pv.product_id = p.product_id
+                  WHERE oi.order_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $items = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $items;
+    }
+
+    /**
+     * Update order status (seller side)
+     * FIX: Updated validation list to include CANCELLED and PENDING_PAYMENT
+     */
+    public function updateOrderStatus($orderId, $shopId, $newStatus) {
+        // Validate input to prevent blank statuses
+        if (empty($newStatus)) {
+            return false;
+        }
+
+        // Validate status transition
+        $validStatuses = [
+            'PENDING_PAYMENT',
+            'PROCESSING', 
+            'READY_TO_SHIP', 
+            'SHIPPED', 
+            'DELIVERED', 
+            'CANCELLED',
+            'COMPLETED'
+        ];
+        
+        if (!in_array($newStatus, $validStatuses)) {
+            // Strictly fail if status is not in the allowed list
+            return false;
+        }
+        
+        $query = "UPDATE orders 
+                  SET order_status = ?,
+                      updated_at = CURRENT_TIMESTAMP
+                  WHERE order_id = ? 
+                  AND shop_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("sii", $newStatus, $orderId, $shopId);
+        
+        $success = false;
+        if ($stmt->execute()) {
+            $success = true;
+        }
+        $stmt->close();
+        
+        return $success;
+    }
+
+    /**
+     * Get order statistics by status for a shop
+     */
+    public function getOrderStatsByStatus($shopId) {
+        $query = "SELECT 
+                    order_status,
+                    COUNT(*) as count,
+                    SUM(total_amount) as total_revenue
+                  FROM orders
+                  WHERE shop_id = ? 
+                  AND is_deleted = 0
+                  GROUP BY order_status";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $shopId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $stats = [];
+        
+        while ($row = $result->fetch_assoc()) {
+            $stats[$row['order_status']] = $row;
+        }
+        
+        $stmt->close();
+        return $stats;
+    }
+
+    /**
+     * Get total order count for shop
+     */
+    public function getTotalOrderCount($shopId, $status = null) {
+        $query = "SELECT COUNT(*) as total 
+                  FROM orders 
+                  WHERE shop_id = ? 
+                  AND is_deleted = 0";
+        
+        $params = [$shopId];
+        $types = "i";
+        
+        if ($status !== null && $status !== 'all') {
+            $query .= " AND order_status = ?";
+            $params[] = strtoupper($status);
+            $types .= "s";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $row['total'] ?? 0;
+    }
+
+    // ========================================================================
+    // END OF ORDER MANAGEMENT METHODS
+    // ========================================================================
+
+    /**
      * Get cancelled orders
-     * @param int $shopId
-     * @return array
      */
     public function getCancelledOrders($shopId) {
         $stmt = $this->conn->prepare("
@@ -319,8 +541,6 @@ class Shop {
 
     /**
      * Get shop address
-     * @param int $shopId
-     * @return array|null
      */
     public function getShopAddress($shopId) {
         $stmt = $this->conn->prepare("
@@ -339,8 +559,6 @@ class Shop {
 
     /**
      * Create a new shop
-     * @param array $data
-     * @return int|false Shop ID on success, false on failure
      */
     public function createShop($data) {
         $stmt = $this->conn->prepare("
@@ -370,9 +588,6 @@ class Shop {
 
     /**
      * Update shop information
-     * @param int $shopId
-     * @param array $data
-     * @return bool
      */
     public function updateShop($shopId, $data) {
         $stmt = $this->conn->prepare("
@@ -399,8 +614,6 @@ class Shop {
 
     /**
      * Delete shop (soft delete)
-     * @param int $shopId
-     * @return bool
      */
     public function deleteShop($shopId) {
         $stmt = $this->conn->prepare("
@@ -416,7 +629,6 @@ class Shop {
 
     /**
      * Get all categories
-     * @return array
      */
     public function getAllCategories() {
         $stmt = $this->conn->prepare("
@@ -438,8 +650,6 @@ class Shop {
 
     /**
      * Create a new product
-     * @param array $data
-     * @return int|false Product ID on success, false on failure
      */
     public function createProduct($data) {
         $stmt = $this->conn->prepare("
@@ -467,12 +677,8 @@ class Shop {
         return false;
     }
 
-
     /**
      * Link product to category
-     * @param int $productId
-     * @param int $categoryId
-     * @return bool
      */
     public function linkProductToCategory($productId, $categoryId) {
         $stmt = $this->conn->prepare("
@@ -487,15 +693,9 @@ class Shop {
 
     /**
      * Get or create tag
-     * @param string $tagName
-     * @return int Tag ID
      */
     public function getOrCreateTag($tagName) {
-        // Check if tag exists
-        $stmt = $this->conn->prepare("
-            SELECT tag_id FROM product_tags WHERE name = ?
-        ");
-        
+        $stmt = $this->conn->prepare("SELECT tag_id FROM product_tags WHERE name = ?");
         $stmt->bind_param("s", $tagName);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -504,25 +704,16 @@ class Shop {
             return $row['tag_id'];
         }
         
-        // Create new tag
-        $stmt = $this->conn->prepare("
-            INSERT INTO product_tags (name) VALUES (?)
-        ");
-        
+        $stmt = $this->conn->prepare("INSERT INTO product_tags (name) VALUES (?)");
         $stmt->bind_param("s", $tagName);
-        
         if ($stmt->execute()) {
             return $this->conn->insert_id;
         }
-        
         return false;
     }
 
     /**
      * Link product to tag
-     * @param int $productId
-     * @param int $tagId
-     * @return bool
      */
     public function linkProductToTag($productId, $tagId) {
         $stmt = $this->conn->prepare("

@@ -9,12 +9,10 @@ $isSeller = $isSeller ?? false;
 $isLoggedIn = $isLoggedIn ?? false;
 ?>
 
-<!-- ===================== HERO CAROUSEL ===================== -->
 <section class="hero-carousel">
   <div class="carousel-container">
     <div class="carousel-track">
 
-      <!-- Slide 1 -->
       <div class="carousel-slide is-active">
         <img src="/img/banner-gold-earrings.jpg" alt="Gold Earrings Collection" />
         <div class="hero-overlay"></div>
@@ -28,7 +26,6 @@ $isLoggedIn = $isLoggedIn ?? false;
         </div>
       </div>
 
-      <!-- Slide 2 -->
       <div class="carousel-slide">
         <img src="/img/banner-earrings.jpg" alt="Elegant Earring Banner" />
         <div class="hero-overlay"></div>
@@ -42,7 +39,6 @@ $isLoggedIn = $isLoggedIn ?? false;
         </div>
       </div>
 
-      <!-- Slide 3 -->
       <div class="carousel-slide">
         <img src="/img/banner-hero.jpg" alt="Jewelry Collection Banner" />
         <div class="hero-overlay"></div>
@@ -56,7 +52,6 @@ $isLoggedIn = $isLoggedIn ?? false;
         </div>
       </div>
 
-      <!-- Slide 4 -->
       <div class="carousel-slide">
         <img src="/img/banner-necklace-2.jpg" alt="Necklace Banner" />
         <div class="hero-overlay"></div>
@@ -72,11 +67,9 @@ $isLoggedIn = $isLoggedIn ?? false;
 
     </div>
 
-    <!-- Arrows -->
     <button class="carousel-arrow left" aria-label="Previous slide">&#10094;</button>
     <button class="carousel-arrow right" aria-label="Next slide">&#10095;</button>
 
-    <!-- Dots -->
     <div class="carousel-dots">
       <span class="dot active"></span>
       <span class="dot"></span>
@@ -88,7 +81,6 @@ $isLoggedIn = $isLoggedIn ?? false;
 </section>
 
 
-<!-- ===================== POPULAR CATEGORIES ===================== -->
 <section class="popular-categories">
   <div class="container">
     <h2 class="section-title">Popular Categories</h2>
@@ -171,7 +163,6 @@ $isLoggedIn = $isLoggedIn ?? false;
   </div>
 </section>
 
-<!-- ===================== FEATURED PRODUCTS ===================== -->
 <section class="featured-products">
   <div class="container featured-grid">
 
@@ -198,7 +189,6 @@ $isLoggedIn = $isLoggedIn ?? false;
   </div>
 </section>
 
-<!-- ===================== TRENDING PRODUCTS ===================== -->
 <section class="trending-products">
   <div class="container">
     <h2 class="section-title">Trending Products</h2>
@@ -214,24 +204,57 @@ $isLoggedIn = $isLoggedIn ?? false;
 
       <div class="product-grid">
         <?php foreach ($products as $product): ?>
-          <a href="/products/<?= htmlspecialchars($product['slug'] ?? $product['product_id']) ?>" 
-             class="product-card" 
-             data-tag="<?= htmlspecialchars($product['tag'] ?? '') ?>">
+          <div class="product-card">
             <div class="product-image">
               <img src="<?= htmlspecialchars($product['image']) ?>" 
                    alt="<?= htmlspecialchars($product['name']) ?>"
                    loading="lazy">
             </div>
-            <h4 class="product-name"><?= htmlspecialchars($product['name']) ?></h4>
-            <p class="product-price">
-              <?php if (!empty($product['old_price'])): ?>
-                <span class="current">₱<?= number_format($product['price'], 2) ?></span>
-                <del class="old">₱<?= number_format($product['old_price'], 2) ?></del>
-              <?php else: ?>
-                ₱<?= number_format($product['price'], 2) ?>
-              <?php endif; ?>
-            </p>
-          </a>
+            <div class="product-info">
+                <div class="product-category"><?= htmlspecialchars($product['category']) ?></div>
+                <h3 class="product-name"><?= htmlspecialchars($product['name']) ?></h3>
+                
+                <?php if (!empty($product['description'])): ?>
+                    <p class="product-description"><?= htmlspecialchars($product['description']) ?></p>
+                <?php endif; ?>
+                
+                <p class="product-price">
+                  <?php if (!empty($product['old_price'])): ?>
+                    <span class="current">₱<?= number_format($product['price'], 2) ?></span>
+                    <del class="old">₱<?= number_format($product['old_price'], 2) ?></del>
+                  <?php else: ?>
+                    ₱<?= number_format($product['price'], 2) ?>
+                  <?php endif; ?>
+                </p>
+                
+                <div class="product-stock <?= $product['stock'] > 10 ? 'stock-available' : ($product['stock'] > 0 ? 'stock-low' : 'stock-out') ?>">
+                    <?php if ($product['stock'] > 10): ?>
+                        ✓ In Stock
+                    <?php elseif ($product['stock'] > 0): ?>
+                        ⚠ Only <?= $product['stock'] ?> left!
+                    <?php else: ?>
+                        ✗ Out of Stock
+                    <?php endif; ?>
+                </div>
+                
+                <?php if ($isLoggedIn): ?>
+                    <?php if ($product['stock'] > 0): ?>
+                        <form method="POST" action="/cart/add">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-add-cart">Add to Cart</button>
+                        </form>
+                    <?php else: ?>
+                        <button class="btn btn-add-cart btn-disabled" disabled>Out of Stock</button>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <button class="btn btn-add-cart btn-disabled" disabled title="Please login to add items to cart">
+                        Login to Purchase
+                    </button>
+                <?php endif; ?>
+            </div>
+          </div>
         <?php endforeach; ?>
       </div>
 
@@ -241,7 +264,6 @@ $isLoggedIn = $isLoggedIn ?? false;
 </section>
 
 
-<!-- ===================== SELLER PROMO BANNER ===================== -->
 <section class="promo-banner promo-seller">
   <img src="/img/banner-silver-earrings.jpg" alt="Sell on Lumora Banner" />
 

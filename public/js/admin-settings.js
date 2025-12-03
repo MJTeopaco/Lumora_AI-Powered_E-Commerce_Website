@@ -30,18 +30,9 @@ function closeEditModal() {
 // Delete Category
 function deleteCategory(id, name) {
     if (confirm(`Are you sure you want to delete "${name}"?\n\nNote: Categories assigned to products cannot be deleted.`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/admin/delete-category';
-
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'category_id';
-        input.value = id;
-
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
+        // Use the hidden form in settings.view.php which includes the CSRF token
+        document.getElementById('delete_category_id').value = id;
+        document.getElementById('deleteCategoryForm').submit();
     }
 }
 

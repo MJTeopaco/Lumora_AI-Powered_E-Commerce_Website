@@ -185,6 +185,7 @@ class AddProductHelper {
     
     /**
      * Prepare product data for database insertion
+     * UPDATED: Now includes meta_title, meta_description, is_featured
      * @param array $postData
      * @param int $shopId
      * @param string $coverPicture
@@ -198,7 +199,10 @@ class AddProductHelper {
             'short_description' => trim($postData['short_description']),
             'description' => trim($postData['description']),
             'cover_picture' => $coverPicture,
-            'status' => $postData['status']
+            'status' => $postData['status'],
+            'meta_title' => $postData['meta_title'] ?? $postData['product_name'],
+            'meta_description' => $postData['meta_description'] ?? $postData['short_description'],
+            'is_featured' => isset($postData['is_featured']) ? 1 : 0
         ];
     }
     
@@ -236,8 +240,6 @@ class AddProductHelper {
     
     /**
      * Process and link tags to product
-     * NOTE: This now accepts a model that has getOrCreateTag and linkProductToTag methods
-     * Can be either Shop model or Product model
      * @param string $tagsString
      * @param int $productId
      * @param object $model (Shop or Product model with tag methods)

@@ -60,7 +60,10 @@
         <div class="info-label">Email</div>
         <div class="info-value">
             <span><?= htmlspecialchars($user['email'] ?? 'email@example.com') ?></span>
-            <span class="readonly-badge">Cannot be changed</span>
+            <button class="btn-edit" onclick="openModal('emailModal')">
+                <i class="fas fa-edit"></i>
+                Edit
+            </button>
         </div>
     </div>
 
@@ -68,7 +71,10 @@
         <div class="info-label">Username</div>
         <div class="info-value">
             <span><?= htmlspecialchars($user['username'] ?? 'User') ?></span>
-            <span class="readonly-badge">Cannot be changed</span>
+            <button class="btn-edit" onclick="openModal('usernameModal')">
+                <i class="fas fa-edit"></i>
+                Edit
+            </button>
         </div>
     </div>
 

@@ -23,7 +23,6 @@ class OTPResendManager {
     constructor(buttonId, timerId, resendActionUrl) {
         this.button = document.getElementById(buttonId);
         this.timer = document.getElementById(timerId);
-        // *** MODIFIED: We now pass the full URL ***
         this.resendActionUrl = resendActionUrl; 
         this.cooldownSeconds = 120; // 2 minutes
         this.remainingTime = 0;
@@ -75,7 +74,6 @@ class OTPResendManager {
         this.button.textContent = 'Sending...';
         
         try {
-            // *** MODIFIED: FormData is no longer needed, just a direct fetch POST ***
             const response = await fetch(this.resendActionUrl, {
                 method: 'POST',
                 headers: {
@@ -88,7 +86,7 @@ class OTPResendManager {
             if (result.success) {
                 showAlert(result.message, 'success');
                 this.button.textContent = originalText;
-                this.startCooldown(); // Timer starts ONLY after successful resend
+                this.startCooldown();
             } else {
                 showAlert(result.message, 'error');
                 this.button.disabled = false;
@@ -103,27 +101,18 @@ class OTPResendManager {
     }
 }
 
-// Initialize OTP resend managers
+// Initialize OTP resend managers (only login and forgot - NO register)
 let loginResendManager = null;
-let registerResendManager = null;
 let forgotResendManager = null;
 
 function initializeResendManagers() {
     const loginOtpStep = document.getElementById('login-step-otp');
     if (loginOtpStep && loginOtpStep.classList.contains('active') && !loginResendManager) {
-        // *** MODIFIED: Use new route URLs ***
         loginResendManager = new OTPResendManager('login-resend-otp', 'login-resend-timer', '/auth/resend-login-otp');
-    }
-    
-    const registerOtpStep = document.getElementById('register-step-otp');
-    if (registerOtpStep && registerOtpStep.classList.contains('active') && !registerResendManager) {
-        // *** MODIFIED: Use new route URLs ***
-        registerResendManager = new OTPResendManager('register-resend-otp', 'register-resend-timer', '/auth/resend-register-otp');
     }
     
     const forgotOtpStep = document.getElementById('forgot-step-otp');
     if (forgotOtpStep && forgotOtpStep.classList.contains('active') && !forgotResendManager) {
-        // *** MODIFIED: Use new route URLs ***
         forgotResendManager = new OTPResendManager('forgot-resend-otp', 'forgot-resend-timer', '/auth/resend-forgot-otp');
     }
 }
@@ -282,15 +271,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// *** MODIFIED: This logic is now handled by PHP in login.php ***
-// The old 'DOMContentLoaded' listener that checked URL params is removed.
-// We keep the resend manager initialization.
+// Initialize resend managers on page load
 window.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         initializeResendManagers();
     }, 500);
 });
-
 
 // Helper function for email validation
 function isValidEmail(email) {
@@ -310,8 +296,102 @@ function isValidUsername(username) {
     return re.test(String(username));
 }
 
+// ============================================
+// PASSWORD STRENGTH CHECKER - REGISTER ONLY
+// ============================================
+
+const registerPassword = document.getElementById('register-password');
+if (registerPassword) {
+    registerPassword.addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+    });
+}
+
+function checkPasswordStrength(password) {
+    // Define requirements
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password)
+    };
+    
+    // Update requirement checkboxes with animation
+    Object.keys(requirements).forEach(req => {
+        const element = document.querySelector(`[data-requirement="${req}"]`);
+        if (element) {
+            if (requirements[req]) {
+                element.classList.add('met');
+            } else {
+                element.classList.remove('met');
+            }
+        }
+    });
+    
+    // Calculate strength (0-4)
+    const metCount = Object.values(requirements).filter(Boolean).length;
+    
+    // Get strength bar elements
+    const strengthFill = document.querySelector('.strength-fill');
+    const strengthLabel = document.getElementById('strength-label');
+    
+    if (!strengthFill || !strengthLabel) return;
+    
+    // Define strength levels
+    const strengthLevels = {
+        0: { 
+            width: '0%', 
+            className: 'strength-very-weak', 
+            label: 'Very Weak',
+            color: '#6b7280'
+        },
+        1: { 
+            width: '25%', 
+            className: 'strength-very-weak', 
+            label: 'Very Weak',
+            color: '#ef4444'
+        },
+        2: { 
+            width: '50%', 
+            className: 'strength-weak', 
+            label: 'Weak',
+            color: '#f59e0b'
+        },
+        3: { 
+            width: '75%', 
+            className: 'strength-good', 
+            label: 'Good',
+            color: '#84cc16'
+        },
+        4: { 
+            width: '100%', 
+            className: 'strength-strong', 
+            label: 'Strong',
+            color: '#10b981'
+        }
+    };
+    
+    const currentStrength = strengthLevels[metCount];
+    
+    // Remove all strength classes
+    strengthFill.className = 'strength-fill';
+    
+    // Apply new strength
+    strengthFill.style.width = currentStrength.width;
+    strengthFill.classList.add(currentStrength.className);
+    strengthLabel.textContent = currentStrength.label;
+    strengthLabel.style.color = currentStrength.color;
+}
+
+// Initialize strength checker on page load (if password field has value)
+window.addEventListener('DOMContentLoaded', function() {
+    const registerPassword = document.getElementById('register-password');
+    if (registerPassword && registerPassword.value) {
+        checkPasswordStrength(registerPassword.value);
+    }
+});
+
 // --- CLIENT-SIDE VALIDATION ---
-// (This remains unchanged as it's good practice)
 
 // 1. Login - Step 1 (Credentials)
 document.getElementById('login-form-element')?.addEventListener('submit', function(e) {
@@ -353,21 +433,9 @@ document.getElementById('register-email-form-element')?.addEventListener('submit
     }
 });
 
-// 4. Register - Step 2 (OTP)
-document.getElementById('register-otp-form-element')?.addEventListener('submit', function(e) {
-    hideAlert();
-    const otp = document.getElementById('register-otp').value.trim();
+// REMOVED: Register - Step 2 (OTP) validation - no longer needed
 
-    if (otp === '') {
-        e.preventDefault();
-        showAlert('OTP is required.', 'error');
-    } else if (!/^[0-9]{6}$/.test(otp)) {
-        e.preventDefault();
-        showAlert('OTP must be 6 digits.', 'error');
-    }
-});
-
-// 5. Register - Step 3 (Google reCAPTCHA)
+// 4. Register - Step 3 (Google reCAPTCHA) - now Step 2
 document.getElementById('register-captcha-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const recaptchaResponse = grecaptcha.getResponse();
@@ -378,7 +446,7 @@ document.getElementById('register-captcha-form-element')?.addEventListener('subm
     }
 });
 
-// 6. Register - Step 4 (Details)
+// 5. Register - Step 4 (Details) - now Step 3
 document.getElementById('register-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const username = document.getElementById('register-username').value.trim();
@@ -407,8 +475,8 @@ document.getElementById('register-form-element')?.addEventListener('submit', fun
     }
     
     if (!terms) {
-    errors.push('You must agree to the Terms & Conditions and Privacy Policy');
-}   
+        errors.push('You must agree to the Terms & Conditions and Privacy Policy');
+    }   
 
     if (errors.length > 0) {
         e.preventDefault();
@@ -416,7 +484,7 @@ document.getElementById('register-form-element')?.addEventListener('submit', fun
     }
 });
 
-// 7. Forgot Password - Step 1 (Email)
+// 6. Forgot Password - Step 1 (Email)
 document.getElementById('forgot-email-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const email = document.getElementById('forgot-email').value.trim();
@@ -430,7 +498,7 @@ document.getElementById('forgot-email-form-element')?.addEventListener('submit',
     }
 });
 
-// 8. Forgot Password - Step 2 (OTP)
+// 7. Forgot Password - Step 2 (OTP)
 document.getElementById('forgot-otp-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const otp = document.getElementById('forgot-otp').value.trim();
@@ -444,7 +512,7 @@ document.getElementById('forgot-otp-form-element')?.addEventListener('submit', f
     }
 });
 
-// 9. Forgot Password - Step 3 (Reset Password)
+// 8. Forgot Password - Step 3 (Reset Password)
 document.getElementById('forgot-reset-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const password = document.getElementById('forgot-password').value.trim();

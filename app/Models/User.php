@@ -137,4 +137,56 @@ class User {
         $stmt->close();
         return $result;
     }
+    public function isEmailInUse($email, $excludeUserId = null) {
+        if ($excludeUserId) {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_id != ?");
+            $stmt->bind_param("si", $email, $excludeUserId);
+        } else {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $exists = $result->num_rows > 0;
+        $stmt->close();
+        return $exists;
+    }
+
+    public function isUsernameInUse($username, $excludeUserId = null) {
+        if ($excludeUserId) {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE username = ? AND user_id != ?");
+            $stmt->bind_param("si", $username, $excludeUserId);
+        } else {
+            $stmt = $this->conn->prepare("SELECT user_id FROM users WHERE username = ?");
+            $stmt->bind_param("s", $username);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $exists = $result->num_rows > 0;
+        $stmt->close();
+        return $exists;
+    }
+
+    public function updateEmail($userId, $email) {
+        $stmt = $this->conn->prepare("UPDATE users SET email = ? WHERE user_id = ?");
+        $stmt->bind_param("si", $email, $userId);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+
+    public function updateUsername($userId, $username) {
+        $stmt = $this->conn->prepare("UPDATE users SET username = ? WHERE user_id = ?");
+        $stmt->bind_param("si", $username, $userId);
+        $result = $stmt->execute();
+        $stmt->close();
+        return $result;
+    }
+    public function markEmailVerified($userId) {
+    $stmt = $this->conn->prepare("UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expires = NULL WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $result = $stmt->execute();
+    $stmt->close();
+    return $result;
+}
 }

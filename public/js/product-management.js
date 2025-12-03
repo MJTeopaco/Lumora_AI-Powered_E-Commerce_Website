@@ -39,6 +39,11 @@ document.getElementById('bulkActionForm')?.addEventListener('submit', function(e
     }
 });
 
+// Helper to get CSRF token
+function getCsrfToken() {
+    return document.getElementById('csrf_token').value;
+}
+
 // Update Product Status
 function updateProductStatus(productId, status) {
     fetch('/shop/products/update-status', {
@@ -46,7 +51,8 @@ function updateProductStatus(productId, status) {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `product_id=${productId}&status=${status}`
+        // ADDED: csrf_token to the body
+        body: `csrf_token=${getCsrfToken()}&product_id=${productId}&status=${status}`
     })
     .then(response => response.json())
     .then(data => {

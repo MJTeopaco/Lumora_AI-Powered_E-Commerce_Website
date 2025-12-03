@@ -89,6 +89,11 @@ function closeDetailsModal() {
     document.getElementById('sellerDetailsModal').classList.remove('active');
 }
 
+// Helper to retrieve CSRF token from the hidden input in the view
+function getCsrfToken() {
+    return document.getElementById('csrf_token').value;
+}
+
 // Approve seller
 function approveSeller(userId, shopName) {
     if (confirm(`Are you sure you want to APPROVE the seller application for "${shopName}"?\n\nThis will grant them full seller privileges.`)) {
@@ -100,8 +105,15 @@ function approveSeller(userId, shopName) {
         input.type = 'hidden';
         input.name = 'user_id';
         input.value = userId;
-
         form.appendChild(input);
+
+        // ADDED: CSRF Token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = getCsrfToken();
+        form.appendChild(csrfInput);
+
         document.body.appendChild(form);
         form.submit();
     }
@@ -118,8 +130,15 @@ function rejectSeller(userId, shopName) {
         input.type = 'hidden';
         input.name = 'user_id';
         input.value = userId;
-
         form.appendChild(input);
+
+        // ADDED: CSRF Token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = getCsrfToken();
+        form.appendChild(csrfInput);
+
         document.body.appendChild(form);
         form.submit();
     }
@@ -136,8 +155,15 @@ function suspendSeller(userId, shopName) {
         input.type = 'hidden';
         input.name = 'user_id';
         input.value = userId;
-
         form.appendChild(input);
+
+        // ADDED: CSRF Token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = getCsrfToken();
+        form.appendChild(csrfInput);
+
         document.body.appendChild(form);
         form.submit();
     }

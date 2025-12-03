@@ -2,7 +2,8 @@
 // app/Views/admin/sellers.view.php
 ?>
 
-<!-- Pending Approvals Section -->
+<input type="hidden" id="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+
 <div class="content-card">
     <h2>
         <span><i class="fas fa-clock"></i> Pending Seller Applications</span>
@@ -83,7 +84,6 @@
     <?php endif; ?>
 </div>
 
-<!-- Approved Sellers Section -->
 <div class="content-card" style="margin-top: 30px;">
     <h2>
         <span><i class="fas fa-check-circle"></i> Approved Sellers</span>
@@ -160,7 +160,6 @@
     <?php endif; ?>
 </div>
 
-<!-- Seller Details Modal -->
 <div id="sellerDetailsModal" class="modal">
     <div class="modal-content modal-large">
         <div class="modal-header">
@@ -170,7 +169,6 @@
         
         <div class="modal-body">
             <div class="details-grid">
-                <!-- Shop Information -->
                 <div class="details-section">
                     <h4><i class="fas fa-store-alt"></i> Shop Information</h4>
                     <div class="details-content">
@@ -189,7 +187,6 @@
                     </div>
                 </div>
 
-                <!-- Owner Information -->
                 <div class="details-section">
                     <h4><i class="fas fa-user"></i> Owner Information</h4>
                     <div class="details-content">
@@ -208,7 +205,6 @@
                     </div>
                 </div>
 
-                <!-- Contact Information -->
                 <div class="details-section">
                     <h4><i class="fas fa-address-card"></i> Contact Information</h4>
                     <div class="details-content">
@@ -223,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- Address Information -->
                 <div class="details-section">
                     <h4><i class="fas fa-map-marker-alt"></i> Shop Address</h4>
                     <div class="details-content">
@@ -254,7 +249,6 @@
                     </div>
                 </div>
 
-                <!-- Application Timeline -->
                 <div class="details-section full-width">
                     <h4><i class="fas fa-clock"></i> Timeline</h4>
                     <div class="details-content">

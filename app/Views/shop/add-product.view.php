@@ -7,8 +7,8 @@
     </div>
 
     <form id="addProductForm" action="/shop/products/store" method="POST" enctype="multipart/form-data" class="product-form">
+        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
         
-        <!-- Basic Information Section -->
         <div class="form-section">
             <div class="form-section-header">
                 <h2><i class="fas fa-info-circle"></i> Basic Information</h2>
@@ -75,16 +75,12 @@
                     <label for="status" class="form-label required">Product Status</label>
                     <select id="status" name="status" class="form-select" required>
                         <option value="PUBLISHED">Published - Visible in store</option>
-                        <!--
-                        <option value="DRAFT">Draft - Not visible to customers</option>
-                        -->
                         <option value="UNPUBLISHED">Unpublished - Temporarily hidden</option>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Product Cover Image Section -->
         <div class="form-section">
             <div class="form-section-header">
                 <h2><i class="fas fa-image"></i> Product Cover Image</h2>
@@ -114,7 +110,6 @@
             </div>
         </div>
 
-        <!-- Product Variants Section -->
         <div class="form-section">
             <div class="form-section-header">
                 <h2><i class="fas fa-boxes"></i> Product Variants</h2>
@@ -122,15 +117,13 @@
             </div>
             
             <div id="variantsContainer">
-                <!-- Variant items will be added here dynamically -->
-            </div>
+                </div>
 
             <button type="button" class="btn btn-outline btn-add-variant" onclick="addVariant()">
                 <i class="fas fa-plus"></i> Add Variant
             </button>
         </div>
 
-        <!-- Additional Information Section -->
         <div class="form-section">
             <div class="form-section-header">
                 <h2><i class="fas fa-tags"></i> Additional Information</h2>
@@ -152,22 +145,13 @@
             </div>
         </div>
 
-        <!-- Form Actions -->
         <div class="form-actions">
             <button type="button" class="btn btn-secondary" onclick="window.history.back()">
                 <i class="fas fa-times"></i> Cancel
             </button>
-            <!--
-            <button type="button" class="btn btn-outline" onclick="saveDraft()">
-                <i class="fas fa-save"></i> Save as Draft
-            </button>
-            -->
             <button type="submit" class="btn btn-success">
                 <i class="fas fa-check"></i> Create Product
             </button>
         </div>
     </form>
 </div>
-
-
-

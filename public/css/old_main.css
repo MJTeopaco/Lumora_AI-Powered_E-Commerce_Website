@@ -1,6 +1,6 @@
-/* 
- * Main Stylesheet for Lumora E-Commerce
+/* * Main Stylesheet for Lumora E-Commerce
  * Consolidated from layout and partial files
+ * Theme: Lumora Luxury (White, Black, Gold)
  */
 
 /* ==================== RESET & BASE STYLES ==================== */
@@ -12,17 +12,18 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f5f5f5;
-    color: #1f2937;
+    background-color: #f9f9f9;
+    color: #1A1A1A;
 }
 
 /* ==================== HEADER & NAVIGATION ==================== */
 .header {
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #ffffff; /* Replaced green gradient */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 100;
+    border-bottom: 1px solid #e5e5e5;
 }
 
 .nav-container {
@@ -38,11 +39,11 @@ body {
     justify-content: space-between;
     gap: 1.5rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .logo {
-    color: #ffffff;
+    color: #1A1A1A;
     font-size: 28px;
     font-weight: 700;
     letter-spacing: 2px;
@@ -62,22 +63,23 @@ body {
 .search-bar {
     width: 100%;
     padding: 0.75rem 3.5rem 0.75rem 1.25rem;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid #e5e5e5;
     border-radius: 30px;
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: #f9f9f9;
     font-size: 14px;
     transition: all 0.3s ease;
     outline: none;
+    color: #1A1A1A;
 }
 
 .search-bar:focus {
     background-color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #D4AF37;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1);
 }
 
 .search-bar::placeholder {
-    color: #6b7280;
+    color: #999;
 }
 
 .search-btn {
@@ -85,7 +87,7 @@ body {
     right: 4px;
     top: 50%;
     transform: translateY(-50%);
-    background: #174c7a;
+    background: #D4AF37;
     border: none;
     width: 40px;
     height: 40px;
@@ -98,7 +100,7 @@ body {
 }
 
 .search-btn:hover {
-    background: #ea580c;
+    background: #B8942C;
 }
 
 .search-btn i {
@@ -128,16 +130,16 @@ body {
 }
 
 .nav-link {
-    color: #ffffff;
+    color: #1A1A1A;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
-    transition: opacity 0.3s ease;
+    transition: color 0.3s ease;
     white-space: nowrap;
 }
 
 .nav-link:hover {
-    opacity: 0.8;
+    color: #D4AF37;
 }
 
 /* ==================== BUTTONS ==================== */
@@ -155,12 +157,12 @@ body {
 }
 
 .btn-primary {
-    background-color: #ffffff;
-    color: #1e4d3d;
+    background-color: #D4AF37; /* Gold */
+    color: #ffffff;
 }
 
 .btn-primary:hover {
-    background-color: #f0f5f3;
+    background-color: #B8942C;
     transform: translateY(-2px);
 }
 
@@ -175,7 +177,7 @@ body {
 }
 
 .btn-add-cart {
-    background-color: #2d5a4a;
+    background-color: #1A1A1A; /* Black */
     color: #ffffff;
     width: 100%;
     padding: 0.8rem;
@@ -183,17 +185,17 @@ body {
 }
 
 .btn-add-cart:hover {
-    background-color: #1e4d3d;
+    background-color: #D4AF37; /* Gold hover */
 }
 
 .btn-disabled {
-    background-color: #9ca3af;
+    background-color: #e5e5e5;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 1;
 }
 
 .btn-disabled:hover {
-    background-color: #9ca3af;
+    background-color: #e5e5e5;
     transform: none;
 }
 
@@ -214,27 +216,19 @@ body {
 }
 
 .icon-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #f5f5f5;
 }
 
 .icon-btn i {
-    color: #ffffff; 
+    color: #1A1A1A; 
     font-size: 20px; 
 }
-
-/*
-.icon-btn img {
-    width: 28px;
-    height: 28px;
-    filter: brightness(0) invert(1);
-}
-*/
 
 .icon-btn .badge {
     position: absolute;
     top: 2px;
     right: 2px;
-    background-color: #ef4444;
+    background-color: #D4AF37;
     color: white;
     font-size: 10px;
     font-weight: bold;
@@ -249,9 +243,9 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     border: none;
-    color: #ffffff;
+    color: #1A1A1A;
     cursor: pointer;
     padding: 0.5rem 1rem;
     border-radius: 8px;
@@ -260,21 +254,20 @@ body {
 }
 
 .profile-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: #f5f5f5;
 }
 
 .profile-avatar {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    background-color: #ffffff;
+    background-color: #D4AF37;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    color: #1e4d3d;
+    color: white;
     font-size: 14px;
-    border: 2px solid #ffffff;
     overflow: hidden;
 }
 
@@ -301,21 +294,21 @@ body {
 }
 
 .alert-success {
-    background-color: #d1fae5;
-    border-left: 4px solid #10b981;
-    color: #065f46;
+    background-color: #e8f5e9;
+    border-left: 4px solid #2e7d32;
+    color: #1b5e20;
 }
 
 .alert-error {
-    background-color: #fee2e2;
-    border-left: 4px solid #ef4444;
-    color: #991b1b;
+    background-color: #ffebee;
+    border-left: 4px solid #c62828;
+    color: #b71c1c;
 }
 
 .alert-info {
-    background-color: #dbeafe;
-    border-left: 4px solid #3b82f6;
-    color: #1e40af;
+    background-color: #e3f2fd;
+    border-left: 4px solid #1565c0;
+    color: #0d47a1;
 }
 
 .alert a {
@@ -326,8 +319,8 @@ body {
 
 /* ==================== HERO SECTION ==================== */
 .hero {
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
-    color: #ffffff;
+    background: white; /* Removed green gradient */
+    color: #1A1A1A;
     padding: 4rem 2rem;
     text-align: center;
 }
@@ -336,11 +329,13 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     font-weight: 700;
+    color: #1A1A1A;
 }
 
 .hero p {
     font-size: 1.2rem;
     opacity: 0.9;
+    color: #666;
 }
 
 /* ==================== CONTAINER & LAYOUT ==================== */
@@ -354,7 +349,7 @@ body {
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 2rem;
-    color: #1e4d3d;
+    color: #1A1A1A;
 }
 
 /* ==================== PRODUCTS GRID ==================== */
@@ -368,20 +363,22 @@ body {
     background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #f0f0f0;
 }
 
 .product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border-color: #D4AF37;
 }
 
 .product-image {
     width: 100%;
     height: 250px;
     object-fit: cover;
-    background: linear-gradient(135deg, #f0f5f3 0%, #e5e7eb 100%);
+    background: #f5f5f5;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -400,7 +397,7 @@ body {
 
 .product-category {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: #999;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 0.5rem;
@@ -409,13 +406,13 @@ body {
 .product-name {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1f2937;
+    color: #1A1A1A;
     margin-bottom: 0.5rem;
 }
 
 .product-description {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #666;
     margin-bottom: 1rem;
     line-height: 1.4;
     display: -webkit-box;
@@ -427,33 +424,33 @@ body {
 .product-price {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1e4d3d;
+    color: #D4AF37;
     margin-bottom: 1rem;
 }
 
 .product-stock {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #666;
     margin-bottom: 0.5rem;
 }
 
 .stock-available {
-    color: #059669;
+    color: #2e7d32;
 }
 
 .stock-low {
-    color: #f59e0b;
+    color: #f57c00;
 }
 
 .stock-out {
-    color: #ef4444;
+    color: #c62828;
 }
 
 /* ==================== EMPTY STATE ==================== */
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
-    color: #6b7280;
+    color: #666;
 }
 
 .empty-state h3 {
@@ -463,8 +460,8 @@ body {
 
 /* ==================== FOOTER ==================== */
 .footer {
-    background-color: #1f2937;
-    color: #9ca3af;
+    background-color: #1A1A1A;
+    color: #e0e0e0;
     padding: 2rem;
     text-align: center;
     margin-top: 4rem;
@@ -535,4 +532,3 @@ body {
         font-size: 12px;
     }
 }
-

@@ -18,7 +18,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+            /* REPLACED BACKGROUND GRADIENT */
+            background: linear-gradient(135deg, #YOUR_PRIMARY_COLOR 0%, #YOUR_SECONDARY_COLOR 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -90,7 +91,7 @@
         }
 
         .status-card h2 {
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED TEXT COLOR */
             font-size: 24px;
             margin-bottom: 15px;
         }
@@ -130,7 +131,7 @@
         }
 
         .shop-info-label i {
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED ICON COLOR */
         }
 
         .shop-info-value {
@@ -187,7 +188,8 @@
 
         .btn-home {
             display: inline-block;
-            background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+            /* REPLACED BUTTON GRADIENT */
+            background: linear-gradient(135deg, #YOUR_PRIMARY_COLOR 0%, #YOUR_SECONDARY_COLOR 100%);
             color: white;
             padding: 15px 40px;
             border-radius: 10px;
@@ -195,12 +197,12 @@
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(30, 77, 61, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
         }
 
         .btn-home:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 77, 61, 0.5);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
         }
 
         .btn-home i {
@@ -293,7 +295,7 @@
         </div>
 
         <p style="color: #555; font-size: 15px; margin-bottom: 25px;">
-            <i class="fas fa-envelope" style="color: #1e4d3d;"></i>
+            <i class="fas fa-envelope" style="color: #YOUR_PRIMARY_COLOR;"></i>
             You will receive an email notification once your application has been reviewed. This typically takes 24-48 hours.
         </p>
 

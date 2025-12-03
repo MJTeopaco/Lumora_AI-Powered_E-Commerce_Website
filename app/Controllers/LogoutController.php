@@ -6,10 +6,14 @@ namespace App\Controllers;
 use App\Core\Session;
 use App\Models\RememberMeToken;
 use App\Helpers\RedirectHelper;
+use App\Core\Controller; // Added use statement for Controller base class
 
-class LogoutController {
+class LogoutController extends Controller { // Extends Controller to use verifyCsrfToken
     
     public function logout() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         // Delete the remember me token from DB and cookie
         if (isset($_COOKIE['remember_me'])) {
             list($selector) = explode(':', $_COOKIE['remember_me'], 2);

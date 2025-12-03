@@ -2,7 +2,6 @@
 // app/Views/layouts/partials/profile-modals.partial.php
 ?>
 
-<!-- Picture Modal -->
 <div id="pictureModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -10,6 +9,7 @@
             <button class="modal-close" onclick="closeModal('pictureModal')">&times;</button>
         </div>
         <form method="POST" action="/profile/update" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="update_field" value="picture">
             <div class="modal-body">
                 <div class="form-group">
@@ -33,7 +33,6 @@
     </div>
 </div>
 
-<!-- Name Modal -->
 <div id="nameModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -41,6 +40,7 @@
             <button class="modal-close" onclick="closeModal('nameModal')">&times;</button>
         </div>
         <form method="POST" action="/profile/update">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="update_field" value="name">
             <div class="modal-body">
                 <div class="form-group">
@@ -58,7 +58,6 @@
     </div>
 </div>
 
-<!-- Phone Modal -->
 <div id="phoneModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -66,6 +65,7 @@
             <button class="modal-close" onclick="closeModal('phoneModal')">&times;</button>
         </div>
         <form method="POST" action="/profile/update" id="phoneForm">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="update_field" value="phone">
             <div class="modal-body">
                 <div class="form-group">
@@ -84,7 +84,58 @@
     </div>
 </div>
 
-<!-- Gender Modal -->
+<div id="emailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Email</h2>
+            <button class="modal-close" onclick="closeModal('emailModal')">&times;</button>
+        </div>
+        <form method="POST" action="/profile/update" id="emailForm">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="update_field" value="email">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-input" 
+                           value="<?= htmlspecialchars($user['email'] ?? '') ?>" 
+                           placeholder="your@email.com" required>
+                    <p class="form-help">Make sure you have access to this email address</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('emailModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="usernameModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Username</h2>
+            <button class="modal-close" onclick="closeModal('usernameModal')">&times;</button>
+        </div>
+        <form method="POST" action="/profile/update">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="update_field" value="username">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" name="username" class="form-input" 
+                           value="<?= htmlspecialchars($user['username'] ?? '') ?>" 
+                           placeholder="username" pattern="[a-zA-Z0-9_]{3,20}" required>
+                    <p class="form-help">3-20 characters. Letters, numbers, and underscores only</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('usernameModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="genderModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -92,6 +143,7 @@
             <button class="modal-close" onclick="closeModal('genderModal')">&times;</button>
         </div>
         <form method="POST" action="/profile/update">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="update_field" value="gender">
             <div class="modal-body">
                 <div class="form-group">
@@ -113,7 +165,6 @@
     </div>
 </div>
 
-<!-- Birth Date Modal -->
 <div id="birthModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -121,6 +172,7 @@
             <button class="modal-close" onclick="closeModal('birthModal')">&times;</button>
         </div>
         <form method="POST" action="/profile/update">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="update_field" value="birthdate">
             <div class="modal-body">
                 <div class="form-group">

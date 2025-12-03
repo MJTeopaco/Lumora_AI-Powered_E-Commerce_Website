@@ -121,4 +121,22 @@ class EmailHelper {
             return false;
         }
     }
+    public static function sendRegistrationActivationEmail($email, $token) {
+    try {
+        $mail = self::configureMailer();
+        $mail->addAddress($email);
+        $mail->isHTML(true);
+        $mail->Subject = 'Activate Your Lumora Account';
+        
+$activationLink = "http://lumora.prod/auth/verify-email?token=" . $token;        $mail->Body = self::renderEmailView('registration-activation.php', [
+            'activationLink' => $activationLink
+        ]);
+        $mail->AltBody = "Welcome to Lumora! Click this link to activate your account: $activationLink (valid for 24 hours)";
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log('PHPMailer error: ' . $mail->ErrorInfo);
+        return false;
+    }
+}
 }

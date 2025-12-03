@@ -78,6 +78,9 @@ class AdminController extends Controller {
      * Add Category
      */
     public function addCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -115,6 +118,9 @@ class AdminController extends Controller {
      * Update Category
      */
     public function updateCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -159,6 +165,9 @@ class AdminController extends Controller {
      * Delete Category
      */
     public function deleteCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -240,6 +249,9 @@ class AdminController extends Controller {
      * Approve Seller Application
      */
     public function approveSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();
@@ -267,6 +279,9 @@ class AdminController extends Controller {
      * Reject Seller Application
      */
     public function rejectSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();
@@ -294,6 +309,9 @@ class AdminController extends Controller {
      * Suspend Seller Account
      */
     public function suspendSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();

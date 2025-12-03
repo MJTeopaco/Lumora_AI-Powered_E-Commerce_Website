@@ -5,7 +5,6 @@ $shopData = $shop ?? null;
 ?>
 <header class="shop-header">
     <div class="shop-header-container">
-        <!-- Left Section: Logo & Shop Info -->
         <div class="shop-header-left">
             <a href="/" class="shop-logo-link">
                 <i class="fas fa-arrow-left"></i>
@@ -20,7 +19,6 @@ $shopData = $shop ?? null;
             <?php endif; ?>
         </div>
         
-        <!-- Center Section: Quick Nav -->
         <nav class="shop-header-nav">
             <a href="/shop/dashboard" class="shop-nav-item <?= ($currentPage ?? '') === 'dashboard' ? 'active' : '' ?>">
                 <i class="fas fa-chart-line"></i>
@@ -36,9 +34,7 @@ $shopData = $shop ?? null;
             </a>
         </nav>
         
-        <!-- Right Section: User Actions -->
         <div class="shop-header-right">
-            <!-- Notifications -->
             <button class="shop-icon-btn" onclick="window.location.href='/notifications'" title="Notifications">
                 <i class="fas fa-bell"></i>
                 <?php if (isset($_SESSION['notification_count']) && $_SESSION['notification_count'] > 0): ?>
@@ -46,7 +42,6 @@ $shopData = $shop ?? null;
                 <?php endif; ?>
             </button>
             
-            <!-- Messages -->
             <button class="shop-icon-btn" onclick="window.location.href='/messages'" title="Messages">
                 <i class="fas fa-envelope"></i>
                 <?php if (isset($_SESSION['message_count']) && $_SESSION['message_count'] > 0): ?>
@@ -54,13 +49,11 @@ $shopData = $shop ?? null;
                 <?php endif; ?>
             </button>
             
-            <!-- View Store -->
             <a href="/" class="shop-view-store-btn">
                 <i class="fas fa-external-link-alt"></i>
                 <span>View Store</span>
             </a>
             
-            <!-- Profile Dropdown -->
             <div class="shop-profile-dropdown">
                 <button class="shop-profile-trigger" onclick="toggleShopProfileMenu()">
                     <div class="shop-profile-avatar">
@@ -113,6 +106,7 @@ $shopData = $shop ?? null;
                     <div class="shop-profile-menu-divider"></div>
                     
                     <form action="/logout" method="POST" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <button type="submit" class="shop-profile-menu-item shop-logout-btn">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Logout</span>

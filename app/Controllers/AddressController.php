@@ -18,7 +18,6 @@ class AddressController extends Controller
 
     public function __construct()
     {
-        
         if (!Session::has('user_id')) {
             RedirectHelper::redirect('/login');
         }
@@ -48,7 +47,6 @@ class AddressController extends Controller
             'pageTitle' => 'My Addresses'
         ];
 
-        
         $this->view('profile/addresses', $data, '/profile');
     }
 
@@ -68,10 +66,10 @@ class AddressController extends Controller
             'statusMessage' => $_GET['message'] ?? null,
             'statusType' => $_GET['status'] ?? 'success',
             'activeTab' => 'addresses',
-            'pageTitle' => 'Add New Address'
+            'pageTitle' => 'Add New Address',
+            'regions' => $this->getRegions() // Added missing regions
         ];
 
-        
         $this->view('profile/address-form', $data, '/profile');
     }
 
@@ -80,13 +78,14 @@ class AddressController extends Controller
      */
     public function store()
     {
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('profile/addresses/add');
+            RedirectHelper::redirect('/profile/addresses/add'); // Fixed: Added leading slash
         }
 
         $userId = Session::get('user_id');
 
-        // Get form data
         $data = [
             'user_id' => $userId,
             'address_line_1' => trim($_POST['address_line_1'] ?? ''),
@@ -99,19 +98,16 @@ class AddressController extends Controller
             'is_default' => isset($_POST['is_default']) ? 1 : 0
         ];
 
-        // Validate required fields
         if (empty($data['address_line_1']) || empty($data['barangay']) || 
             empty($data['city']) || empty($data['province']) || empty($data['region'])) {
             $this->redirectWithError('Please fill in all required fields.');
             return;
         }
 
-        // If this address is set as default, unset other defaults
         if ($data['is_default']) {
             $this->addressModel->unsetDefaultAddresses($userId);
         }
 
-        // Create the address
         $result = $this->addressModel->createAddress($data);
 
         if ($result) {
@@ -130,7 +126,6 @@ class AddressController extends Controller
         $user = $this->userModel->findById($userId);
         $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
 
-        // Get the address
         $address = $this->addressModel->getAddressById($addressId, $userId);
 
         if (!$address) {
@@ -146,10 +141,10 @@ class AddressController extends Controller
             'statusMessage' => $_GET['message'] ?? null,
             'statusType' => $_GET['status'] ?? 'success',
             'activeTab' => 'addresses',
-            'pageTitle' => 'Edit Address'
+            'pageTitle' => 'Edit Address',
+            'regions' => $this->getRegions() // Added missing regions
         ];
 
-        
         $this->view('profile/address-form', $data, '/profile');
     }
 
@@ -158,20 +153,20 @@ class AddressController extends Controller
      */
     public function update($addressId)
     {
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('profile/addresses/edit/' . $addressId);
+            RedirectHelper::redirect('/profile/addresses/edit/' . $addressId); // Fixed: Added leading slash
         }
 
         $userId = Session::get('user_id');
 
-        // Verify the address belongs to the user
         $existingAddress = $this->addressModel->getAddressById($addressId, $userId);
         if (!$existingAddress) {
             $this->redirectWithError('Address not found.');
             return;
         }
 
-        // Get form data
         $data = [
             'address_line_1' => trim($_POST['address_line_1'] ?? ''),
             'address_line_2' => trim($_POST['address_line_2'] ?? ''),
@@ -183,19 +178,16 @@ class AddressController extends Controller
             'is_default' => isset($_POST['is_default']) ? 1 : 0
         ];
 
-        // Validate required fields
         if (empty($data['address_line_1']) || empty($data['barangay']) || 
             empty($data['city']) || empty($data['province']) || empty($data['region'])) {
             $this->redirectWithError('Please fill in all required fields.');
             return;
         }
 
-        // If this address is set as default, unset other defaults
         if ($data['is_default']) {
             $this->addressModel->unsetDefaultAddresses($userId);
         }
 
-        // Update the address
         $result = $this->addressModel->updateAddress($addressId, $userId, $data);
 
         if ($result) {
@@ -210,20 +202,20 @@ class AddressController extends Controller
      */
     public function delete($addressId)
     {
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('profile/addresses');
+            RedirectHelper::redirect('/profile/addresses'); // Fixed: Added leading slash
         }
 
         $userId = Session::get('user_id');
 
-        // Verify the address belongs to the user
         $address = $this->addressModel->getAddressById($addressId, $userId);
         if (!$address) {
             $this->redirectWithError('Address not found.');
             return;
         }
 
-        // Delete the address
         $result = $this->addressModel->deleteAddress($addressId, $userId);
 
         if ($result) {
@@ -238,23 +230,21 @@ class AddressController extends Controller
      */
     public function setDefault($addressId)
     {
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('profile/addresses');
+            RedirectHelper::redirect('/profile/addresses'); // Fixed: Added leading slash
         }
 
         $userId = Session::get('user_id');
 
-        // Verify the address belongs to the user
         $address = $this->addressModel->getAddressById($addressId, $userId);
         if (!$address) {
             $this->redirectWithError('Address not found.');
             return;
         }
 
-        // Unset all default addresses for this user
         $this->addressModel->unsetDefaultAddresses($userId);
-
-        // Set this address as default
         $result = $this->addressModel->setAsDefault($addressId, $userId);
 
         if ($result) {
@@ -263,7 +253,6 @@ class AddressController extends Controller
             $this->redirectWithError('Failed to set default address. Please try again.');
         }
     }
-
     
     private function redirectWithError($message)
     {
@@ -271,7 +260,7 @@ class AddressController extends Controller
             'status' => 'error',
             'message' => urlencode($message)
         ];
-        $url = 'profile/addresses?' . http_build_query($params);
+        $url = '/profile/addresses?' . http_build_query($params); // Fixed: Added leading slash
         RedirectHelper::redirect($url);
     }
 
@@ -281,7 +270,32 @@ class AddressController extends Controller
             'status' => 'success',
             'message' => urlencode($message)
         ];
-        $url = 'profile/addresses?' . http_build_query($params);
+        $url = '/profile/addresses?' . http_build_query($params); // Fixed: Added leading slash
         RedirectHelper::redirect($url);
+    }
+
+    /**
+     * Get list of regions in Philippines
+     */
+    private function getRegions() {
+        return [
+            'NCR' => 'National Capital Region',
+            'CAR' => 'Cordillera Administrative Region',
+            'Region I' => 'Region I (Ilocos Region)',
+            'Region II' => 'Region II (Cagayan Valley)',
+            'Region III' => 'Region III (Central Luzon)',
+            'Region IV-A' => 'Region IV-A (CALABARZON)',
+            'Region IV-B' => 'Region IV-B (MIMAROPA)',
+            'Region V' => 'Region V (Bicol Region)',
+            'Region VI' => 'Region VI (Western Visayas)',
+            'Region VII' => 'Region VII (Central Visayas)',
+            'Region VIII' => 'Region VIII (Eastern Visayas)',
+            'Region IX' => 'Region IX (Zamboanga Peninsula)',
+            'Region X' => 'Region X (Northern Mindanao)',
+            'Region XI' => 'Region XI (Davao Region)',
+            'Region XII' => 'Region XII (SOCCSKSARGEN)',
+            'Region XIII' => 'Region XIII (Caraga)',
+            'BARMM' => 'Bangsamoro Autonomous Region in Muslim Mindanao'
+        ];
     }
 }

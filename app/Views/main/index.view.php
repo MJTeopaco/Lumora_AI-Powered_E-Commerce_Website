@@ -23,7 +23,8 @@ include __DIR__ . '/includes/success.popup.php';
 
         /* Header / Navigation */
         .header {
-            background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+            /* REPLACED GREEN GRADIENT */
+            background: linear-gradient(135deg, #YOUR_PRIMARY_COLOR 0%, #YOUR_SECONDARY_COLOR 100%);
             padding: 1rem 2rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             position: sticky;
@@ -121,7 +122,7 @@ include __DIR__ . '/includes/success.popup.php';
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED TEXT COLOR */
             font-size: 14px;
             border: 2px solid #ffffff;
             overflow: hidden;
@@ -153,7 +154,7 @@ include __DIR__ . '/includes/success.popup.php';
 
         .btn-primary {
             background-color: #ffffff;
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED TEXT COLOR */
         }
 
         .btn-primary:hover {
@@ -162,7 +163,7 @@ include __DIR__ . '/includes/success.popup.php';
         }
 
         .btn-add-cart {
-            background-color: #2d5a4a;
+            background-color: #YOUR_SECONDARY_COLOR; /* REPLACED BUTTON BG */
             color: #ffffff;
             width: 100%;
             padding: 0.8rem;
@@ -170,7 +171,7 @@ include __DIR__ . '/includes/success.popup.php';
         }
 
         .btn-add-cart:hover {
-            background-color: #1e4d3d;
+            background-color: #YOUR_PRIMARY_COLOR; /* REPLACED HOVER BG */
         }
 
         .btn-disabled {
@@ -221,7 +222,8 @@ include __DIR__ . '/includes/success.popup.php';
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+            /* REPLACED GREEN GRADIENT */
+            background: linear-gradient(135deg, #YOUR_PRIMARY_COLOR 0%, #YOUR_SECONDARY_COLOR 100%);
             color: #ffffff;
             padding: 4rem 2rem;
             text-align: center;
@@ -249,7 +251,7 @@ include __DIR__ . '/includes/success.popup.php';
             font-size: 2rem;
             font-weight: 600;
             margin-bottom: 2rem;
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED TITLE COLOR */
         }
 
         .products-grid {
@@ -321,7 +323,7 @@ include __DIR__ . '/includes/success.popup.php';
         .product-price {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #1e4d3d;
+            color: #YOUR_PRIMARY_COLOR; /* REPLACED PRICE COLOR */
             margin-bottom: 1rem;
         }
 
@@ -401,8 +403,7 @@ include __DIR__ . '/includes/success.popup.php';
                 <?php if ($isLoggedIn): ?>
                     <!-- Notification Icon -->
                     <button class="icon-btn" onclick="window.location.href='/notifications'" title="Notifications">
-                        <img src="/img/notif-icon.png" alt="Notifications">
-                        <?php if (isset($notificationCount) && $notificationCount > 0): ?>
+<img src="<?= base_url('/img/notif-icon.png') ?>" alt="Notifications">                        <?php if (isset($notificationCount) && $notificationCount > 0): ?>
                             <span class="badge"><?= $notificationCount > 99 ? '99+' : $notificationCount ?></span>
                         <?php endif; ?>
                     </button>

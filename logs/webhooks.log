@@ -1,0 +1,81 @@
+[2025-11-30 07:48:56] [info] Webhook received
+[2025-11-30 07:48:56] [error] Empty payload received
+[2025-12-01 16:32:56] ------------------------------------------------
+[2025-12-01 16:32:56] Incoming Webhook: GET
+[2025-12-01 16:32:56] ERROR: input stream is empty.
+[2025-12-01 16:36:48] ------------------------------------------------
+[2025-12-01 16:36:48] Incoming Webhook: POST
+[2025-12-01 16:36:48] SUCCESS: Signature verified.
+[2025-12-01 16:36:48] Event Type: payment.paid
+[2025-12-01 16:36:48] Ignored event: payment.paid
+[2025-12-01 16:36:49] ------------------------------------------------
+[2025-12-01 16:36:49] Incoming Webhook: POST
+[2025-12-01 16:36:49] SUCCESS: Signature verified.
+[2025-12-01 16:36:49] Event Type: checkout_session.payment.paid
+[2025-12-01 16:36:49] Processing Checkout Session: cs_jDQEj98bB5TwW8z7UAx8GdBD
+[2025-12-01 16:36:49] Found Order ID: 32
+[2025-12-01 16:36:49] SUCCESS: Database updated for Order #32 to PROCESSING
+[2025-12-01 17:13:12] ------------------------------------------------
+[2025-12-01 17:13:12] Incoming Webhook: POST
+[2025-12-01 17:13:12] SUCCESS: Signature verified.
+[2025-12-01 17:13:12] Event Type: payment.paid
+[2025-12-01 17:13:12] Ignored event: payment.paid
+[2025-12-01 17:13:12] ------------------------------------------------
+[2025-12-01 17:13:12] Incoming Webhook: POST
+[2025-12-01 17:13:12] SUCCESS: Signature verified.
+[2025-12-01 17:13:12] Event Type: checkout_session.payment.paid
+[2025-12-01 17:13:12] Processing Checkout Session: cs_bi19nNkUbwDpM4mJrkoicq6X
+[2025-12-01 17:13:12] Found Order ID: 33
+[2025-12-01 17:13:12] SUCCESS: Database updated for Order #33 to PROCESSING
+[2025-12-03 07:30:06] ------------------------------------------------
+[2025-12-03 07:30:06] Incoming Webhook: GET
+[2025-12-03 07:30:06] ERROR: input stream is empty.
+[2025-12-03 07:30:48] ------------------------------------------------
+[2025-12-03 07:30:48] Incoming Webhook: POST
+[2025-12-03 07:30:48] SUCCESS: Signature verified.
+[2025-12-03 07:30:48] Event Type: checkout_session.payment.paid
+[2025-12-03 07:30:48] Processing Checkout Session: cs_GV8xKFTRS4T31TLgBk7hVfWm
+[2025-12-03 07:30:49] Found Order ID: 36
+[2025-12-03 07:30:49] SUCCESS: Database updated for Order #36 to PROCESSING
+[2025-12-03 07:35:19] ------------------------------------------------
+[2025-12-03 07:35:19] Incoming Webhook: POST
+[2025-12-03 07:35:19] SUCCESS: Signature verified.
+[2025-12-03 07:35:19] Event Type: checkout_session.payment.paid
+[2025-12-03 07:35:19] Processing Checkout Session: cs_49p9LowyaAHZKPiycQeLtrW3
+[2025-12-03 07:35:20] Found Order ID: 37
+[2025-12-03 07:35:20] SUCCESS: Database updated for Order #37 to PROCESSING
+[2025-12-03 08:04:26] ------------------------------------------------
+[2025-12-03 08:04:26] Incoming Webhook: POST
+[2025-12-03 08:04:26] SUCCESS: Signature verified.
+[2025-12-03 08:04:26] Event Type: checkout_session.payment.paid
+[2025-12-03 08:04:26] Processing Checkout Session: cs_Uh4mqhTn2xpP1DvgMznKDCGF
+[2025-12-03 08:04:26] Found Order ID: 38
+[2025-12-03 08:04:26] SUCCESS: Database updated for Order #38 to PROCESSING
+[2025-12-03 08:08:34] ------------------------------------------------
+[2025-12-03 08:08:34] Incoming Webhook: POST
+[2025-12-03 08:08:34] SUCCESS: Signature verified.
+[2025-12-03 08:08:34] Event Type: checkout_session.payment.paid
+[2025-12-03 08:08:34] Processing Checkout Session: cs_pU7q3EEX2N5yfMPjWkkcpAfb
+[2025-12-03 08:08:34] Found Order ID: 39
+[2025-12-03 08:08:34] SUCCESS: Database updated for Order #39 to PROCESSING
+[2025-12-03 08:41:33] ------------------------------------------------
+[2025-12-03 08:41:33] Incoming Webhook: POST
+[2025-12-03 08:41:33] SUCCESS: Signature verified.
+[2025-12-03 08:41:33] Event Type: checkout_session.payment.paid
+[2025-12-03 08:41:33] Processing Checkout Session: cs_jRRLxhqwaK893pcRy3ggFHo1
+[2025-12-03 08:41:33] Found Order ID: 40
+[2025-12-03 08:41:33] SUCCESS: Database updated for Order #40 to PROCESSING
+[2025-12-03 09:24:36] ------------------------------------------------
+[2025-12-03 09:24:36] Incoming Webhook: POST
+[2025-12-03 09:24:36] SUCCESS: Signature verified.
+[2025-12-03 09:24:36] Event Type: checkout_session.payment.paid
+[2025-12-03 09:24:36] Processing Checkout Session: cs_WsLKFe3qEchcvGMRaHebfqzz
+[2025-12-03 09:24:36] Found Order ID: 41
+[2025-12-03 09:24:36] SUCCESS: Database updated for Order #41 to PROCESSING
+[2025-12-03 09:28:09] ------------------------------------------------
+[2025-12-03 09:28:09] Incoming Webhook: POST
+[2025-12-03 09:28:09] SUCCESS: Signature verified.
+[2025-12-03 09:28:09] Event Type: checkout_session.payment.paid
+[2025-12-03 09:28:09] Processing Checkout Session: cs_d71SkiZQ1Uj95P872TCJRApX
+[2025-12-03 09:28:10] Found Order ID: 42
+[2025-12-03 09:28:10] SUCCESS: Database updated for Order #42 to PROCESSING
