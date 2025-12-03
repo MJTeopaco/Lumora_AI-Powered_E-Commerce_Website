@@ -63,11 +63,14 @@ $router->get('/collections/index', 'CollectionsController@index');
 // SHOP ROUTES
 $router->get('/shop/dashboard', 'ShopController@dashboard');
 $router->get('/shop/products', 'ShopController@products');
-$router->get('/shop/add-product', 'ShopController@addProduct');
-$router->post('/shop/products/store', 'ShopController@storeProduct');
 $router->get('/shop/orders', 'ShopController@orders');
 $router->get('/shop/cancellations', 'ShopController@cancellations');
 $router->get('/shop/addresses', 'ShopController@addresses');
+
+// ADD PRODUCT ROUTES
+$router->get('/shop/add-product', 'ShopController@addProduct');
+$router->post('/shop/products/store', 'ShopController@storeProduct');
+$router->post('/api/products/predict-tags', 'ShopController@predictTags');
 
 // My Products Routes
 $router->get('/shop/products', 'ProductManagementController@index');
@@ -76,6 +79,14 @@ $router->post('/shop/products/update-status', 'ProductManagementController@updat
 $router->post('/shop/products/delete', 'ProductManagementController@delete');
 $router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
 $router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
+
+
+// Shop Profile Routes
+$router->get('/shop/shop-profile', 'ShopProfileController@index');
+$router->post('/shop/profile/update-basic-info', 'ShopProfileController@updateBasicInfo');
+$router->post('/shop/profile/update-address', 'ShopProfileController@updateAddress');
+$router->post('/shop/profile/upload-banner', 'ShopProfileController@uploadBanner');
+$router->post('/shop/profile/upload-profile', 'ShopProfileController@uploadProfile');
 
 // <----------------------------------------------------------------------------------------->
 // ADMIN ROUTES
@@ -94,5 +105,3 @@ $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
 $router->post('/admin/delete-category', 'AdminController@deleteCategory');
-
-

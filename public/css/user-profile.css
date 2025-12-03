@@ -1,5 +1,5 @@
 /*
- * Profile Pages Styles
+ * Profile Pages Styles - Refactored for Gold/White/Black Theme
  * app/public/css/profile.css
  */
 
@@ -13,54 +13,59 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background-color: #f5f5f5;
-    color: #1f2937;
+    color: #1f2937; /* Near Black Text */
 }
 
+/* Color Palette:
+   Primary Gold: #B8860B (Dark Goldenrod)
+   Accent Gold: #FFD700 (Pure Gold)
+   Light Gold Background: #FFF8E1
+   Dark Text/Header: #1A1A1A / #333333
+*/
+
 /* ==================== HEADER & NAVIGATION ==================== */
-            /* =========================================
-            * 2. HEADER & ALERT MESSAGES
-            * ========================================= */
+/* 2. HEADER & ALERT MESSAGES */
+.header {
+    /* Changed gradient to black/dark grey */
+    background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
 
-            .header {
-                background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
-                padding: 1rem 2rem;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-                position: sticky;
-                top: 0;
-                z-index: 100;
-            }
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-            .nav-container {
-                max-width: 1400px;
-                margin: 0 auto;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
+.logo {
+    color: #ffffff; /* Pure Gold */
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-decoration: none;
+}
 
-            .logo {
-                color: #ffffff;
-                font-size: 28px;
-                font-weight: 700;
-                letter-spacing: 2px;
-                text-decoration: none;
-            }
+.back-link {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 14px;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
 
-            .back-link {
-                color: #ffffff;
-                text-decoration: none;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 14px;
-                padding: 0.5rem 1rem;
-                border-radius: 8px;
-                transition: background-color 0.3s ease;
-            }
-
-            .back-link:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-            }
+.back-link:hover {
+    background-color: rgba(255, 215, 0, 0.2); /* Subtle Gold hover */
+}
 
 /* Search Bar */
 .search-container {
@@ -96,7 +101,7 @@ body {
     right: 4px;
     top: 50%;
     transform: translateY(-50%);
-    background: #174c7a;
+    background: #1A1A1A; /* Black search button */
     border: none;
     width: 40px;
     height: 40px;
@@ -109,7 +114,7 @@ body {
 }
 
 .search-btn:hover {
-    background: #ea580c;
+    background: #B8860B; /* Primary Gold hover */
 }
 
 .search-btn i {
@@ -151,7 +156,7 @@ body {
     opacity: 0.8;
 }
 
-/* ==================== BUTTONS ==================== */
+/* ==================== BUTTONS (Global) ==================== */
 .btn {
     padding: 0.6rem 1.5rem;
     border: none;
@@ -167,26 +172,28 @@ body {
 
 .btn-primary {
     background-color: #ffffff;
-    color: #1e4d3d;
+    color: #1A1A1A; /* Black text */
 }
 
 .btn-primary:hover {
-    background-color: #f0f5f3;
+    background-color: #B8860B; /* Primary Gold hover */
+    color: #ffffff;
     transform: translateY(-2px);
 }
 
 .btn-success {
-    background-color: #10b981;
+    background-color: #B8860B; /* Primary Gold */
     color: #ffffff;
 }
 
 .btn-success:hover {
-    background-color: #059669;
+    background-color: #FFD700; /* Pure Gold hover */
+    color: #1A1A1A;
     transform: translateY(-2px);
 }
 
 .btn-add-cart {
-    background-color: #2d5a4a;
+    background-color: #1A1A1A; /* Black */
     color: #ffffff;
     width: 100%;
     padding: 0.8rem;
@@ -194,7 +201,7 @@ body {
 }
 
 .btn-add-cart:hover {
-    background-color: #1e4d3d;
+    background-color: #B8860B; /* Primary Gold hover */
 }
 
 .btn-disabled {
@@ -225,7 +232,7 @@ body {
 }
 
 .icon-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 215, 0, 0.1); /* Subtle gold hover */
 }
 
 .icon-btn i {
@@ -255,12 +262,12 @@ body {
     text-align: center;
 }
 
-/* ==================== PROFILE BUTTON ==================== */
+/* ==================== PROFILE BUTTON (Header) ==================== */
 .profile-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 215, 0, 0.15); /* Light Gold BG */
     border: none;
     color: #ffffff;
     cursor: pointer;
@@ -271,21 +278,21 @@ body {
 }
 
 .profile-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 215, 0, 0.3); /* Darker Gold hover */
 }
 
 .profile-avatar {
     width: 35px;
     height: 35px;
     border-radius: 50%;
-    background-color: #ffffff;
+    background-color: #B8860B; /* Primary Gold background */
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    color: #1e4d3d;
+    color: #1A1A1A; /* Black text */
     font-size: 14px;
-    border: 2px solid #ffffff;
+    border: 2px solid #FFD700; /* Accent Gold border */
     overflow: hidden;
 }
 
@@ -312,9 +319,9 @@ body {
 }
 
 .alert-success {
-    background-color: #d1fae5;
-    border-left: 4px solid #10b981;
-    color: #065f46;
+    background-color: #fff8e1; /* Light Gold BG */
+    border-left: 4px solid #B8860B; /* Primary Gold Border */
+    color: #374151; /* Dark Grey Text */
 }
 
 .alert-error {
@@ -372,13 +379,14 @@ body {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    /* Gradient changed to Gold/Black */
+    background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%); 
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 32px;
     font-weight: 600;
-    color: #ffffff;
+    color: #1A1A1A; /* Black */
     border: 3px solid #e5e7eb;
     overflow: hidden;
 }
@@ -426,14 +434,14 @@ body {
 }
 
 .menu-item:hover {
-    background-color: #f9fafb;
-    color: #1e4d3d;
+    background-color: #FFF8E1; /* Light gold background on hover */
+    color: #B8860B; /* Primary Gold text on hover */
 }
 
 .menu-item.active {
-    background-color: #f0f5f3;
-    color: #1e4d3d;
-    border-left-color: #2d5a4a;
+    background-color: #FFF8E1; /* Light gold background for active item */
+    color: #B8860B; /* Primary Gold text for active item */
+    border-left-color: #B8860B; /* Primary Gold sidebar border */
     font-weight: 600;
 }
 
@@ -539,13 +547,14 @@ body {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%);
+    /* Gradient changed to Gold/Black */
+    background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%); 
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 32px;
     font-weight: 600;
-    color: #ffffff;
+    color: #1A1A1A; /* Black */
     border: 2px solid #e5e7eb;
 }
 
@@ -692,8 +701,8 @@ body {
 .form-select:focus,
 .form-textarea:focus {
     outline: none;
-    border-color: #2d5a4a;
-    box-shadow: 0 0 0 3px rgba(45, 90, 74, 0.1);
+    border-color: #B8860B; /* Primary Gold Focus Border */
+    box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.2); /* Gold Shadow */
 }
 
 .form-input.error {
@@ -794,7 +803,7 @@ body {
     color: #6b7280;
 }
 
-/* ==================== BUTTONS ==================== */
+/* ==================== BUTTONS (Local) ==================== */
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
@@ -810,12 +819,12 @@ body {
 }
 
 .btn-primary {
-    background-color: #2d5a4a;
+    background-color: #B8860B; /* Primary Gold button */
     color: #ffffff;
 }
 
 .btn-primary:hover {
-    background-color: #1e4d3d;
+    background-color: #FFD700; /* Pure Gold hover */
     transform: translateY(-2px);
 }
 
@@ -849,13 +858,13 @@ body {
 }
 
 .address-card:hover {
-    border-color: #2d5a4a;
-    box-shadow: 0 4px 12px rgba(45, 90, 74, 0.1);
+    border-color: #B8860B; /* Primary Gold hover border */
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.1); /* Gold shadow */
 }
 
 .address-card.default {
-    border-color: #2d5a4a;
-    background-color: #f0f5f3;
+    border-color: #B8860B; /* Primary Gold default border */
+    background-color: #FFF8E1; /* Light gold background for default card */
 }
 
 .address-header {
@@ -871,11 +880,11 @@ body {
     gap: 0.5rem;
     font-size: 14px;
     font-weight: 600;
-    color: #2d5a4a;
+    color: #B8860B; /* Primary Gold text */
 }
 
 .default-badge {
-    background-color: #2d5a4a;
+    background-color: #B8860B; /* Primary Gold badge */
     color: #ffffff;
     font-size: 11px;
     padding: 0.25rem 0.5rem;
@@ -999,6 +1008,3 @@ body {
         gap: 1rem;
     }
 }
-
-
-
