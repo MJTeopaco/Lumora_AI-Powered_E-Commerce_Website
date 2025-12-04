@@ -19,7 +19,6 @@ class Product {
 
     /**
      * Get all published products with basic info
-     * FIXED: Added GROUP_CONCAT for categories to support filtering
      */
     public function getAllProducts($limit = 12, $offset = 0) {
         $query = "SELECT 
@@ -53,7 +52,6 @@ class Product {
 
     /**
      * Get featured products for homepage
-     * FIXED: Added categories here too for consistency
      */
     public function getFeaturedProducts($limit = 8) {
         $query = "SELECT 
@@ -119,6 +117,31 @@ class Product {
     }
 
     /**
+     * [FIX ADDED] Get product by ID (Required for Reviews)
+     */
+    public function getProductById($id) {
+        $query = "SELECT 
+                    p.product_id as id,
+                    p.name,
+                    p.short_description,
+                    p.description,
+                    p.cover_picture,
+                    p.slug,
+                    p.shop_id
+                  FROM products p
+                  WHERE p.product_id = ? AND p.is_deleted = 0"; 
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $product = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $product;
+    }
+
+    /**
      * Get product variants
      */
     public function getProductVariants($productId) {
@@ -149,7 +172,6 @@ class Product {
     
     /**
      * Get products by search term
-     * FIXED: Added categories selection
      */
     public function getProductsBySearch($searchTerm) {
         $query = "SELECT 
@@ -213,8 +235,6 @@ class Product {
         
         return $products;
     }
-
-    // ... (Keep existing helper methods like hasStock, updateStock, getAllCategories, etc. unchanged)
     
     public function hasStock($variantId, $quantity = 1) {
         $query = "SELECT quantity FROM product_variants WHERE variant_id = ? AND is_active = 1";
@@ -228,6 +248,9 @@ class Product {
         return $variant && $variant['quantity'] >= $quantity;
     }
 
+    /**
+     * Decrease stock
+     */
     public function updateStock($variantId, $quantity) {
         $query = "UPDATE product_variants 
                   SET quantity = quantity - ?,
@@ -236,6 +259,23 @@ class Product {
         
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("iii", $quantity, $variantId, $quantity);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+
+    /**
+     * NEW: Increase stock (for cancellations/refunds)
+     */
+    public function increaseStock($variantId, $quantity) {
+        $query = "UPDATE product_variants 
+                  SET quantity = quantity + ?,
+                      updated_at = CURRENT_TIMESTAMP
+                  WHERE variant_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $quantity, $variantId);
         $result = $stmt->execute();
         $stmt->close();
         
@@ -277,8 +317,6 @@ class Product {
         
         return $counts;
     }
-
-    // ... (Keep createProduct, updateProduct, deleteProduct, and other CRUD methods unchanged)
     
     public function createProduct($data) {
         $stmt = $this->conn->prepare("

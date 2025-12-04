@@ -9,7 +9,8 @@ use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Address;
 use App\Models\Order;
-use App\Models\Transaction;
+use App\Models\Product; 
+use App\Models\OrderItem;
 use App\Helpers\ValidationHelper;
 use App\Helpers\RedirectHelper;
 
@@ -20,6 +21,8 @@ class ProfileController extends Controller
     protected $profileModel;
     protected $addressModel;
     protected $orderModel;
+    protected $productModel;
+    protected $orderItemModel;
 
     public function __construct()
     {
@@ -27,6 +30,8 @@ class ProfileController extends Controller
         $this->profileModel = new UserProfile();
         $this->addressModel = new Address();
         $this->orderModel = new Order();
+        $this->productModel = new Product();
+        $this->orderItemModel = new OrderItem();
 
         // Require authentication for all profile actions
         if (!Session::has('user_id')) {
@@ -344,7 +349,6 @@ class ProfileController extends Controller
         }
 
         // Get addresses from database
-        // These are now retrieved as plain text from the model
         $addresses = $this->addressModel->getAddressesByUserId_User($userId);
 
         // Check for status messages
@@ -365,7 +369,7 @@ class ProfileController extends Controller
     }
 
     // ========================================================================
-    // ORDER MANAGEMENT METHODS - NEW FOR CUSTOMER SIDE
+    // ORDER MANAGEMENT METHODS
     // ========================================================================
 
     /**
@@ -469,8 +473,8 @@ class ProfileController extends Controller
             exit;
         }
         
-        // Get order items
-        $orderItems = $this->getOrderItems($orderId);
+        // Get order items - NOW PASSING USERID to check for reviews
+        $orderItems = $this->getOrderItems($orderId, $userId);
         
         // If AJAX request
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
@@ -501,7 +505,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Cancel an order with Refund Logic
+     * Cancel an order
      */
     public function cancelOrder()
     {
@@ -519,61 +523,53 @@ class ProfileController extends Controller
             return;
         }
 
-        // 1. Get Full Order Details
+        // Get the order status BEFORE cancelling to see if we need to restore stock
         $order = $this->orderModel->getOrderById($orderId, $userId);
-
+        
         if (!$order) {
             $this->redirectToOrders('Order not found', 'error');
             return;
         }
 
-        // 2. Logic Split: Paid vs Unpaid
-        if ($order['order_status'] === 'PENDING_PAYMENT') {
-            // Unpaid: Simple cancellation
-            if ($this->orderModel->cancelOrder($orderId, $userId)) {
-                $this->redirectToOrders('Order cancelled successfully', 'success');
-            } else {
-                $this->redirectToOrders('Unable to cancel order', 'error');
+        $previousStatus = $order['order_status'];
+
+        // Try to cancel
+        if ($this->orderModel->cancelOrder($orderId, $userId)) {
+            
+            // STOCK RESTORATION: Only if it was PROCESSING (Paid)
+            if ($previousStatus === 'PROCESSING') {
+                $items = $this->orderItemModel->getOrderItems($orderId);
+                foreach ($items as $item) {
+                    $this->productModel->increaseStock($item['variant_id'], $item['quantity']);
+                }
             }
-        } 
-        elseif (in_array($order['order_status'], ['PROCESSING', 'PAID', 'READY_TO_SHIP'])) {
-            // Paid: Request Refund (Do NOT auto-refund)
-            $this->handlePaidOrderCancellation($order, $userId);
-        } 
-        else {
-            $this->redirectToOrders('Order cannot be cancelled at this stage', 'error');
-        }
-    }
 
-    /**
-     * Helper to handle refund process
-     */
-    private function handlePaidOrderCancellation($order, $userId) {
-        // Mark as refund requested so Seller can review
-        $success = $this->orderModel->updateOrderStatus($order['order_id'], 'REFUND_REQUESTED', $userId);
-
-        if ($success) {
-            $this->redirectToOrders('Cancellation submitted. Waiting for seller approval.', 'info');
+            $this->redirectToOrders('Order cancelled successfully', 'success');
         } else {
-            $this->redirectToOrders('Failed to submit cancellation request.', 'error');
+            $this->redirectToOrders('Unable to cancel order. It may have already been processed.', 'error');
         }
     }
 
     /**
      * Get order items with product details
+     * UPDATED: Checks if user has already reviewed the product
      */
-    private function getOrderItems($orderId)
+    private function getOrderItems($orderId, $userId)
     {
         $conn = $this->orderModel->getConnection();
         
+        // Added slug and review check subquery
         $query = "SELECT 
                     oi.*,
+                    p.product_id,
                     p.name as product_name,
                     p.cover_picture,
+                    p.slug as product_slug,
                     pv.color,
                     pv.size,
                     pv.material,
-                    s.shop_name
+                    s.shop_name,
+                    (SELECT COUNT(*) FROM product_reviews pr WHERE pr.product_id = p.product_id AND pr.user_id = ?) as has_reviewed
                   FROM order_items oi
                   JOIN product_variants pv ON oi.variant_id = pv.variant_id
                   JOIN products p ON pv.product_id = p.product_id
@@ -581,7 +577,8 @@ class ProfileController extends Controller
                   WHERE oi.order_id = ?";
         
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $orderId);
+        // Bind userId for the review check, and orderId for the items
+        $stmt->bind_param("ii", $userId, $orderId);
         $stmt->execute();
         $result = $stmt->get_result();
         $items = $result->fetch_all(MYSQLI_ASSOC);
@@ -725,5 +722,15 @@ class ProfileController extends Controller
         ];
         $url = '/profile/addresses?' . http_build_query($params);
         RedirectHelper::redirect($url);
+    }
+    
+    // Override base Controller to handle custom redirects for Profile actions
+    protected function verifyCsrfToken() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!isset($_POST['csrf_token']) || !hash_equals(Session::get('csrf_token'), $_POST['csrf_token'])) {
+                // Handle CSRF failure
+                RedirectHelper::redirect('/profile?status=error&message=Invalid+security+token');
+            }
+        }
     }
 }

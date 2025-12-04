@@ -154,13 +154,10 @@
                 </div>
 
                 <div class="order-footer">
-                    <button 
-                        class="btn-view-order" 
-                        onclick="viewOrderDetails(<?= $order['order_id'] ?>)"
-                    >
+                    <a href="/profile/orders/details?order_id=<?= $order['order_id'] ?>" class="btn-view-order" style="text-decoration: none;">
                         <i class="fas fa-eye"></i>
                         View Details
-                    </button>
+                    </a>
 
                     <?php if ($order['order_status'] === 'PENDING_PAYMENT' || $order['order_status'] === 'PROCESSING'): ?>
                         <button 
@@ -173,32 +170,15 @@
                     <?php endif; ?>
 
                     <?php if ($order['order_status'] === 'DELIVERED'): ?>
-                        <button class="btn-secondary-order">
+                        <a href="/profile/orders/details?order_id=<?= $order['order_id'] ?>" class="btn-secondary-order" style="text-decoration: none;">
                             <i class="fas fa-star"></i>
-                            Rate & Review
-                        </button>
+                            Rate Items
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
-</div>
-
-<div id="orderDetailsModal" class="modal-overlay">
-    <div class="modal-content-large">
-        <div class="modal-header-custom">
-            <h3><i class="fas fa-file-invoice"></i> Order Details</h3>
-            <button class="modal-close-btn" onclick="closeOrderModal()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body-custom" id="orderDetailsContent">
-            <div class="loading-container">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading order details...</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div id="cancelOrderModal" class="modal-overlay">
@@ -231,5 +211,4 @@
 </div>
 
 <input type="hidden" id="csrfToken" value="<?= $_SESSION['csrf_token'] ?>">
-
 <script src="/js/profile-orders.js"></script>

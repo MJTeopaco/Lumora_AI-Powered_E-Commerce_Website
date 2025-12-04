@@ -10,6 +10,7 @@ use App\Helpers\RedirectHelper;
 use App\Helpers\ValidationHelper;
 use App\Models\User;
 use App\Models\RememberMeToken;
+use App\Models\Notification; // Added Notification Model
 use App\Core\Controller;
 use DateTime;
 
@@ -21,6 +22,7 @@ class AuthController extends Controller {
         $this->userModel = new User();
     }
 
+    // ... [Keep showLogin and handleLoginStep1 exactly as they are] ...
     public function showLogin() {
         if (Session::has('user_id')) {
             RedirectHelper::redirect('/');
@@ -92,6 +94,7 @@ class AuthController extends Controller {
         }
     }
 
+    // --- UPDATED METHOD ---
     public function handleLoginStep2() {
         $this->verifyCsrfToken(); // CSRF Check
 
@@ -127,7 +130,8 @@ class AuthController extends Controller {
         }
 
         Session::regenerate();
-        Session::set('user_id', Session::get('login_user_id_pending'));
+        $userId = Session::get('login_user_id_pending');
+        Session::set('user_id', $userId);
         Session::set('username', Session::get('login_username_pending'));
         Session::set('last_activity', time()); 
 
@@ -143,7 +147,12 @@ class AuthController extends Controller {
         Session::unset('login_otp_expiry');
         Session::unset('login_otp_attempts');
 
-        $role = $this->userModel->getUserRoles(Session::get('user_id'));
+        // --- NEW CODE: Set Seller Status ---
+        $isSeller = $this->userModel->checkRole($userId);
+        Session::set('is_seller', $isSeller);
+        // -----------------------------------
+
+        $role = $this->userModel->getUserRoles($userId);
         
         if (in_array('admin', $role)) {
             RedirectHelper::redirect('/admin/dashboard'); 
@@ -151,7 +160,9 @@ class AuthController extends Controller {
             RedirectHelper::redirect('/'); 
         }
     }
+    // --- END UPDATED METHOD ---
 
+    // ... [Keep the rest of the file (handleRegisterStep1, verifyEmail, etc.) exactly as is] ...
     public function handleRegisterStep1() {
         $this->verifyCsrfToken(); // CSRF Check
 
@@ -241,6 +252,15 @@ class AuthController extends Controller {
         if ($this->userModel->create($data['username'], $email, $data['password'])) {
             $user = $this->userModel->findByEmail($email);
             $this->userModel->markEmailVerified($user['user_id']);
+            
+            // --- ENHANCED NOTIFICATION SYSTEM INTEGRATION ---
+            // Send welcome notification
+            $notificationModel = new Notification();
+            $notificationModel->notifyWelcome(
+                $user['user_id'],
+                $data['username']
+            );
+            // ------------------------------------------------
             
             EmailHelper::sendWelcomeEmail($email, $data['username']);
             
@@ -369,13 +389,7 @@ class AuthController extends Controller {
         exit();
     }
     
-    // Note: Resend logic typically via AJAX, might not send CSRF in all setups, 
-    // but standard practice is to include it in headers. For now, assuming simple fetch without CSRF on these read-only/safe ops or add it.
-    // Since these send emails (action), they SHOULD be protected.
-    // You'll need to update JS to send CSRF token for these too.
     public function resendLoginOtp() {
-        // $this->verifyCsrfToken(); // Enable if JS is updated to send token
-        
         if (!Session::has('login_user_id_pending')) {
             $this->jsonResponse(false, 'Session expired. Please login again.');
         }
@@ -398,8 +412,6 @@ class AuthController extends Controller {
     }
 
     public function resendForgotOtp() {
-        // $this->verifyCsrfToken(); // Enable if JS is updated
-        
         if (!Session::has('forgot_email')) {
             $this->jsonResponse(false, 'Session expired. Please start over.');
         }
@@ -421,7 +433,6 @@ class AuthController extends Controller {
     }
 
     public function logout() {
-        // Logout should be protected
         $this->verifyCsrfToken();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

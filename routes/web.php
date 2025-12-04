@@ -58,6 +58,8 @@ $router->post('/cart/validate', 'CartController@validateCart');
 
 // Notifications
 $router->get('/notifications', 'NotificationsController@index');
+$router->get('/notifications/latest', 'NotificationsController@getLatest'); // For AJAX header
+$router->post('/notifications/mark-read', 'NotificationsController@markAsRead'); // For AJAX click
 
 // <----------------------------------------------------------------------------------------->
 // SELLER REGISTRATION ROUTES
@@ -127,3 +129,29 @@ $router->get('/shop/orders/details', 'ShopController@getOrderDetails');
 
 // Shop Orders - Update Status (AJAX)
 $router->post('/shop/orders/update-status', 'ShopController@updateOrderStatus');
+
+// Customer Review Routes
+$router->get('/reviews/create', 'ReviewController@showReviewForm');
+$router->post('/reviews/submit', 'ReviewController@submitReview');
+$router->get('/reviews/get-product-reviews', 'ReviewController@getProductReviews');
+$router->post('/reviews/update', 'ReviewController@updateReview');
+$router->post('/reviews/delete', 'ReviewController@deleteReview');
+$router->post('/reviews/mark-helpful', 'ReviewController@markHelpful');
+
+// Seller Response to Reviews
+$router->post('/reviews/seller-response', 'ReviewController@addSellerResponse');
+
+// User's Own Reviews (in Profile)
+$router->get('/profile/reviews', 'ProfileController@myReviews');
+
+// Shop Reviews Management (for sellers)
+$router->get('/shop/reviews', 'ShopController@reviews');
+
+// ENHANCED NOTIFICATION ROUTES
+$router->get('/notifications', 'NotificationsController@index');
+$router->get('/notifications/get-latest', 'NotificationsController@getLatest');
+$router->get('/notifications/get-counts', 'NotificationsController@getCounts');
+$router->post('/notifications/mark-read', 'NotificationsController@markAsRead');
+$router->post('/notifications/mark-all-read', 'NotificationsController@markAllAsRead');
+$router->post('/notifications/delete', 'NotificationsController@deleteNotification');
+$router->post('/notifications/delete-all-read', 'NotificationsController@deleteAllRead');

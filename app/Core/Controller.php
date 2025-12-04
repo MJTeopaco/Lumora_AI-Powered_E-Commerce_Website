@@ -10,8 +10,10 @@ class Controller {
     
     /**
      * Load a view file with data using the OOP View System.
+     * Updated to support specific layouts (e.g., 'shop', 'admin').
      */
     protected function view($view, $data = [], $layout = 'default') { 
+        // Create view, set the layout, and render it
         $viewInstance = View::make($view, $data)->setLayout($layout);
         $viewInstance->render();
     }

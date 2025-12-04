@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\Transaction;
 use App\Models\Address;
 use App\Models\UserProfile;
+use App\Models\Notification; // Added Notification Model
 use App\Helpers\PayMongoService;
 use App\Helpers\RedirectHelper;
 
@@ -228,6 +229,22 @@ class CheckoutController extends Controller {
         // --- CHANGED: Clear cart HERE (after successful payment/return) ---
         $this->cartModel->clearCart($userId);
         $this->cartModel->markCartCheckedOut($userId);
+        
+        // --- ENHANCED NOTIFICATION SYSTEM INTEGRATION ---
+        $notificationModel = new Notification();
+        // 1. Notify Payment Success
+        $notificationModel->notifyPaymentSuccess(
+            $userId,
+            $orderId,
+            $order['total_amount']
+        );
+        // 2. Notify Order Placed
+        $notificationModel->notifyOrderPlaced(
+            $userId,
+            $orderId,
+            $order['total_amount']
+        );
+        // ------------------------------------------------
         
         $orderItems = $this->orderItemModel->getOrderItems($orderId);
         $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);

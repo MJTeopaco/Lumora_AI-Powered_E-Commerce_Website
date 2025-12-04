@@ -6,7 +6,7 @@ $status = $order['order_status'] ?? 'PENDING';
 $statusClass = strtolower(str_replace('_', '-', $status));
 $statusDisplay = ucwords(str_replace('_', ' ', $status));
 
-// 2. Safe Address Handling (Filters out nulls automatically)
+// 2. Safe Address Handling
 $addressParts = [
     $order['address_line_1'] ?? null,
     $order['address_line_2'] ?? null,
@@ -16,13 +16,11 @@ $addressParts = [
     $order['region'] ?? null,
     $order['postal_code'] ?? null
 ];
-// Remove empty/null values and join with commas
 $formattedAddress = implode(', ', array_filter($addressParts));
 if (empty($formattedAddress)) {
     $formattedAddress = 'No address details available';
 }
 
-// 3. Username Only (As requested)
 $username = $order['username'] ?? 'Valued Customer';
 ?>
 
@@ -53,7 +51,7 @@ $username = $order['username'] ?? 'Valued Customer';
         gap: 1rem;
         margin-top: 1rem;
     }
-    /* Stepper for Order Status */
+    /* Timeline Styles */
     .status-timeline {
         display: flex;
         justify-content: space-between;
@@ -111,6 +109,60 @@ $username = $order['username'] ?? 'Valued Customer';
     .timeline-step.active .step-label,
     .timeline-step.completed .step-label {
         color: #1A1A1A;
+    }
+    
+    /* Review Button Style */
+    .btn-review-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        background-color: #D4AF37;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        margin-top: 8px;
+    }
+    .btn-review-item:hover {
+        background-color: #c49f30;
+    }
+
+    /* Reviewed Badge Styles */
+    .badge-reviewed {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        background-color: #e9ecef;
+        color: #28a745;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: default;
+        margin-top: 8px;
+    }
+    .btn-view-product {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        margin-top: 8px;
+        margin-left: 5px;
+    }
+    .btn-view-product:hover {
+        background-color: #e2e6ea;
+        color: #000;
     }
 </style>
 
@@ -255,6 +307,25 @@ $username = $order['username'] ?? 'Valued Customer';
                                     <span class="item-price">₱<?= number_format($item['price_at_purchase'] ?? 0, 2) ?> each</span>
                                     <span class="item-total">₱<?= number_format($item['total_price'] ?? 0, 2) ?></span>
                                 </div>
+
+                                <?php if (($order['order_status'] ?? '') === 'DELIVERED'): ?>
+                                    <div class="item-actions">
+                                        <?php if (!empty($item['has_reviewed'])): ?>
+                                            <span class="badge-reviewed">
+                                                <i class="fas fa-check-circle"></i> Reviewed
+                                            </span>
+                                            <?php if (!empty($item['product_slug'])): ?>
+                                                <a href="/products/<?= htmlspecialchars($item['product_slug']) ?>" class="btn-view-product">
+                                                    View Product
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <a href="/reviews/create?product_id=<?= $item['product_id'] ?>" class="btn-review-item">
+                                                <i class="fas fa-star"></i> Write a Review
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
