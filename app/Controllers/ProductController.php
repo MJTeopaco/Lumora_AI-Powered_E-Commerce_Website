@@ -25,79 +25,83 @@ class ProductController extends Controller {
     }
 
     /**
-     * Show single product detail page (customer-facing)
-     * @param string $slug - Product slug from URL
-     */
-    public function show($slug) {
-        // --- 1. Get Product Data ---
-        $product = $this->productModel->getSingleProduct($slug);
+ * Show single product detail page (customer-facing)
+ * @param string $slug - Product slug from URL
+ */
+public function show($slug) {
+    // --- 1. Get Product Data ---
+    $product = $this->productModel->getSingleProduct($slug);
 
-        if (!$product) {
-            $this->redirect('/404');
-        }
-
-        $product['variants'] = $this->productModel->getProductVariants($product['id']);
-
-        // Get shop information
-        $conn = $this->productModel->getConnection();
-        $stmt = $conn->prepare("SELECT shop_id FROM products WHERE product_id = ?");
-        $stmt->bind_param("i", $product['id']);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $productData = $result->fetch_assoc();
-        $stmt->close();
-
-        $shop = null;
-        if ($productData && $productData['shop_id']) {
-            $shop = $this->shopModel->getShopById($productData['shop_id']);
-        }
-
-        $categories = $this->productModel->getProductCategories($product['id']);
-        $tags = $this->productModel->getProductTags($product['id']);
-
-        // --- 2. Get User/Header Data (Fixes "Sign In" Issue) ---
-        $isLoggedIn = Session::has('user_id');
-        $username = null;
-        $userProfile = null;
-        $notificationCount = 0;
-        $cartCount = 0;
-        $isSeller = false;
-
-        if ($isLoggedIn) {
-            $userId = Session::get('user_id');
-            $username = Session::get('username');
-            
-            // Get user profile for avatar
-            $userProfile = $this->profileModel->getByUserId($userId);
-            if (!$userProfile) {
-                $userProfile = ['profile_pic' => ''];
-            }
-            
-            // Check seller status
-            $isSeller = $this->userModel->checkRole($userId);
-            
-            // Placeholder counts (implement real logic as needed)
-            $notificationCount = 0; 
-            $cartCount = 0; 
-        }
-
-        $data = [
-            'pageTitle' => $product['name'] . ' - Lumora',
-            'product' => $product,
-            'shop' => $shop,
-            'categories' => $categories,
-            'tags' => $tags,
-            // Pass header data to view
-            'isLoggedIn' => $isLoggedIn,
-            'username' => $username,
-            'userProfile' => $userProfile,
-            'notificationCount' => $notificationCount,
-            'cartCount' => $cartCount,
-            'isSeller' => $isSeller
-        ];
-
-        $this->view('products/detail', $data);
+    if (!$product) {
+        $this->redirect('/404');
     }
+
+    $product['variants'] = $this->productModel->getProductVariants($product['id']);
+
+    // Get shop information
+    $conn = $this->productModel->getConnection();
+    $stmt = $conn->prepare("SELECT shop_id FROM products WHERE product_id = ?");
+    $stmt->bind_param("i", $product['id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $productData = $result->fetch_assoc();
+    $stmt->close();
+
+    $shop = null;
+    if ($productData && $productData['shop_id']) {
+        $shop = $this->shopModel->getShopById($productData['shop_id']);
+    }
+
+    $categories = $this->productModel->getProductCategories($product['id']);
+    $tags = $this->productModel->getProductTags($product['id']);
+
+    // --- 2. Get User/Header Data ---
+    $isLoggedIn = Session::has('user_id');
+    $username = null;
+    $userProfile = null;
+    $notificationCount = 0;
+    $cartCount = 0;
+    $isSeller = false;
+
+    if ($isLoggedIn) {
+        $userId = Session::get('user_id');
+        $username = Session::get('username');
+        
+        // Get user profile for avatar
+        $userProfile = $this->profileModel->getByUserId($userId);
+        if (!$userProfile) {
+            $userProfile = ['profile_pic' => ''];
+        }
+        
+        // Check seller status
+        $isSeller = $this->userModel->checkRole($userId);
+        
+        // Get cart count (if you have a Cart model)
+        // $cartCount = $this->cartModel->getCartCount($userId);
+    }
+
+    // --- 3. NEW: Get Review Statistics ---
+    $reviewModel = new \App\Models\ProductReview();
+    $reviewStats = $reviewModel->getProductReviewStats($product['id']);
+
+    $data = [
+        'pageTitle' => $product['name'] . ' - Lumora',
+        'product' => $product,
+        'shop' => $shop,
+        'categories' => $categories,
+        'tags' => $tags,
+        'reviewStats' => $reviewStats, // NEW
+        // Pass header data to view
+        'isLoggedIn' => $isLoggedIn,
+        'username' => $username,
+        'userProfile' => $userProfile,
+        'notificationCount' => $notificationCount,
+        'cartCount' => $cartCount,
+        'isSeller' => $isSeller
+    ];
+
+    $this->view('products/detail', $data);
+}
 
     /**
      * Search products (AJAX endpoint)

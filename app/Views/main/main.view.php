@@ -1,5 +1,5 @@
 <?php
-// app/Views/main/index.view.php
+// app/Views/main/main.view.php
 // Main homepage content to be injected into default.layout.php via $content
 
 // Prevent undefined variable warnings
@@ -206,13 +206,20 @@ $isLoggedIn = $isLoggedIn ?? false;
         <?php foreach ($products as $product): ?>
           <div class="product-card">
             <div class="product-image">
-              <img src="<?= htmlspecialchars($product['image']) ?>" 
-                   alt="<?= htmlspecialchars($product['name']) ?>"
-                   loading="lazy">
+              <?php if (!empty($product['image'])): ?>
+                  <img src="<?= htmlspecialchars($product['image']) ?>" 
+                       alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>"
+                       loading="lazy">
+              <?php else: ?>
+                  <div class="no-image-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
+                      <i class="fas fa-image" style="font-size: 2rem; color: #ccc;"></i>
+                  </div>
+              <?php endif; ?>
             </div>
+            
             <div class="product-info">
-                <div class="product-category"><?= htmlspecialchars($product['category']) ?></div>
-                <h3 class="product-name"><?= htmlspecialchars($product['name']) ?></h3>
+                <div class="product-category"><?= htmlspecialchars($product['category'] ?? 'General') ?></div>
+                <h3 class="product-name"><?= htmlspecialchars($product['name'] ?? 'Unnamed Product') ?></h3>
                 
                 <?php if (!empty($product['description'])): ?>
                     <p class="product-description"><?= htmlspecialchars($product['description']) ?></p>
@@ -220,28 +227,32 @@ $isLoggedIn = $isLoggedIn ?? false;
                 
                 <p class="product-price">
                   <?php if (!empty($product['old_price'])): ?>
-                    <span class="current">₱<?= number_format($product['price'], 2) ?></span>
+                    <span class="current">₱<?= number_format($product['price'] ?? 0, 2) ?></span>
                     <del class="old">₱<?= number_format($product['old_price'], 2) ?></del>
                   <?php else: ?>
-                    ₱<?= number_format($product['price'], 2) ?>
+                    ₱<?= number_format($product['price'] ?? 0, 2) ?>
                   <?php endif; ?>
                 </p>
                 
-                <div class="product-stock <?= $product['stock'] > 10 ? 'stock-available' : ($product['stock'] > 0 ? 'stock-low' : 'stock-out') ?>">
-                    <?php if ($product['stock'] > 10): ?>
+                <?php 
+                    $stock = $product['stock'] ?? 0;
+                    $stockClass = $stock > 10 ? 'stock-available' : ($stock > 0 ? 'stock-low' : 'stock-out');
+                ?>
+                <div class="product-stock <?= $stockClass ?>">
+                    <?php if ($stock > 10): ?>
                         ✓ In Stock
-                    <?php elseif ($product['stock'] > 0): ?>
-                        ⚠ Only <?= $product['stock'] ?> left!
+                    <?php elseif ($stock > 0): ?>
+                        ⚠ Only <?= $stock ?> left!
                     <?php else: ?>
                         ✗ Out of Stock
                     <?php endif; ?>
                 </div>
                 
                 <?php if ($isLoggedIn): ?>
-                    <?php if ($product['stock'] > 0): ?>
+                    <?php if ($stock > 0): ?>
                         <form method="POST" action="/cart/add">
-                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                            <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
+                            <input type="hidden" name="product_id" value="<?= $product['id'] ?? '' ?>">
                             <input type="hidden" name="quantity" value="1">
                             <button type="submit" class="btn btn-add-cart">Add to Cart</button>
                         </form>
