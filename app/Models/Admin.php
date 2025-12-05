@@ -424,4 +424,70 @@ class Admin {
         $stmt->close();
         return $categories;
     }
+    // ==================== REPORTING & SALES ====================
+
+    public function getSalesOverview($startDate, $endDate) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                COUNT(DISTINCT order_id) as total_orders,
+                SUM(total_amount) as total_revenue,
+                AVG(total_amount) as average_order_value
+            FROM orders 
+            WHERE order_status = 'DELIVERED' 
+            AND created_at BETWEEN ? AND ?
+        ");
+        
+        // Append time to dates to cover full days
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+        
+        $stmt->bind_param("ss", $start, $end);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_assoc();
+    }
+
+    public function getDailySales($startDate, $endDate) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                DATE(created_at) as date, 
+                SUM(total_amount) as revenue,
+                COUNT(order_id) as orders
+            FROM orders 
+            WHERE order_status = 'DELIVERED' 
+            AND created_at BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+        
+        $stmt->bind_param("ss", $start, $end);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getTopSellingProducts($limit = 5) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                p.name,
+                s.shop_name,
+                SUM(oi.quantity) as total_sold,
+                SUM(oi.total_price) as revenue_generated
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.order_id
+            JOIN product_variants pv ON oi.variant_id = pv.variant_id
+            JOIN products p ON pv.product_id = p.product_id
+            JOIN shops s ON p.shop_id = s.shop_id
+            WHERE o.order_status = 'DELIVERED'
+            GROUP BY p.product_id
+            ORDER BY total_sold DESC
+            LIMIT ?
+        ");
+        
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 }

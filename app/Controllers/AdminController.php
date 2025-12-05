@@ -4,8 +4,11 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Admin;
-use App\Models\Notification; // Added
-use App\Models\Shop;         // Added
+use App\Models\User;
+use App\Models\Notification; 
+use App\Models\Shop;
+use App\Models\SupportTicket;
+use App\Models\AuditLog; // Added this import
 
 class AdminController extends Controller {
 
@@ -230,6 +233,33 @@ class AdminController extends Controller {
     }
 
     /**
+     * Unlock User Account
+     */
+    public function unlockUser() {
+        $this->verifyCsrfToken();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/users');
+            exit();
+        }
+
+        $userId = (int)($_POST['user_id'] ?? 0);
+
+        if ($userId <= 0) {
+            Session::set('error', 'Invalid user ID');
+            header('Location: /admin/users');
+            exit();
+        }
+
+        $userModel = new User();
+        $userModel->resetLoginAttempts($userId);
+        
+        Session::set('success', 'User account unlocked successfully');
+        header('Location: /admin/users');
+        exit();
+    }
+
+    /**
      * Sellers Management Page
      */
     public function sellers() {
@@ -280,6 +310,18 @@ class AdminController extends Controller {
                 );
             }
             // ------------------------------------------------
+
+            // --- NEW CODE: Log the approval ---
+            $auditLogger = new AuditLog();
+            $currentAdminId = Session::get('user_id'); // The admin who clicked the button
+            
+            $auditLogger->log(
+                $currentAdminId,       // Who performed the action (The Admin)
+                'APPROVE_SELLER',      // What they did
+                ['approved_user_id' => $userId], // Details (Who they approved)
+                $userId                // Target User ID (optional, helps with filtering)
+            );
+            // ----------------------------------
 
             Session::set('success', 'Seller application approved successfully! The user can now manage their shop.');
         } else {
@@ -348,5 +390,132 @@ class AdminController extends Controller {
 
         header('Location: /admin/sellers');
         exit();
+    }
+
+    /**
+     * Support Tickets Page
+     */
+    public function support() {
+        $username = Session::get('username');
+        $ticketModel = new SupportTicket();
+        
+        $data = [
+            'pageTitle' => 'Support Requests - Lumora',
+            'headerTitle' => 'User Support',
+            'username' => $username,
+            'userRole' => 'Administrator',
+            'tickets' => $ticketModel->getAll()
+        ];
+
+        $this->view('admin/support', $data, 'admin');
+    }
+
+    /**
+     * Resolve Ticket
+     */
+    public function resolveTicket() {
+        $this->verifyCsrfToken();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/support');
+            exit();
+        }
+
+        $ticketId = (int)($_POST['ticket_id'] ?? 0);
+        $ticketModel = new SupportTicket();
+        
+        if ($ticketId > 0 && $ticketModel->markAsResolved($ticketId)) {
+            Session::set('success', 'Ticket marked as resolved.');
+        } else {
+            Session::set('error', 'Failed to update ticket.');
+        }
+        
+        header('Location: /admin/support');
+        exit();
+    }
+
+    // ==================== NEW REPORTING FEATURES ====================
+
+    /**
+     * Main Reports Hub
+     */
+    public function reports() {
+        $this->checkAdminAccess();
+        
+        $data = [
+            'pageTitle' => 'System Reports - Lumora',
+            'headerTitle' => 'Reports & Logs',
+            'username' => Session::get('username'),
+            'userRole' => 'Administrator'
+        ];
+
+        $this->view('admin/reports', $data, 'admin');
+    }
+
+    /**
+     * Audit Logs Viewer with Integrity Check
+     */
+    public function auditLogs() {
+        $this->checkAdminAccess();
+        
+        // Ensure AuditLog model exists
+        $auditModel = new AuditLog();
+        
+        // Filters
+        $filters = [];
+        if (isset($_GET['action_type']) && !empty($_GET['action_type'])) {
+            $filters['action_type'] = $_GET['action_type'];
+        }
+
+        // Pagination
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $logs = $auditModel->getLogs($limit, $offset, $filters);
+        $totalLogs = $auditModel->getTotalLogs();
+        
+        // Verify Integrity of log chain
+        $integrityStatus = $auditModel->verifyChainIntegrity();
+
+        $data = [
+            'pageTitle' => 'Audit Logs - Lumora',
+            'headerTitle' => 'System Audit Logs',
+            'username' => Session::get('username'),
+            'userRole' => 'Administrator',
+            'logs' => $logs,
+            'currentPage' => $page,
+            'totalPages' => ceil($totalLogs / $limit),
+            'integrity' => $integrityStatus
+        ];
+
+        $this->view('admin/audit_logs', $data, 'admin');
+    }
+
+    /**
+     * Sales Reports Viewer
+     */
+    public function salesReports() {
+        $this->checkAdminAccess();
+        
+        $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+        $endDate = $_GET['end_date'] ?? date('Y-m-d');
+        
+        $overview = $this->adminModel->getSalesOverview($startDate, $endDate);
+        $dailySales = $this->adminModel->getDailySales($startDate, $endDate);
+        $topProducts = $this->adminModel->getTopSellingProducts(5);
+
+        $data = [
+            'pageTitle' => 'Sales Reports - Lumora',
+            'headerTitle' => 'Sales Analytics',
+            'username' => Session::get('username'),
+            'userRole' => 'Administrator',
+            'overview' => $overview,
+            'dailySales' => $dailySales,
+            'topProducts' => $topProducts,
+            'dateRange' => ['start' => $startDate, 'end' => $endDate]
+        ];
+
+        $this->view('admin/sales_reports', $data, 'admin');
     }
 }

@@ -9,8 +9,124 @@
     <title>Lumora</title>
     <link rel="stylesheet" href="<?= base_url('/css/auth.css') ?>">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        /* Floating Support Button (Headset Icon) */
+        .support-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #D4AF37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            border: none;
+        }
+
+        .support-fab:hover {
+            transform: scale(1.1);
+            background: #B8942C;
+        }
+
+        /* Support Modal */
+        .support-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(2px);
+        }
+
+        .support-modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .support-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
+        }
+
+        .support-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .support-header h3 {
+            margin: 0;
+            color: #1a1a1a;
+            font-size: 18px;
+        }
+
+        .close-support {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
 </head>
 <body>
+    <button class="support-fab" id="openSupportBtn" title="Contact Support">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+        </svg>
+    </button>
+
+    <div class="support-modal-overlay" id="supportModal">
+        <div class="support-card">
+            <div class="support-header">
+                <h3>Contact Administrator</h3>
+                <button class="close-support" id="closeSupportBtn">&times;</button>
+            </div>
+            <p style="color:#666; font-size:14px; margin-bottom:15px;">
+                Account locked or trouble logging in? Send us a message.
+            </p>
+            <form action="<?= base_url('/support/submit') ?>" method="POST">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:13px; color:#333;">Email or Username</label>
+                    <input type="text" name="identifier" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px;">
+                </div>
+
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:13px; color:#333;">Message</label>
+                    <textarea name="message" required rows="4" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; margin-bottom:15px; font-family:inherit;" placeholder="I cannot access my account because..."></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">Send Request</button>
+            </form>
+        </div>
+    </div>
+
     <div class="auth-container">
         <div class="brand-section">
             <div class="logo">LUMORA</div>
@@ -282,7 +398,7 @@
 
     <?php require __DIR__ . '/../../products/modal.php'; ?>
 
-    <script src="<?= base_url('/js/auth.js') ?>"></script>
+    <script src="<?= base_url('/js/auth.js?v=' . time()) ?>"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

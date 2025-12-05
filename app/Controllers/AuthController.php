@@ -10,7 +10,8 @@ use App\Helpers\RedirectHelper;
 use App\Helpers\ValidationHelper;
 use App\Models\User;
 use App\Models\RememberMeToken;
-use App\Models\Notification; // Added Notification Model
+use App\Models\Notification;
+use App\Models\AuditLog; // Added AuditLog Model
 use App\Core\Controller;
 use DateTime;
 
@@ -22,7 +23,6 @@ class AuthController extends Controller {
         $this->userModel = new User();
     }
 
-    // ... [Keep showLogin and handleLoginStep1 exactly as they are] ...
     public function showLogin() {
         if (Session::has('user_id')) {
             RedirectHelper::redirect('/');
@@ -57,9 +57,9 @@ class AuthController extends Controller {
         $user = $this->userModel->findByIdentifier($identifier);
 
         if ($user) {
+            // Check for indefinite lockout
             if ($user['lockout_until'] && new DateTime() < new DateTime($user['lockout_until'])) {
-                $lockout_time = (new DateTime($user['lockout_until']))->format('g:i A');
-                RedirectHelper::redirectWithError("Account locked. Please try again after $lockout_time.", 'login', 'credentials');
+                RedirectHelper::redirectWithError("Account locked due to too many failed attempts. Please contact the administrator to unlock your account.", 'login', 'credentials');
             }
 
             if (password_verify($password, $user['password'])) {
@@ -83,10 +83,10 @@ class AuthController extends Controller {
                 $isLocked = $this->userModel->incrementLoginAttempts($user['user_id'], $new_attempts);
                 
                 if ($isLocked) {
-                    RedirectHelper::redirectWithError('Account locked for 15 minutes.', 'login', 'credentials');
+                    RedirectHelper::redirectWithError('Account has been locked due to multiple failed login attempts. Please contact admin.', 'login', 'credentials');
                 } else {
                     $attempts_remaining = 3 - $new_attempts;
-                    RedirectHelper::redirectWithError("Invalid credentials.", 'login', 'credentials');
+                    RedirectHelper::redirectWithError("Invalid credentials. $attempts_remaining attempts remaining.", 'login', 'credentials');
                 }
             }
         } else {
@@ -94,7 +94,6 @@ class AuthController extends Controller {
         }
     }
 
-    // --- UPDATED METHOD ---
     public function handleLoginStep2() {
         $this->verifyCsrfToken(); // CSRF Check
 
@@ -135,6 +134,15 @@ class AuthController extends Controller {
         Session::set('username', Session::get('login_username_pending'));
         Session::set('last_activity', time()); 
 
+        // --- NEW CODE: Log the login action ---
+        $auditLogger = new AuditLog();
+        $auditLogger->log(
+            $userId, 
+            'LOGIN', 
+            ['ip' => $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN']
+        );
+        // --------------------------------------
+
         if (Session::get('login_remember_me_pending') === true) {
             $tokenModel = new RememberMeToken();
             $tokenModel->create(Session::get('user_id'));
@@ -147,10 +155,8 @@ class AuthController extends Controller {
         Session::unset('login_otp_expiry');
         Session::unset('login_otp_attempts');
 
-        // --- NEW CODE: Set Seller Status ---
         $isSeller = $this->userModel->checkRole($userId);
         Session::set('is_seller', $isSeller);
-        // -----------------------------------
 
         $role = $this->userModel->getUserRoles($userId);
         
@@ -160,9 +166,7 @@ class AuthController extends Controller {
             RedirectHelper::redirect('/'); 
         }
     }
-    // --- END UPDATED METHOD ---
 
-    // ... [Keep the rest of the file (handleRegisterStep1, verifyEmail, etc.) exactly as is] ...
     public function handleRegisterStep1() {
         $this->verifyCsrfToken(); // CSRF Check
 
@@ -191,7 +195,6 @@ class AuthController extends Controller {
     }
 
     public function verifyEmail() {
-        // GET request, no CSRF token needed for verification link usually, but token serves as validation
         $token = $_GET['token'] ?? '';
         
         if (empty($token)) {
@@ -253,14 +256,11 @@ class AuthController extends Controller {
             $user = $this->userModel->findByEmail($email);
             $this->userModel->markEmailVerified($user['user_id']);
             
-            // --- ENHANCED NOTIFICATION SYSTEM INTEGRATION ---
-            // Send welcome notification
             $notificationModel = new Notification();
             $notificationModel->notifyWelcome(
                 $user['user_id'],
                 $data['username']
             );
-            // ------------------------------------------------
             
             EmailHelper::sendWelcomeEmail($email, $data['username']);
             
