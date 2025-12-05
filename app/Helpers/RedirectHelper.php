@@ -5,8 +5,19 @@ namespace App\Helpers;
 
 class RedirectHelper {
     
+    /**
+     * Redirect to a specific path using base_url() to handle subfolders
+     */
     public static function redirect($path) {
-        header("Location: {$path}");
+        // 1. Check if the path is already a full URL (e.g., http://google.com)
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            header("Location: {$path}");
+        } else {
+            // 2. If it's a relative path, wrap it in base_url()
+            // This ensures '/login' becomes 'http://ngrok.../public/login'
+            $url = base_url($path);
+            header("Location: {$url}");
+        }
         exit();
     }
     
@@ -17,6 +28,7 @@ class RedirectHelper {
             'tab' => $tab,
             'step' => $step
         ];
+        // Note: We pass the relative path here. The redirect() method above will fix it.
         $url = '/login?' . http_build_query($params);
         self::redirect($url);
     }
@@ -37,7 +49,7 @@ class RedirectHelper {
             'status' => 'success',
             'message' => urlencode($message)
         ];
-        $url = '/?' . http_build_query($params); // Redirect to dashboard
+        $url = '/?' . http_build_query($params);
         self::redirect($url);
     }
 }

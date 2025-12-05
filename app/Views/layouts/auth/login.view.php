@@ -1,7 +1,5 @@
 <?php
 // views/auth/login.php
-// This file replaces your old login.html
-// $data is passed from AuthController@showLogin
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -9,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumora</title>
-    <link rel="stylesheet" href="/css/auth.css">
+    <link rel="stylesheet" href="<?= base_url('/css/auth.css') ?>">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
@@ -25,19 +23,18 @@
                 <button class="tab-btn <?php echo ($data['tab'] ?? '') === 'register' ? 'active' : ''; ?>" data-tab="register">Register</button>
             </div>
 
-            <!-- Alert box will be populated by JS -->
             <div id="alert" class="alert <?php echo $data['status'] ?? ''; ?>">
                 <?php echo $data['message'] ?? ''; ?>
             </div>
 
-            <!-- LOGIN FORM -->
             <div id="login-form" class="form-content <?php echo ($data['tab'] ?? 'login') === 'login' ? 'active' : ''; ?>">
                 
                 <div id="login-step-credentials" class="login-step <?php echo (($data['tab'] ?? 'login') === 'login' && ($data['step'] ?? 'credentials') === 'credentials') ? 'active' : ''; ?>">
                     <h2>Welcome Back!</h2>
                     <p class="subtitle">Sign in to continue shopping</p>
-                    <form id="login-form-element" action="/auth/login-step-1" method="POST">
+                    <form id="login-form-element" action="<?= base_url('/auth/login-step-1') ?>" method="POST">
                         <input type="hidden" name="action" value="login_step_1_credentials">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         
                         <div class="input-group">
                             <label>Email or Username</label>
@@ -74,7 +71,8 @@
                 <div id="login-step-otp" class="login-step <?php echo (($data['tab'] ?? 'login') === 'login' && ($data['step'] ?? '') === 'otp') ? 'active' : ''; ?>">
                     <h2>Verify Your Identity</h2>
                     <p class="subtitle">A 6-digit code was sent to your email for security.</p>
-                    <form id="login-otp-form-element" action="/auth/login-step-2" method="POST">
+                    <form id="login-otp-form-element" action="<?= base_url('/auth/login-step-2') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>Verification Code (OTP)</label>
                             <input type="text" name="otp" id="login-otp" placeholder="Enter 6-digit OTP" maxlength="6" required>
@@ -88,13 +86,13 @@
                 </div>
             </div>
 
-            <!-- FORGOT PASSWORD FORM -->
             <div id="forgot-form" class="form-content <?php echo ($data['tab'] ?? '') === 'forgot' ? 'active' : ''; ?>">
                 
                 <div id="forgot-step-email" class="forgot-step <?php echo (($data['tab'] ?? '') === 'forgot' && ($data['step'] ?? 'email') === 'email') ? 'active' : ''; ?>">
                     <h2>Reset Password</h2>
                     <p class="subtitle">Enter your email address to receive a password reset code</p>
-                    <form id="forgot-email-form-element" action="/auth/forgot-step-1" method="POST">
+                    <form id="forgot-email-form-element" action="<?= base_url('/auth/forgot-step-1') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>Email Address</label>
                             <input type="email" name="email" id="forgot-email" placeholder="Enter your registered email" required>
@@ -107,7 +105,8 @@
                 <div id="forgot-step-otp" class="forgot-step <?php echo (($data['tab'] ?? '') === 'forgot' && ($data['step'] ?? '') === 'otp') ? 'active' : ''; ?>">
                     <h2>Verify Code</h2>
                     <p class="subtitle">Enter the 6-digit code sent to your email</p>
-                    <form id="forgot-otp-form-element" action="/auth/forgot-step-2" method="POST">
+                    <form id="forgot-otp-form-element" action="<?= base_url('/auth/forgot-step-2') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>Verification Code (OTP)</label>
                             <input type="text" name="otp" id="forgot-otp" placeholder="Enter 6-digit OTP" maxlength="6" required>
@@ -124,7 +123,8 @@
                 <div id="forgot-step-reset" class="forgot-step <?php echo (($data['tab'] ?? '') === 'forgot' && ($data['step'] ?? '') === 'reset') ? 'active' : ''; ?>">
                     <h2>Create New Password</h2>
                     <p class="subtitle">Enter your new password</p>
-                    <form id="forgot-reset-form-element" action="/auth/forgot-step-3" method="POST">
+                    <form id="forgot-reset-form-element" action="<?= base_url('/auth/forgot-step-3') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>New Password</label>
                             <div class="password-input">
@@ -159,13 +159,13 @@
                 </div>
             </div>
             
-            <!-- REGISTER FORM -->
             <div id="register-form" class="form-content <?php echo ($data['tab'] ?? '') === 'register' ? 'active' : ''; ?>">
 
                 <div id="register-step-email" class="register-step <?php echo (($data['tab'] ?? '') === 'register' && ($data['step'] ?? 'email') === 'email') ? 'active' : ''; ?>">
                     <h2>Create Account</h2>
                     <p class="subtitle">Step 1 out of 4: Enter your email to verify</p>
-                    <form id="register-email-form-element" action="/auth/register-step-1" method="POST">
+                    <form id="register-email-form-element" action="<?= base_url('/auth/register-step-1') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>Email</label>
                             <input type="email" name="email" id="register-email" placeholder="Enter your email address" required>
@@ -174,26 +174,25 @@
                     </form>
                 </div>
 
-                <div id="register-step-otp" class="register-step <?php echo (($data['tab'] ?? '') === 'register' && ($data['step'] ?? '') === 'otp') ? 'active' : ''; ?>">
-                    <h2>Verify Your Email</h2>
-                    <p class="subtitle">Step 2 out of 4: Enter the 6-digit code</p>
-                    <form id="register-otp-form-element" action="/auth/register-step-2" method="POST">
-                        <div class="input-group">
-                            <label>Verification Code (OTP)</label>
-                            <input type="text" name="otp" id="register-otp" placeholder="Enter 6-digit OTP" maxlength="6" required>
+                <div id="register-step-pending" class="register-step <?php echo (($data['tab'] ?? '') === 'register' && ($data['step'] ?? '') === 'pending') ? 'active' : ''; ?>">
+                    <h2>Check Your Email</h2>
+                    <p class="subtitle">Step 2 out of 4: We've sent an activation link to your email</p>
+                    <div class="email-sent-message" style="text-align: center; padding: 40px 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📬</div>
+                        <p style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 10px;">Activation Link Sent!</p>
+                        <p style="color: #4a5568; margin-bottom: 20px;">Please check your inbox and click the activation button to continue your registration.</p>
+                        <div style="background: #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 0; color: #2d3748; font-size: 14px;"><strong>Expires in 3 minutes</strong></p>
                         </div>
-                        <div class="resend-otp-container">
-                            <button type="button" class="resend-otp-btn" id="register-resend-otp">Resend Code</button>
-                            <span class="resend-timer" id="register-resend-timer"></span>
-                        </div>
-                        <button type="submit" class="submit-btn">Verify OTP</button>
-                    </form>
-                </div>
+                        <p style="color: #718096; font-size: 14px;">Didn't receive the email? Check your spam folder or try again.</p>
+                    </div>
+                </div>  
 
                 <div id="register-step-captcha" class="register-step <?php echo (($data['tab'] ?? '') === 'register' && ($data['step'] ?? '') === 'captcha') ? 'active' : ''; ?>">
-                    <h2>Bot Check</h2>
+                    <h2>Bot Checker</h2>
                     <p class="subtitle">Step 3 out of 4: Prove you are not a robot</p>
-                    <form id="register-captcha-form-element" action="/auth/register-step-3" method="POST">
+                    <form id="register-captcha-form-element" action="<?= base_url('/auth/register-step-3') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group captcha-group">
                             <div class="g-recaptcha" data-sitekey="6LdpbwwsAAAAAGUr6X_3imAtgnaSBzwyzs20Lpdi"></div>
                         </div>
@@ -204,8 +203,8 @@
                 <div id="register-step-details" class="register-step <?php echo (($data['tab'] ?? '') === 'register' && ($data['step'] ?? '') === 'details') ? 'active' : ''; ?>">
                     <h2>Final Step</h2>
                     <p class="subtitle">Step 4 out of 4: Create your username and password</p>
-                    <form id="register-form-element" action="/auth/register-step-4" method="POST">
-                        
+                    <form id="register-form-element" action="<?= base_url('/auth/register-step-4') ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group">
                             <label>Username</label>
                             <input type="text" name="username" id="register-username" placeholder="Choose a username" required>
@@ -223,6 +222,34 @@
                                         <line class="eye-closed" x1="1" y1="1" x2="23" y2="23"></line>
                                     </svg>
                                 </button>
+                            </div>
+                            
+                            <div class="password-strength-container">
+                                <div class="strength-bar">
+                                    <div class="strength-fill"></div>
+                                </div>
+                                <div class="strength-text">Password Strength: <span id="strength-label">Very Weak</span></div>
+                            </div>
+                            
+                            <div class="password-requirements">
+                                <div class="requirements-grid">
+                                    <div class="requirement" data-requirement="length">
+                                        <span class="requirement-icon"></span>
+                                        <span>At least 8 characters</span>
+                                    </div>
+                                    <div class="requirement" data-requirement="uppercase">
+                                        <span class="requirement-icon"></span>
+                                        <span>One uppercase letter</span>
+                                    </div>
+                                    <div class="requirement" data-requirement="number">
+                                        <span class="requirement-icon"></span>
+                                        <span>One number</span>
+                                    </div>
+                                    <div class="requirement" data-requirement="lowercase">
+                                        <span class="requirement-icon"></span>
+                                        <span>One lowercase letter</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -242,9 +269,9 @@
                         </div>
 
                        <div class="checkbox-group">
-    <input type="checkbox" name="terms" id="terms" required>
-    <label for="terms">I agree to the <a href="#" id="terms-link">Terms & Conditions</a> and <a href="#" id="privacy-link">Privacy Policy</a></label>
-</div>
+                            <input type="checkbox" name="terms" id="terms" required>
+                            <label for="terms">I agree to the <a href="#" id="terms-link">Terms & Conditions</a> and <a href="#" id="privacy-link">Privacy Policy</a></label>
+                        </div>
 
                         <button type="submit" class="submit-btn">Create Account</button>
                     </form>
@@ -253,12 +280,10 @@
         </div>
     </div>
 
-    <!-- Terms & Conditions Modal -->
     <?php require __DIR__ . '/../../products/modal.php'; ?>
 
-    <script src="/js/auth.js"></script>
+    <script src="<?= base_url('/js/auth.js') ?>"></script>
 
-    <!-- This script handles showing alerts from the URL -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);

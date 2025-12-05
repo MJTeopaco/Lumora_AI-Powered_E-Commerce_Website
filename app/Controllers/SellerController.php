@@ -73,6 +73,9 @@ class SellerController extends Controller {
      * Handle seller registration form submission
      */
     public function registerSubmit() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         // Check if user is logged in
         if (!Session::has('user_id')) {
             Session::set('error', 'You must be logged in to register as a seller');

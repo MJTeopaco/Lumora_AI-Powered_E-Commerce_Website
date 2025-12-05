@@ -13,7 +13,6 @@
 </div>
 
 <?php if (empty($addresses)): ?>
-    <!-- Empty State -->
     <div class="empty-state">
         <div class="empty-icon">
             <i class="fas fa-map-marked-alt"></i>
@@ -26,7 +25,6 @@
         </a>
     </div>
 <?php else: ?>
-    <!-- Addresses Grid -->
     <div class="addresses-grid">
         <?php foreach ($addresses as $address): ?>
             <div class="address-card <?= $address['is_default'] ? 'default' : '' ?>">
@@ -46,6 +44,7 @@
                         </button>
                         <form method="POST" action="/profile/addresses/delete" style="display: inline;" 
                               onsubmit="return confirm('Are you sure you want to delete this address?')">
+                            <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
                             <input type="hidden" name="address_id" value="<?= htmlspecialchars($address['address_id']) ?>">
                             <button type="submit" class="icon-btn delete" title="Delete">
                                 <i class="fas fa-trash"></i>
@@ -73,6 +72,7 @@
                 <?php if (!$address['is_default']): ?>
                     <div class="address-footer">
                         <form method="POST" action="/profile/addresses/set-default" style="flex: 1;">
+                            <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
                             <input type="hidden" name="address_id" value="<?= htmlspecialchars($address['address_id']) ?>">
                             <button type="submit" class="btn btn-secondary btn-small" style="width: 100%;">
                                 <i class="fas fa-check"></i>

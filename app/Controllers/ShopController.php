@@ -1,4 +1,5 @@
 <?php
+// app/Controllers/ShopController.php
 
 namespace App\Controllers;
 
@@ -7,7 +8,12 @@ use App\Core\Session;
 use App\Models\Shop;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Notification;
 use App\Helpers\AddProductHelper;
+use App\Helpers\RedirectHelper;
+use App\Helpers\EmailService;
 use App\Models\Services\TaggingService;
 
 class ShopController extends Controller {
@@ -15,22 +21,27 @@ class ShopController extends Controller {
     protected $shopModel;
     protected $productModel;
     protected $userModel;
+    protected $orderModel;
+    protected $orderItemModel;
+    protected $notificationModel;
+    protected $emailService;
     protected $taggingService;
 
     public function __construct() {
         $this->shopModel = new Shop(); 
         $this->productModel = new Product();
         $this->userModel = new User();
+        $this->orderModel = new Order();
+        $this->orderItemModel = new OrderItem();
+        $this->notificationModel = new Notification();
+        $this->emailService = new EmailService();
         $this->taggingService = new TaggingService();
     }
 
-    /**
-     * Display the shop dashboard
-     */
     public function dashboard() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access the shop dashboard');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -38,14 +49,14 @@ class ShopController extends Controller {
         
         if (!$sellerStatus || $sellerStatus['is_approved'] != 1) {
             Session::set('error', 'You do not have access to the seller dashboard. Please register as a seller first.');
-            $this->redirect('/seller/register');
+            RedirectHelper::redirect('/seller/register');
         }
 
         $shopData = $this->shopModel->getShopByUserId($userId);
         
         if (!$shopData) {
             Session::set('error', 'Shop not found. Please contact support.');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
         $stats = $this->shopModel->getDashboardStats($shopData['shop_id']);
@@ -64,13 +75,10 @@ class ShopController extends Controller {
         $this->view('shop/shop-dashboard', $data, 'shop');
     }
 
-    /**
-     * Display products list
-     */
     public function products() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -78,7 +86,7 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
         $products = $this->shopModel->getShopProducts($shopData['shop_id']);
@@ -93,13 +101,10 @@ class ShopController extends Controller {
         $this->view('shop/products', $data, 'shop');
     }
 
-    /**
-     * Display add product form
-     */
     public function addProduct() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -107,7 +112,7 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
         $categories = $this->shopModel->getAllCategories();
@@ -122,18 +127,17 @@ class ShopController extends Controller {
         $this->view('shop/add-product', $data, 'shop');
     }
 
-    /**
-     * Store new product with multiple variants
-     */
     public function storeProduct() {
+        $this->verifyCsrfToken();
+
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             Session::set('error', 'Invalid request method');
-            $this->redirect('/shop/add-product');
+            RedirectHelper::redirect('/shop/add-product');
         }
 
         $userId = Session::get('user_id');
@@ -141,18 +145,16 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
-        // Validate form data using helper
         $validation = AddProductHelper::validateProductData($_POST, $_FILES);
         
         if (!$validation['valid']) {
             Session::set('error', implode('<br>', $validation['errors']));
-            $this->redirect('/shop/add-product');
+            RedirectHelper::redirect('/shop/add-product');
         }
 
-        // Handle cover image upload
         $coverUploadResult = AddProductHelper::uploadProductImage(
             $_FILES['cover_picture'], 
             $shopData['shop_id']
@@ -160,49 +162,39 @@ class ShopController extends Controller {
         
         if (!$coverUploadResult['success']) {
             Session::set('error', 'Cover image upload failed: ' . $coverUploadResult['message']);
-            $this->redirect('/shop/add-product');
+            RedirectHelper::redirect('/shop/add-product');
         }
 
-        // Prepare product data
         $productData = AddProductHelper::prepareProductData(
             $_POST, 
             $shopData['shop_id'], 
             $coverUploadResult['filename']
         );
 
-        // Get database connection for transaction
         $conn = $this->shopModel->getConnection();
-        
-        // Start transaction
         $conn->begin_transaction();
 
         try {
-            // Create product using shopModel (which has the createProduct method)
             $productId = $this->shopModel->createProduct($productData);
 
             if (!$productId) {
                 throw new \Exception('Failed to create product');
             }
 
-            // Link product to category using shopModel
             if (!$this->shopModel->linkProductToCategory($productId, $_POST['category_id'])) {
                 throw new \Exception('Failed to link product to category');
             }
 
-            // Process variant images
             $variantImages = AddProductHelper::processVariantImages($_FILES, $shopData['shop_id']);
 
-            // Process variants
             $variantsProcessed = 0;
             $uploadedFiles = [$coverUploadResult['filename']];
             
             foreach ($_POST['variants'] as $variantIndex => $variantData) {
-                // Skip invalid variants
                 if (empty($variantData['price']) || empty($variantData['quantity'])) {
                     continue;
                 }
 
-                // Get variant image if uploaded
                 $variantImage = isset($variantImages[$variantIndex]) && $variantImages[$variantIndex]['success']
                     ? $variantImages[$variantIndex]['filename']
                     : null;
@@ -211,7 +203,6 @@ class ShopController extends Controller {
                     $uploadedFiles[] = $variantImage;
                 }
 
-                // Prepare variant data
                 $variantInsertData = AddProductHelper::prepareVariantData(
                     $variantData,
                     $productId,
@@ -233,36 +224,28 @@ class ShopController extends Controller {
                 throw new \Exception('No valid variants were created. Please check variant data.');
             }
 
-            // Process tags using shopModel
             if (!empty($_POST['tags'])) {
                 AddProductHelper::processTags($_POST['tags'], $productId, $this->shopModel);
             }
 
-            // Commit transaction
             $conn->commit();
 
             Session::set('success', "Product created successfully with {$variantsProcessed} variant(s)!");
-            $this->redirect('/shop/products');
+            RedirectHelper::redirect('/shop/products');
 
         } catch (\Exception $e) {
-            // Rollback transaction
             $conn->rollback();
-            
-            // Clean up uploaded files
             AddProductHelper::cleanupFiles($uploadedFiles);
 
             Session::set('error', 'Failed to create product: ' . $e->getMessage());
-            $this->redirect('/shop/add-product');
+            RedirectHelper::redirect('/shop/add-product');
         }
     }
 
-    /**
-     * Display orders list
-     */
     public function orders() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -270,28 +253,183 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
-        $orders = $this->shopModel->getShopOrders($shopData['shop_id']);
+        $currentFilter = $_GET['status'] ?? 'all';
+        $searchTerm = $_GET['search'] ?? '';
+        
+        $orders = $this->shopModel->getShopOrders(
+            $shopData['shop_id'], 
+            $currentFilter, 
+            $searchTerm
+        );
+
+        $orderStats = $this->shopModel->getOrderStatsByStatus($shopData['shop_id']);
+        
+        $stats = [
+            'total_orders' => $this->shopModel->getTotalOrderCount($shopData['shop_id']),
+            'processing' => $orderStats['PROCESSING']['count'] ?? 0,
+            'ready_to_ship' => $orderStats['READY_TO_SHIP']['count'] ?? 0,
+            'shipped' => $orderStats['SHIPPED']['count'] ?? 0,
+            'delivered' => $orderStats['DELIVERED']['count'] ?? 0
+        ];
 
         $data = [
-            'pageTitle' => 'My Orders',
+            'pageTitle' => 'Manage Orders',
             'currentPage' => 'orders',
             'shop' => $shopData,
-            'orders' => $orders
+            'orders' => $orders,
+            'stats' => $stats,
+            'currentFilter' => $currentFilter,
+            'searchTerm' => $searchTerm
         ];
 
         $this->view('shop/orders', $data, 'shop');
     }
 
-    /**
-     * Display cancellations
-     */
+    public function getOrderDetails() {
+        header('Content-Type: application/json');
+
+        if (!Session::has('user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        $userId = Session::get('user_id');
+        $shopData = $this->shopModel->getShopByUserId($userId);
+        
+        if (!$shopData) {
+            echo json_encode(['success' => false, 'message' => 'Shop not found']);
+            exit;
+        }
+
+        $orderId = $_GET['order_id'] ?? null;
+        
+        if (!$orderId) {
+            echo json_encode(['success' => false, 'message' => 'Order ID required']);
+            exit;
+        }
+
+        $orderDetails = $this->shopModel->getOrderDetails($orderId, $shopData['shop_id']);
+        
+        if (!$orderDetails) {
+            echo json_encode(['success' => false, 'message' => 'Order not found']);
+            exit;
+        }
+
+        echo json_encode(['success' => true, 'data' => $orderDetails]);
+        exit;
+    }
+
+    public function updateOrderStatus() {
+        header('Content-Type: application/json');
+        
+        $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        
+        if (!$csrfToken || !hash_equals(Session::get('csrf_token', ''), $csrfToken)) {
+            echo json_encode(['success' => false, 'message' => 'CSRF validation failed']);
+            exit;
+        }
+
+        if (!Session::has('user_id')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+            exit;
+        }
+
+        $userId = Session::get('user_id');
+        $shopData = $this->shopModel->getShopByUserId($userId);
+        
+        if (!$shopData) {
+            echo json_encode(['success' => false, 'message' => 'Shop not found']);
+            exit;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        $orderId = $input['order_id'] ?? null;
+        $newStatus = $input['status'] ?? null;
+
+        if (!$orderId || !$newStatus) {
+            echo json_encode(['success' => false, 'message' => 'Order ID and status required']);
+            exit;
+        }
+
+        $validTransitions = [
+            'PENDING_PAYMENT' => ['PROCESSING', 'CANCELLED'],
+            'PROCESSING' => ['SHIPPED', 'READY_TO_SHIP', 'CANCELLED'],
+            'READY_TO_SHIP' => ['SHIPPED'],
+            'SHIPPED' => ['DELIVERED']
+        ];
+
+        $currentOrder = $this->shopModel->getOrderDetails($orderId, $shopData['shop_id']);
+        
+        if (!$currentOrder) {
+            echo json_encode(['success' => false, 'message' => 'Order not found']);
+            exit;
+        }
+
+        $currentStatus = $currentOrder['order_status'];
+
+        if (!isset($validTransitions[$currentStatus]) || 
+            !in_array($newStatus, $validTransitions[$currentStatus])) {
+            echo json_encode([
+                'success' => false, 
+                'message' => "Cannot change status from {$currentStatus} to {$newStatus}"
+            ]);
+            exit;
+        }
+
+        $success = $this->shopModel->updateOrderStatus($orderId, $shopData['shop_id'], $newStatus);
+
+        if ($success) {
+            if ($newStatus === 'CANCELLED' && $currentStatus === 'PROCESSING') {
+                $items = $this->orderItemModel->getOrderItems($orderId);
+                foreach ($items as $item) {
+                    $this->productModel->increaseStock($item['variant_id'], $item['quantity']);
+                }
+            }
+            
+            $fullOrder = $this->orderModel->getOrderById($orderId);
+            
+            $this->notificationModel->notifyOrderStatusChange(
+                $fullOrder['user_id'],
+                $orderId,
+                $newStatus
+            );
+
+            try {
+                if (in_array($newStatus, ['SHIPPED', 'READY_TO_SHIP', 'DELIVERED', 'CANCELLED'])) {
+                    $this->emailService->sendOrderStatusUpdate([
+                        'order' => $fullOrder,
+                        'status' => $newStatus,
+                        'customerEmail' => $fullOrder['email'],
+                        'customerName' => $fullOrder['full_name'] ?? $fullOrder['username']
+                    ]);
+                }
+            } catch (\Exception $e) {
+                error_log("Failed to send order status email: " . $e->getMessage());
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Order status updated successfully',
+                'new_status' => $newStatus
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to update order status']);
+        }
+        exit;
+    }
+
     public function cancellations() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -299,7 +437,7 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
         $cancellations = $this->shopModel->getCancelledOrders($shopData['shop_id']);
@@ -314,13 +452,10 @@ class ShopController extends Controller {
         $this->view('shop/cancellations', $data, 'shop');
     }
 
-    /**
-     * Display addresses
-     */
     public function addresses() {
         if (!Session::has('user_id')) {
             Session::set('error', 'Please login to access this page');
-            $this->redirect('/login');
+            RedirectHelper::redirect('/login');
         }
 
         $userId = Session::get('user_id');
@@ -328,7 +463,7 @@ class ShopController extends Controller {
         
         if (!$shopData) {
             Session::set('error', 'Shop not found');
-            $this->redirect('/');
+            RedirectHelper::redirect('/');
         }
 
         $shopAddress = $this->shopModel->getShopAddress($shopData['shop_id']);
@@ -341,6 +476,67 @@ class ShopController extends Controller {
         ];
 
         $this->view('shop/addresses', $data, 'shop');
+    }
+
+    /**
+     * Shop Reviews Management Page
+     * Updated to use the correct 'shop' layout
+     */
+    public function reviews() {
+        // Check authentication and seller status
+        if (!Session::has('user_id')) {
+            Session::set('error', 'Please login to access this page');
+            RedirectHelper::redirect('/login');
+        }
+
+        $userId = Session::get('user_id');
+        $shopData = $this->shopModel->getShopByUserId($userId);
+        
+        if (!$shopData) {
+            Session::set('error', 'Shop not found. Please contact support.');
+            RedirectHelper::redirect('/');
+        }
+        
+        $shopId = $shopData['shop_id'];
+        
+        // Get review model
+        $reviewModel = new \App\Models\ProductReview();
+        
+        // Get all reviews for this shop's products
+        $reviews = $reviewModel->getShopProductReviews($shopId, 50, 0);
+        
+        // Calculate statistics
+        $stats = [
+            'total_reviews' => count($reviews),
+            'average_rating' => 0,
+            'responded' => 0,
+            'pending_response' => 0
+        ];
+        
+        $totalRating = 0;
+        foreach ($reviews as $review) {
+            $totalRating += $review['rating'];
+            if ($review['response_text']) {
+                $stats['responded']++;
+            } else {
+                $stats['pending_response']++;
+            }
+        }
+        
+        if ($stats['total_reviews'] > 0) {
+            $stats['average_rating'] = $totalRating / $stats['total_reviews'];
+        }
+        
+        $data = [
+            'pageTitle' => 'Manage Reviews',
+            'currentPage' => 'reviews',
+            'shop' => $shopData,
+            'reviews' => $reviews,
+            'stats' => $stats
+        ];
+        
+        // Explicitly use the 'shop' layout to avoid the default header
+        $this->view('shop/reviews', $data, 'shop');
     }
 
         /**

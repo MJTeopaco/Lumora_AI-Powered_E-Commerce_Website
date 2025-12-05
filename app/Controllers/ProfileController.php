@@ -8,6 +8,9 @@ use App\Core\Session;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Address;
+use App\Models\Order;
+use App\Models\Product; 
+use App\Models\OrderItem;
 use App\Helpers\ValidationHelper;
 use App\Helpers\RedirectHelper;
 
@@ -17,12 +20,18 @@ class ProfileController extends Controller
     protected $userModel;
     protected $profileModel;
     protected $addressModel;
+    protected $orderModel;
+    protected $productModel;
+    protected $orderItemModel;
 
     public function __construct()
     {
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
         $this->addressModel = new Address();
+        $this->orderModel = new Order();
+        $this->productModel = new Product();
+        $this->orderItemModel = new OrderItem();
 
         // Require authentication for all profile actions
         if (!Session::has('user_id')) {
@@ -76,6 +85,9 @@ class ProfileController extends Controller
      */
     public function update()
     {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             RedirectHelper::redirect('/profile');
         }
@@ -126,6 +138,80 @@ class ProfileController extends Controller
                 $successMessage = 'Phone number updated successfully!';
                 break;
 
+            case 'email':
+                $email = strtolower(trim($_POST['email'] ?? ''));
+                
+                // Validate
+                if (empty($email)) {
+                    $this->redirectWithError('Email cannot be empty');
+                    return;
+                }
+                
+                if (!ValidationHelper::isValidEmail($email)) {
+                    $this->redirectWithError('Please enter a valid email address');
+                    return;
+                }
+                
+                // Check if same as current
+                $currentUser = $this->userModel->findById($userId);
+                if ($email === $currentUser['email']) {
+                    $this->redirectWithSuccess('No changes were made');
+                    return;
+                }
+                
+                // Check uniqueness
+                if ($this->userModel->isEmailInUse($email, $userId)) {
+                    $this->redirectWithError('This email is already registered');
+                    return;
+                }
+                
+                // Update
+                if ($this->userModel->updateEmail($userId, $email)) {
+                    Session::set('user_email', $email);
+                    $successMessage = 'Email updated successfully!';
+                } else {
+                    $this->redirectWithError('Failed to update email');
+                    return;
+                }
+                break;
+
+            case 'username':
+                $username = trim($_POST['username'] ?? '');
+                
+                // Validate
+                if (empty($username)) {
+                    $this->redirectWithError('Username cannot be empty');
+                    return;
+                }
+                
+                if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
+                    $this->redirectWithError('Username must be 3-20 characters (letters, numbers, underscore only)');
+                    return;
+                }
+                
+                // Check if same as current
+                $currentUser = $this->userModel->findById($userId);
+                if ($username === $currentUser['username']) {
+                    $this->redirectWithSuccess('No changes were made');
+                    return;
+                }
+                
+                // Check uniqueness
+                if ($this->userModel->isUsernameInUse($username, $userId)) {
+                    $this->redirectWithError('This username is already taken');
+                    return;
+                }
+                
+                // Update
+                if ($this->userModel->updateUsername($userId, $username)) {
+                    Session::set('username', $username);
+                    $successMessage = 'Username updated successfully!';
+                } else {
+                    $this->redirectWithError('Failed to update username');
+                    return;
+                }
+                break;
+
             case 'gender':
                 $data['gender'] = ValidationHelper::sanitize($_POST['gender'] ?? '');
                 $successMessage = 'Gender updated successfully!';
@@ -146,59 +232,48 @@ class ProfileController extends Controller
                     }
 
                     $data['profile_pic'] = $uploadResult['path'];
-                } else {
-                    $this->redirectWithError('Please select a file to upload');
-                    return;
+                    $successMessage = 'Profile picture updated successfully!';
                 }
-                $successMessage = 'Profile picture updated successfully!';
                 break;
-
-            default:
-                $this->redirectWithError('Invalid update field');
-                return;
         }
 
-        // Update or create profile
-        try {
-            // Check if there is actually anything to update
-            if (empty($data) && $updateField !== 'picture') {
-                $this->redirectWithSuccess('No changes were made.');
-                return;
-            }
+        // Skip DB update if email or username was handled above
+        if (!in_array($updateField, ['email', 'username'])) {
+            // Check if profile exists
+            $existingProfile = $this->profileModel->getByUserId($userId);
 
-            if ($this->profileModel->exists($userId)) {
-                // Profile exists, just update the single field with plain text data
-                $success = $this->profileModel->update($userId, $data);
-            } else {
-                // Profile doesn't exist, create it with this new data
-                
-                // Build the data for create()
-                $createData = $rawDataForCreate;
-                
-                if ($updateField === 'picture') {
-                     $createData['profile_pic'] = $data['profile_pic'];
+            // Only update non-empty data fields
+            $dataToUpdate = array_filter($data, function($value) {
+                return $value !== '' && $value !== null;
+            });
+
+            if ($existingProfile) {
+                // Update existing profile with only the non-empty fields
+                if (!empty($dataToUpdate)) {
+                    if ($this->profileModel->update($userId, $dataToUpdate)) {
+                        $this->redirectWithSuccess($successMessage);
+                    } else {
+                        $this->redirectWithError('Failed to update profile');
+                    }
+                } else {
+                    // No changes
+                    $this->redirectWithSuccess('No changes were made');
                 }
-                
-                // Send plain text data to create()
-                $success = $this->profileModel->create($userId, $createData);
-            }
-
-            if ($success) {
-                $this->redirectWithSuccess($successMessage);
             } else {
-                $this->redirectWithError('Failed to update profile. Please try again.');
+                // Create new profile - use rawDataForCreate which has all fields
+                if ($this->profileModel->create($userId, $rawDataForCreate)) {
+                    $this->redirectWithSuccess($successMessage);
+                } else {
+                    $this->redirectWithError('Failed to create profile');
+                }
             }
-        } catch (\Exception $e) {
-            $this->redirectWithError($e->getMessage());
         }
     }
-
-    // ... (keep handleProfilePictureUpload, redirectWithError, redirectWithSuccess) ...
 
     private function handleProfilePictureUpload($file, $userId)
     {
         // Validate file
-        $validation = ValidationHelper::validateProfilePicture($file);
+        $validation = ValidationHelper::validateImage($file);
 
         if (!$validation['valid']) {
             return ['success' => false, 'error' => $validation['error']];
@@ -256,7 +331,6 @@ class ProfileController extends Controller
         RedirectHelper::redirect($url);
     }
 
-
     /**
      * Show addresses page
      */
@@ -275,7 +349,6 @@ class ProfileController extends Controller
         }
 
         // Get addresses from database
-        // These are now retrieved as plain text from the model
         $addresses = $this->addressModel->getAddressesByUserId_User($userId);
 
         // Check for status messages
@@ -288,12 +361,248 @@ class ProfileController extends Controller
             'addresses' => $addresses,
             'statusMessage' => $statusMessage,
             'statusType' => $statusType,
-            'activeTab' => 'addresses', // <--- IMPORTANT for sidebar highlight
+            'activeTab' => 'addresses',
             'pageTitle' => 'My Addresses'
         ];
 
         $this->view('profile/addresses', $data, 'profile');
     }
+
+    // ========================================================================
+    // ORDER MANAGEMENT METHODS
+    // ========================================================================
+
+    /**
+     * Show user's order history
+     */
+    public function orders()
+    {
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        
+        // Get filter parameters
+        $statusFilter = $_GET['status'] ?? 'all';
+        $searchTerm = $_GET['search'] ?? '';
+        
+        // Get orders
+        $orders = $this->orderModel->getUserOrders($userId, 50, 0, 
+            ($statusFilter !== 'all' ? $statusFilter : null));
+        
+        // Apply search filter if provided
+        if (!empty($searchTerm)) {
+            $orders = array_filter($orders, function($order) use ($searchTerm) {
+                return stripos((string)$order['order_id'], $searchTerm) !== false;
+            });
+        }
+        
+        // Get order statistics
+        $stats = $this->orderModel->getUserOrderStats($userId);
+        
+        // Calculate status counts
+        $statusCounts = [
+            'all' => count($this->orderModel->getUserOrders($userId, 1000, 0)),
+            'pending_payment' => 0,
+            'processing' => 0,
+            'shipped' => 0,
+            'delivered' => 0,
+            'cancelled' => 0
+        ];
+        
+        foreach ($this->orderModel->getUserOrders($userId, 1000, 0) as $order) {
+            $status = strtolower($order['order_status']);
+            if (isset($statusCounts[$status])) {
+                $statusCounts[$status]++;
+            }
+        }
+        
+        // Get status message
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status_type'] ?? 'success';
+        
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'orders' => $orders,
+            'stats' => $stats,
+            'statusCounts' => $statusCounts,
+            'statusFilter' => $statusFilter,
+            'searchTerm' => $searchTerm,
+            'statusMessage' => $statusMessage,
+            'statusType' => $statusType,
+            'activeTab' => 'orders',
+            'pageTitle' => 'My Orders'
+        ];
+        
+        $this->view('profile/orders', $data, 'profile');
+    }
+
+    /**
+     * Show order details (AJAX or page)
+     */
+    public function orderDetails()
+    {
+        $userId = Session::get('user_id');
+        $orderId = $_GET['order_id'] ?? null;
+        
+        if (!$orderId) {
+            // If called via page, redirect
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                RedirectHelper::redirect('/profile/orders');
+            }
+            
+            // If AJAX
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Order ID required']);
+            exit;
+        }
+        
+        // Get order details
+        $order = $this->orderModel->getOrderById($orderId, $userId);
+        
+        if (!$order) {
+            // If called via page, redirect with error
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                $this->redirectToOrders('Order not found', 'error');
+                return;
+            }
+            
+            // If AJAX
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Order not found']);
+            exit;
+        }
+        
+        // Get order items - NOW PASSING USERID to check for reviews
+        $orderItems = $this->getOrderItems($orderId, $userId);
+        
+        // If AJAX request
+        if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+            $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'order' => $order,
+                'items' => $orderItems
+            ]);
+            exit;
+        }
+        
+        // If regular page request
+        $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        
+        $data = [
+            'user' => $user,
+            'profile' => $profile,
+            'order' => $order,
+            'orderItems' => $orderItems,
+            'activeTab' => 'orders',
+            'pageTitle' => 'Order Details - #' . str_pad($orderId, 6, '0', STR_PAD_LEFT)
+        ];
+        
+        $this->view('profile/order-details', $data, 'profile');
+    }
+
+    /**
+     * Cancel an order
+     */
+    public function cancelOrder()
+    {
+        $this->verifyCsrfToken();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            RedirectHelper::redirect('/profile/orders');
+        }
+        
+        $userId = Session::get('user_id');
+        $orderId = $_POST['order_id'] ?? null;
+        
+        if (!$orderId) {
+            $this->redirectToOrders('Invalid order', 'error');
+            return;
+        }
+
+        // Get the order status BEFORE cancelling to see if we need to restore stock
+        $order = $this->orderModel->getOrderById($orderId, $userId);
+        
+        if (!$order) {
+            $this->redirectToOrders('Order not found', 'error');
+            return;
+        }
+
+        $previousStatus = $order['order_status'];
+
+        // Try to cancel
+        if ($this->orderModel->cancelOrder($orderId, $userId)) {
+            
+            // STOCK RESTORATION: Only if it was PROCESSING (Paid)
+            if ($previousStatus === 'PROCESSING') {
+                $items = $this->orderItemModel->getOrderItems($orderId);
+                foreach ($items as $item) {
+                    $this->productModel->increaseStock($item['variant_id'], $item['quantity']);
+                }
+            }
+
+            $this->redirectToOrders('Order cancelled successfully', 'success');
+        } else {
+            $this->redirectToOrders('Unable to cancel order. It may have already been processed.', 'error');
+        }
+    }
+
+    /**
+     * Get order items with product details
+     * UPDATED: Checks if user has already reviewed the product
+     */
+    private function getOrderItems($orderId, $userId)
+    {
+        $conn = $this->orderModel->getConnection();
+        
+        // Added slug and review check subquery
+        $query = "SELECT 
+                    oi.*,
+                    p.product_id,
+                    p.name as product_name,
+                    p.cover_picture,
+                    p.slug as product_slug,
+                    pv.color,
+                    pv.size,
+                    pv.material,
+                    s.shop_name,
+                    (SELECT COUNT(*) FROM product_reviews pr WHERE pr.product_id = p.product_id AND pr.user_id = ?) as has_reviewed
+                  FROM order_items oi
+                  JOIN product_variants pv ON oi.variant_id = pv.variant_id
+                  JOIN products p ON pv.product_id = p.product_id
+                  LEFT JOIN shops s ON p.shop_id = s.shop_id
+                  WHERE oi.order_id = ?";
+        
+        $stmt = $conn->prepare($query);
+        // Bind userId for the review check, and orderId for the items
+        $stmt->bind_param("ii", $userId, $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $items = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $items;
+    }
+
+    /**
+     * Redirect to orders page with message
+     */
+    private function redirectToOrders($message, $status = 'success')
+    {
+        $params = [
+            'status_type' => $status,
+            'message' => urlencode($message)
+        ];
+        $url = '/profile/orders?' . http_build_query($params);
+        RedirectHelper::redirect($url);
+    }
+
+    // ========================================================================
+    // END OF ORDER MANAGEMENT METHODS
+    // ========================================================================
 
     /**
      * Show settings page
@@ -320,13 +629,12 @@ class ProfileController extends Controller
             'profile' => $profile,
             'statusMessage' => $statusMessage,
             'statusType' => $statusType,
-            'activeTab' => 'settings', // <--- IMPORTANT for sidebar highlight
+            'activeTab' => 'settings',
             'pageTitle' => 'Account Settings'
         ];
 
         $this->view('profile/settings', $data, 'profile');
     }
-
 
     public function addAddressForm() {
         $userId = Session::get('user_id');
@@ -339,20 +647,20 @@ class ProfileController extends Controller
             'user' => $user,
             'profile' => $profile,
             'isEdit' => false,
-            // $address variable is not set here for 'add' form
             'statusMessage' => $statusMessage,
             'statusType' => $statusType,
             'activeTab' => 'addresses',
             'pageTitle' => 'Add New Address'
         ];
 
-        // FIX: Ensure the view is wrapped by the profile layout
         $this->view('profile/address-form', $data, 'profile');
     }
 
-
     public function changePassword()
     {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             RedirectHelper::redirect('/profile/settings');
         }
@@ -414,5 +722,15 @@ class ProfileController extends Controller
         ];
         $url = '/profile/addresses?' . http_build_query($params);
         RedirectHelper::redirect($url);
+    }
+    
+    // Override base Controller to handle custom redirects for Profile actions
+    protected function verifyCsrfToken() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!isset($_POST['csrf_token']) || !hash_equals(Session::get('csrf_token'), $_POST['csrf_token'])) {
+                // Handle CSRF failure
+                RedirectHelper::redirect('/profile?status=error&message=Invalid+security+token');
+            }
+        }
     }
 }

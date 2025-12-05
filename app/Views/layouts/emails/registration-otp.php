@@ -10,7 +10,7 @@
             <td style="padding: 40px 20px;">
                 <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     <tr>
-                        <td style="background: linear-gradient(135deg, #1e4d3d 0%, #2d5a4a 100%); padding: 40px 30px; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #YOUR_PRIMARY_COLOR 0%, #YOUR_SECONDARY_COLOR 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 2px;">LUMORA</h1>
                         </td>
                     </tr>
@@ -23,14 +23,14 @@
                             <table role="presentation" style="width: 100%; margin: 32px 0;">
                                 <tr>
                                     <td style="text-align: center;">
-                                        <div style="display: inline-block; background-color: #f0f5f3; border: 2px solid #2d5a4a; border-radius: 12px; padding: 20px 40px;">
-                                            <span style="font-size: 36px; font-weight: 700; color: #1e4d3d; letter-spacing: 8px;"><?= htmlspecialchars($otp) ?></span>
+                                        <div style="display: inline-block; background-color: #f0f5f3; border: 2px solid #YOUR_SECONDARY_COLOR; border-radius: 12px; padding: 20px 40px;">
+                                            <span style="font-size: 36px; font-weight: 700; color: #YOUR_PRIMARY_COLOR; letter-spacing: 8px;"><?= htmlspecialchars($otp) ?></span>
                                         </div>
                                     </td>
                                 </tr>
                             </table>
                             
-                            <p style="margin: 24px 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">This code will expire in <strong style="color: #1e4d3d;">2 minutes</strong>.</p>
+                            <p style="margin: 24px 0 0; color: #6b7280; font-size: 14px; line-height: 1.6;">This code will expire in <strong style="color: #YOUR_PRIMARY_COLOR;">2 minutes</strong>.</p>
                             <p style="margin: 16px 0 0; color: #9ca3af; font-size: 13px; line-height: 1.6;">If you didn't create an account with Lumora, please ignore this email.</p>
                         </td>
                     </tr>

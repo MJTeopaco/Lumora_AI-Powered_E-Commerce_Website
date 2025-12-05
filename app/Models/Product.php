@@ -10,7 +10,6 @@ class Product {
     protected $conn;
 
     public function __construct() {
-        // FIX: Use the static getConnection() method for mysqli
         $this->conn = Database::getConnection();
     }
 
@@ -19,61 +18,63 @@ class Product {
     }
 
     /**
-     * Get all published products with their variants
+     * Get all published products with basic info
      */
-    public function getAllProducts() {
-        $query = "
-            SELECT 
-                p.product_id AS id,
-                p.name,
-                p.short_description,
-                p.description,
-                p.cover_picture AS image,
-                GROUP_CONCAT(pc.name SEPARATOR ', ') AS categories,
-                MIN(pv.price) AS price,
-                SUM(pv.quantity) AS stock,
-                p.slug
-            FROM products p
-            LEFT JOIN product_variants pv 
-                ON p.product_id = pv.product_id 
-                AND pv.is_active = 1
-
-            LEFT JOIN product_category_links pcl 
-                ON pcl.product_id = p.product_id
-
-            LEFT JOIN product_categories pc 
-                ON pc.category_id = pcl.category_id
-
-            WHERE p.status = 'PUBLISHED' 
-            AND p.is_deleted = 0
-
-            GROUP BY p.product_id
-            ORDER BY p.created_at DESC
-        ";
-
-        $result = $this->conn->query($query);
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    public function getAllProducts($limit = 12, $offset = 0) {
+        $query = "SELECT 
+                    p.product_id as id,
+                    p.name,
+                    p.short_description as description,
+                    p.cover_picture as image,
+                    p.slug,
+                    MIN(pv.price) as price,
+                    NULL as old_price,
+                    SUM(pv.quantity) as stock,
+                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
+                  FROM products p
+                  LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+                  LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+                  LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+                  WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
+                  GROUP BY p.product_id
+                  ORDER BY p.created_at DESC
+                  LIMIT ? OFFSET ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $products = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $products;
     }
 
-
     /**
-     * Get featured products (limit to specific number)
+     * Get featured products for homepage
      */
     public function getFeaturedProducts($limit = 8) {
         $query = "SELECT 
                     p.product_id as id,
                     p.name,
+                    p.short_description as description,
                     p.cover_picture as image,
+                    p.slug,
                     MIN(pv.price) as price,
-                    p.slug
+                    NULL as old_price,
+                    SUM(pv.quantity) as stock,
+                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
                   FROM products p
                   LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
-                  WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0 AND p.is_featured = 1
+                  LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+                  LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+                  WHERE p.status = 'PUBLISHED' 
+                    AND p.is_deleted = 0 
+                    AND p.is_featured = 1
                   GROUP BY p.product_id
                   ORDER BY p.created_at DESC
                   LIMIT ?";
         
-        // FIX: Use mysqli prepared statement and bind_param
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $limit);
         $stmt->execute();
@@ -84,26 +85,26 @@ class Product {
         return $products;
     }
 
-    // NOTE: The remaining methods will use mysqli prepared statements:
-    
     /**
      * Get a single product details by slug
      */
-public function getSingleProduct($slug) {
+    public function getSingleProduct($slug) {
         $query = "SELECT 
                     p.product_id as id,
                     p.name,
                     p.short_description,
                     p.description,
-                    p.cover_picture as image,
-                    pc.name as category,
+                    p.cover_picture,
+                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as category,
                     p.slug,
                     p.meta_title,
-                    p.meta_description
+                    p.meta_description,
+                    p.shop_id
                   FROM products p
                   LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
                   LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
-                  WHERE p.slug = ? AND p.status = 'PUBLISHED' AND p.is_deleted = 0"; 
+                  WHERE p.slug = ? AND p.status = 'PUBLISHED' AND p.is_deleted = 0
+                  GROUP BY p.product_id"; 
         
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("s", $slug);
@@ -115,18 +116,46 @@ public function getSingleProduct($slug) {
         return $product;
     }
 
-    // ... continue converting all remaining methods in Product.php ...
-    
+    /**
+     * [FIX ADDED] Get product by ID (Required for Reviews)
+     */
+    public function getProductById($id) {
+        $query = "SELECT 
+                    p.product_id as id,
+                    p.name,
+                    p.short_description,
+                    p.description,
+                    p.cover_picture,
+                    p.slug,
+                    p.shop_id
+                  FROM products p
+                  WHERE p.product_id = ? AND p.is_deleted = 0"; 
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $product = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $product;
+    }
+
     /**
      * Get product variants
      */
     public function getProductVariants($productId) {
         $query = "SELECT 
-                    variant_id as id,
-                    name,
+                    variant_id,
+                    variant_name,
                     price,
                     quantity,
-                    sku
+                    sku,
+                    color,
+                    size,
+                    material,
+                    product_picture,
+                    is_active
                   FROM product_variants
                   WHERE product_id = ? AND is_active = 1
                   ORDER BY price ASC";
@@ -144,14 +173,15 @@ public function getSingleProduct($slug) {
     /**
      * Get products by search term
      */
-public function getProductsBySearch($searchTerm) {
+    public function getProductsBySearch($searchTerm) {
         $query = "SELECT 
                     p.product_id as id,
                     p.name,
                     p.cover_picture as image,
                     MIN(pv.price) as price,
                     SUM(pv.quantity) as stock,
-                    p.slug
+                    p.slug,
+                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
                   FROM products p
                   LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
                   LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
@@ -171,10 +201,41 @@ public function getProductsBySearch($searchTerm) {
         
         return $products;
     }
-    
+
     /**
-     * Check if variant has stock
+     * Get products by category
      */
+    public function getProductsByCategory($categorySlug, $limit = 20, $offset = 0) {
+        $query = "SELECT 
+                    p.product_id as id,
+                    p.name,
+                    p.short_description as description,
+                    p.cover_picture as image,
+                    p.slug,
+                    MIN(pv.price) as price,
+                    SUM(pv.quantity) as stock,
+                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
+                  FROM products p
+                  INNER JOIN product_category_links pcl ON p.product_id = pcl.product_id
+                  INNER JOIN product_categories pc ON pcl.category_id = pc.category_id
+                  LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+                  WHERE p.status = 'PUBLISHED' 
+                    AND p.is_deleted = 0
+                    AND pc.slug = ?
+                  GROUP BY p.product_id
+                  ORDER BY p.created_at DESC
+                  LIMIT ? OFFSET ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("sii", $categorySlug, $limit, $offset);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $products = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $products;
+    }
+    
     public function hasStock($variantId, $quantity = 1) {
         $query = "SELECT quantity FROM product_variants WHERE variant_id = ? AND is_active = 1";
         $stmt = $this->conn->prepare($query);
@@ -188,7 +249,7 @@ public function getProductsBySearch($searchTerm) {
     }
 
     /**
-     * Update variant stock (decrease)
+     * Decrease stock
      */
     public function updateStock($variantId, $quantity) {
         $query = "UPDATE product_variants 
@@ -197,7 +258,6 @@ public function getProductsBySearch($searchTerm) {
                   WHERE variant_id = ? AND quantity >= ?";
         
         $stmt = $this->conn->prepare($query);
-        // FIX: bind_param takes three 'i' for three integer parameters
         $stmt->bind_param("iii", $quantity, $variantId, $quantity);
         $result = $stmt->execute();
         $stmt->close();
@@ -206,8 +266,22 @@ public function getProductsBySearch($searchTerm) {
     }
 
     /**
-     * Get all categories
+     * NEW: Increase stock (for cancellations/refunds)
      */
+    public function increaseStock($variantId, $quantity) {
+        $query = "UPDATE product_variants 
+                  SET quantity = quantity + ?,
+                      updated_at = CURRENT_TIMESTAMP
+                  WHERE variant_id = ?";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $quantity, $variantId);
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
+    }
+
     public function getAllCategories() {
         $query = "SELECT 
                     category_id as id,
@@ -220,28 +294,50 @@ public function getProductsBySearch($searchTerm) {
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-        /**
-     * Create a new product
-     * @param array $data
-     * @return int|false Product ID on success, false on failure
-     */
+    public function getCategoryCounts() {
+        $query = "SELECT 
+                    pc.name as category_name,
+                    COUNT(DISTINCT p.product_id) as product_count
+                  FROM product_categories pc
+                  LEFT JOIN product_category_links pcl ON pc.category_id = pcl.category_id
+                  LEFT JOIN products p ON pcl.product_id = p.product_id 
+                    AND p.status = 'PUBLISHED' 
+                    AND p.is_deleted = 0
+                  GROUP BY pc.category_id, pc.name
+                  ORDER BY pc.name ASC";
+        
+        $result = $this->conn->query($query);
+        $counts = [];
+        
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $counts[$row['category_name']] = $row['product_count'];
+            }
+        }
+        
+        return $counts;
+    }
+    
     public function createProduct($data) {
         $stmt = $this->conn->prepare("
             INSERT INTO products (
                 shop_id, name, slug, short_description, description, 
-                cover_picture, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                cover_picture, status, meta_title, meta_description, is_featured
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         $stmt->bind_param(
-            "issssss",
+            "issssssssi",
             $data['shop_id'],
             $data['name'],
             $data['slug'],
             $data['short_description'],
             $data['description'],
             $data['cover_picture'],
-            $data['status']
+            $data['status'],
+            $data['meta_title'],
+            $data['meta_description'],
+            $data['is_featured']
         );
         
         if ($stmt->execute()) {
@@ -251,12 +347,6 @@ public function getProductsBySearch($searchTerm) {
         return false;
     }
 
-    /**
-     * Update product
-     * @param int $productId
-     * @param array $data
-     * @return bool
-     */
     public function updateProduct($productId, $data) {
         $stmt = $this->conn->prepare("
             UPDATE products 
@@ -264,27 +354,28 @@ public function getProductsBySearch($searchTerm) {
                 short_description = ?, 
                 description = ?,
                 status = ?,
+                meta_title = ?,
+                meta_description = ?,
+                is_featured = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE product_id = ?
         ");
         
         $stmt->bind_param(
-            "ssssi",
+            "ssssssii",
             $data['name'],
             $data['short_description'],
             $data['description'],
             $data['status'],
+            $data['meta_title'],
+            $data['meta_description'],
+            $data['is_featured'],
             $productId
         );
         
         return $stmt->execute();
     }
 
-    /**
-     * Delete product (soft delete)
-     * @param int $productId
-     * @return bool
-     */
     public function deleteProduct($productId) {
         $stmt = $this->conn->prepare("
             UPDATE products 
@@ -297,15 +388,7 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Create a product variant
-     * CRITICAL FIX: Removed variant_id from INSERT (it's AUTO_INCREMENT)
-     * and corrected bind_param type string to match 9 parameters
-     * @param array $data
-     * @return int|false Variant ID on success, false on failure
-     */
     public function createProductVariant($data) {
-        // FIXED: Removed variant_id from INSERT statement
         $stmt = $this->conn->prepare("
             INSERT INTO product_variants (
                 product_id, variant_name, sku, price, quantity, 
@@ -318,18 +401,6 @@ public function getProductsBySearch($searchTerm) {
             return false;
         }
         
-        // FIXED: Changed from "issdissssi" (10 params) to "issdiisssi" (10 params)
-        // Type string breakdown:
-        // i - product_id (int)
-        // s - variant_name (string)
-        // s - sku (string)
-        // d - price (decimal/double)
-        // i - quantity (int)
-        // s - color (string)
-        // s - size (string)
-        // s - material (string)
-        // s - product_picture (string)
-        // i - is_active (int)
         $stmt->bind_param(
             "issdiisssi",
             $data['product_id'],
@@ -350,24 +421,9 @@ public function getProductsBySearch($searchTerm) {
             return $variantId;
         }
         
-        // Get error message for debugging
-        $error = $stmt->error;
-        $stmt->close();
-        
-        if ($error) {
-            error_log("SQL Error in createProductVariant: " . $error);
-            throw new \Exception("Failed to create product variant: " . $error);
-        }
-        
         return false;
     }
 
-    /**
-     * Update product variant
-     * @param int $variantId
-     * @param array $data
-     * @return bool
-     */
     public function updateProductVariant($variantId, $data) {
         $stmt = $this->conn->prepare("
             UPDATE product_variants 
@@ -401,11 +457,6 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Delete product variant
-     * @param int $variantId
-     * @return bool
-     */
     public function deleteProductVariant($variantId) {
         $stmt = $this->conn->prepare("
             DELETE FROM product_variants WHERE variant_id = ?
@@ -416,12 +467,6 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Link product to category
-     * @param int $productId
-     * @param int $categoryId
-     * @return bool
-     */
     public function linkProductToCategory($productId, $categoryId) {
         $stmt = $this->conn->prepare("
             INSERT INTO product_category_links (product_id, category_id)
@@ -434,11 +479,6 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Remove product category link
-     * @param int $productId
-     * @return bool
-     */
     public function removeProductCategoryLinks($productId) {
         $stmt = $this->conn->prepare("
             DELETE FROM product_category_links WHERE product_id = ?
@@ -449,13 +489,7 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Get or create tag
-     * @param string $tagName
-     * @return int|false Tag ID on success, false on failure
-     */
     public function getOrCreateTag($tagName) {
-        // Check if tag exists
         $stmt = $this->conn->prepare("
             SELECT tag_id FROM product_tags WHERE name = ?
         ");
@@ -468,7 +502,6 @@ public function getProductsBySearch($searchTerm) {
             return $row['tag_id'];
         }
         
-        // Create new tag
         $stmt = $this->conn->prepare("
             INSERT INTO product_tags (name) VALUES (?)
         ");
@@ -482,12 +515,6 @@ public function getProductsBySearch($searchTerm) {
         return false;
     }
 
-    /**
-     * Link product to tag
-     * @param int $productId
-     * @param int $tagId
-     * @return bool
-     */
     public function linkProductToTag($productId, $tagId) {
         $stmt = $this->conn->prepare("
             INSERT INTO product_tag_links (product_id, tag_id)
@@ -500,11 +527,6 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Remove product tag links
-     * @param int $productId
-     * @return bool
-     */
     public function removeProductTagLinks($productId) {
         $stmt = $this->conn->prepare("
             DELETE FROM product_tag_links WHERE product_id = ?
@@ -515,11 +537,6 @@ public function getProductsBySearch($searchTerm) {
         return $stmt->execute();
     }
 
-    /**
-     * Get product tags
-     * @param int $productId
-     * @return array
-     */
     public function getProductTags($productId) {
         $stmt = $this->conn->prepare("
             SELECT pt.tag_id, pt.name
@@ -540,11 +557,6 @@ public function getProductsBySearch($searchTerm) {
         return $tags;
     }
 
-    /**
-     * Get product categories
-     * @param int $productId
-     * @return array
-     */
     public function getProductCategories($productId) {
         $stmt = $this->conn->prepare("
             SELECT pc.category_id, pc.name, pc.slug
@@ -565,12 +577,6 @@ public function getProductsBySearch($searchTerm) {
         return $categories;
     }
 
-    /**
-     * Check if SKU exists
-     * @param string $sku
-     * @param int|null $excludeVariantId
-     * @return bool
-     */
     public function skuExists($sku, $excludeVariantId = null) {
         if ($excludeVariantId) {
             $stmt = $this->conn->prepare("

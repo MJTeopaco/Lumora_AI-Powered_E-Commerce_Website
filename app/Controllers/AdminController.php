@@ -4,6 +4,8 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Admin;
+use App\Models\Notification; // Added
+use App\Models\Shop;         // Added
 
 class AdminController extends Controller {
 
@@ -78,6 +80,9 @@ class AdminController extends Controller {
      * Add Category
      */
     public function addCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -115,6 +120,9 @@ class AdminController extends Controller {
      * Update Category
      */
     public function updateCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -159,6 +167,9 @@ class AdminController extends Controller {
      * Delete Category
      */
     public function deleteCategory() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/settings');
             exit();
@@ -240,6 +251,9 @@ class AdminController extends Controller {
      * Approve Seller Application
      */
     public function approveSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();
@@ -254,6 +268,19 @@ class AdminController extends Controller {
         }
 
         if ($this->adminModel->approveSeller($userId)) {
+            // --- ENHANCED NOTIFICATION SYSTEM INTEGRATION ---
+            $shopModel = new Shop();
+            $shop = $shopModel->getShopByUserId($userId);
+            
+            if ($shop) {
+                $notificationModel = new Notification();
+                $notificationModel->notifyShopApproval(
+                    $shop['user_id'],
+                    $shop['shop_name']
+                );
+            }
+            // ------------------------------------------------
+
             Session::set('success', 'Seller application approved successfully! The user can now manage their shop.');
         } else {
             Session::set('error', 'Failed to approve seller. Please try again.');
@@ -267,6 +294,9 @@ class AdminController extends Controller {
      * Reject Seller Application
      */
     public function rejectSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();
@@ -294,6 +324,9 @@ class AdminController extends Controller {
      * Suspend Seller Account
      */
     public function suspendSeller() {
+        // ADDED: CSRF Protection
+        $this->verifyCsrfToken();
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin/sellers');
             exit();

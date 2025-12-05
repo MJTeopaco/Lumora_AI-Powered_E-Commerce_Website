@@ -1,9 +1,8 @@
 <?php
-// app/views/shop/products.view.php
+// app/Views/shop/products.view.php
 ?>
 
 <div class="dashboard-container">
-    <!-- Header Section -->
     <div class="dashboard-header">
         <div>
             <h1 class="dashboard-title">
@@ -16,7 +15,6 @@
         </a>
     </div>
 
-    <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon bg-blue">
@@ -59,10 +57,8 @@
         </div>
     </div>
 
-    <!-- Filters and Search -->
     <div class="filters-section">
         <form method="GET" action="/shop/products" class="filters-form">
-            <!-- Status Filter -->
             <div class="filter-group">
                 <select name="status" class="filter-select" onchange="this.form.submit()">
                     <option value="all" <?= $currentFilter === 'all' ? 'selected' : '' ?>>All Status</option>
@@ -73,7 +69,6 @@
                 </select>
             </div>
 
-            <!-- Search -->
             <div class="search-group">
                 <input 
                     type="text" 
@@ -94,8 +89,9 @@
             <?php endif; ?>
         </form>
 
-        <!-- Bulk Actions -->
         <form method="POST" action="/shop/products/bulk-action" id="bulkActionForm" class="bulk-actions-form">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            
             <select name="bulk_action" id="bulkAction" class="filter-select">
                 <option value="">Bulk Actions</option>
                 <option value="publish">Publish</option>
@@ -109,7 +105,6 @@
         </form>
     </div>
 
-    <!-- Products Table -->
     <div class="table-container">
         <?php if (empty($products)): ?>
             <div class="empty-state">
@@ -246,13 +241,14 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="modal">
     <div class="modal-content">
         <h3>Confirm Delete</h3>
         <p>Are you sure you want to delete <strong id="productNameToDelete"></strong>?</p>
         <p class="text-danger">This action cannot be undone.</p>
         <form method="POST" action="/shop/products/delete" id="deleteForm">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            
             <input type="hidden" name="product_id" id="productIdToDelete">
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
@@ -262,3 +258,6 @@
     </div>
 </div>
 
+<input type="hidden" id="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+
+<script src="/js/product-management.js"></script>

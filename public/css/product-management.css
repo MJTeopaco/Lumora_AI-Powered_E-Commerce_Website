@@ -153,12 +153,13 @@
 }
 
 .btn-secondary {
-    background: #6b7280;
-    color: white;
+    background: #f5f5f5;
+    color: #1A1A1A;
+    border: 1px solid #ddd;
 }
 
 .btn-secondary:hover {
-    background: #4b5563;
+    background: #e0e0e0;
 }
 
 .btn-danger {
@@ -180,35 +181,35 @@
 }
 
 .products-table thead {
-    background: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
+    background: #f9f9f9;
+    border-bottom: 2px solid #e5e5e5;
 }
 
 .products-table th {
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    color: #374151;
+    color: #1A1A1A;
     font-size: 0.875rem;
     text-transform: uppercase;
 }
 
 .products-table td {
     padding: 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .products-table tbody tr:hover {
-    background: #f9fafb;
+    background: #f9f9f9;
 }
 
 /* Product Image */
 .product-image {
-    width: 60px;
-    height: 60px;
+    width: 45px; /* Shrinking image size here */
+    height: 45px;
     border-radius: 6px;
     overflow: hidden;
-    background: #f3f4f6;
+    background: #f5f5f5;
 }
 
 .product-image img {
@@ -249,8 +250,8 @@
 /* Badges */
 .category-badge {
     padding: 0.25rem 0.75rem;
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #f5f5f5;
+    color: #1A1A1A;
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
@@ -264,18 +265,18 @@
 }
 
 .in-stock {
-    background: #d1fae5;
-    color: #065f46;
+    background: #d4edda;
+    color: #155724;
 }
 
 .low-stock {
-    background: #fef3c7;
-    color: #92400e;
+    background: #fff3cd;
+    color: #856404;
 }
 
 .out-of-stock {
-    background: #fee2e2;
-    color: #991b1b;
+    background: #f8d7da;
+    color: #721c24;
 }
 
 .variant-count {
@@ -300,9 +301,9 @@
 }
 
 .status-published {
-    background: #d1fae5;
-    color: #065f46;
-    border-color: #a7f3d0;
+    background: #fffcf5;
+    color: #D4AF37;
+    border-color: #D4AF37;
 }
 
 .status-unpublished {
@@ -358,7 +359,7 @@
 
 .empty-state i {
     font-size: 4rem;
-    color: #d1d5db;
+    color: #e0e0e0;
     margin-bottom: 1rem;
 }
 
@@ -431,4 +432,4 @@
         width: 40px;
         height: 40px;
     }
-}
+}   

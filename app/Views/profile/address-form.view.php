@@ -10,6 +10,8 @@
       action="<?= isset($isEdit) && $isEdit ? '/profile/addresses/edit/' . htmlspecialchars($address['address_id'] ?? '') : '/profile/addresses/add' ?>" 
       id="addressForm">
     
+    <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
+    
     <div class="form-group">
         <label class="form-label">
             Address Line 1 <span class="required">*</span>
@@ -32,12 +34,14 @@
         </label>
         <select name="region" id="region" class="form-select" required>
             <option value="">Select Region</option>
-            <?php foreach ($regions as $key => $name): ?>
-                <option value="<?= htmlspecialchars($key) ?>" 
-                        <?= (isset($address['region']) && $address['region'] === $key) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($name) ?>
-                </option>
-            <?php endforeach; ?>
+            <?php if (isset($regions) && is_array($regions)): ?>
+                <?php foreach ($regions as $key => $name): ?>
+                    <option value="<?= htmlspecialchars($key) ?>" 
+                            <?= (isset($address['region']) && $address['region'] === $key) ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($name) ?>
+                    </option>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </select>
     </div>
 
@@ -100,7 +104,6 @@
     </div>
 </form>
 
-<!-- Store existing values for JS -->
 <script>
     window.existingAddress = {
         province: '<?= htmlspecialchars($address["province"] ?? "") ?>',

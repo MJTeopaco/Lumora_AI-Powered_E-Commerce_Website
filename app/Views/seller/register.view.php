@@ -20,7 +20,6 @@
     </div>
 
     <div class="form-content">
-        <!-- Success or Error Messages -->
         <?php if (isset($_SESSION['error'])): ?>
             <div class="alert error">
                 <i class="fas fa-exclamation-circle"></i>
@@ -35,17 +34,16 @@
             </div>
         <?php endif; ?>
 
-        <!-- Info Banner -->
         <div class="info-banner">
             <i class="fas fa-info-circle"></i>
             <div>
-                <p><strong>Getting Started:</strong> Complete this registration form to create your seller account. Once submitted, your application will be reviewed by our team. You'll receive a confirmation email within 24-48 hours.</p>
+                <p><strong>Getting Started:</strong> Complete this registration form to create your seller account.</p>
             </div>
         </div>
 
         <form action="/seller/register" method="POST" id="sellerRegistrationForm">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             
-            <!-- Shop Information Section -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="fas fa-store-alt"></i>
@@ -69,16 +67,11 @@
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label for="shop_description">Shop Description</label>
-                        <textarea id="shop_description" name="shop_description" placeholder="Describe what your shop offers, your product categories, and what makes your shop unique..."></textarea>
-                        <div class="helper-text">
-                            <i class="fas fa-info-circle"></i>
-                            <span>This will be displayed on your shop profile page</span>
-                        </div>
+                        <textarea id="shop_description" name="shop_description" placeholder="Describe what your shop offers..."></textarea>
                     </div>
                 </div>
             </div>
 
-            <!-- Contact Information Section -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="fas fa-address-card"></i>
@@ -92,10 +85,6 @@
                             <i class="fas fa-envelope"></i>
                             <input type="email" id="contact_email" name="contact_email" placeholder="shop@example.com" required>
                         </div>
-                        <div class="helper-text">
-                            <i class="fas fa-info-circle"></i>
-                            <span>For customer inquiries and order notifications</span>
-                        </div>
                     </div>
 
                     <div class="form-group">
@@ -104,15 +93,10 @@
                             <i class="fas fa-phone"></i>
                             <input type="tel" id="contact_phone" name="contact_phone" placeholder="+63 912 345 6789" required>
                         </div>
-                        <div class="helper-text">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Include country code (e.g., +63 for Philippines)</span>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Shop Address Section -->
             <div class="form-section">
                 <div class="section-title">
                     <i class="fas fa-map-marker-alt"></i>
@@ -122,14 +106,14 @@
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label for="address_line_1">Address Line 1 <span class="required">*</span></label>
-                        <input type="text" id="address_line_1" name="address_line_1" placeholder="Street address, building name, unit number" required>
+                        <input type="text" id="address_line_1" name="address_line_1" placeholder="Street address" required>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group full-width">
                         <label for="address_line_2">Address Line 2</label>
-                        <input type="text" id="address_line_2" name="address_line_2" placeholder="Additional address information (optional)">
+                        <input type="text" id="address_line_2" name="address_line_2" placeholder="Additional address info">
                     </div>
                 </div>
 
@@ -166,23 +150,17 @@
                     <div class="form-group">
                         <label for="postal_code">Postal Code <span class="required">*</span></label>
                         <input type="text" id="postal_code" name="postal_code" placeholder="e.g., 1600" pattern="[0-9]{4}" maxlength="4" required>
-                        <div class="helper-text">
-                            <i class="fas fa-info-circle"></i>
-                            <span>4-digit postal code</span>
-                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Terms and Conditions -->
             <div class="terms-checkbox">
                 <input type="checkbox" id="terms" name="terms" required>
                 <label for="terms">
-                    I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and <a href="/seller-policy" target="_blank">Seller Policy</a>. I understand that all information provided will be verified and my shop will be subject to Lumora's quality standards.
+                    I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and <a href="/seller-policy" target="_blank">Seller Policy</a>.
                 </label>
             </div>
 
-            <!-- Submit Button -->
             <button type="submit" class="btn-submit">
                 <i class="fas fa-paper-plane"></i> Submit Application
             </button>

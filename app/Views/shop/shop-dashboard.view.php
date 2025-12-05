@@ -1,197 +1,237 @@
+<link rel="stylesheet" href="/css/shop-dashboard.css">
+
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h1 class="dashboard-title">
-            <i class="fas fa-th-large"></i> Dashboard
-        </h1>
-        <p class="dashboard-subtitle">Welcome back, <?= htmlspecialchars($_SESSION['user']['first_name'] ?? 'Seller') ?>! Here's your shop overview.</p>
+        <div>
+            <h1 class="dashboard-title">
+                <i class="fas fa-shopping-cart"></i> Manage Orders
+            </h1>
+            <p class="dashboard-subtitle">Track and fulfill customer orders</p>
+        </div>
     </div>
-    
-    <!-- Statistics Cards -->
+
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-icon stat-icon-primary">
-                <i class="fas fa-box"></i>
-            </div>
-            <div class="stat-content">
-                <h3 class="stat-value"><?= number_format($stats['total_products'] ?? 0) ?></h3>
-                <p class="stat-label">Total Products</p>
-            </div>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon stat-icon-success">
+            <div class="stat-icon bg-blue">
                 <i class="fas fa-shopping-cart"></i>
             </div>
             <div class="stat-content">
-                <h3 class="stat-value"><?= number_format($stats['total_orders'] ?? 0) ?></h3>
-                <p class="stat-label">Total Orders</p>
+                <div class="stat-value"><?= number_format($stats['total_orders'] ?? 0) ?></div>
+                <div class="stat-label">Total Orders</div>
             </div>
         </div>
-        
+
         <div class="stat-card">
-            <div class="stat-icon stat-icon-warning">
+            <div class="stat-icon bg-yellow">
                 <i class="fas fa-clock"></i>
             </div>
             <div class="stat-content">
-                <h3 class="stat-value"><?= number_format($stats['pending_orders'] ?? 0) ?></h3>
-                <p class="stat-label">Pending Orders</p>
+                <div class="stat-value"><?= number_format($stats['processing'] ?? 0) ?></div>
+                <div class="stat-label">Processing</div>
             </div>
         </div>
-        
+
         <div class="stat-card">
-            <div class="stat-icon stat-icon-info">
-                <i class="fas fa-dollar-sign"></i>
+            <div class="stat-icon bg-purple">
+                <i class="fas fa-box"></i>
             </div>
             <div class="stat-content">
-                <h3 class="stat-value">₱<?= number_format($stats['total_revenue'] ?? 0, 2) ?></h3>
-                <p class="stat-label">Total Revenue</p>
+                <div class="stat-value"><?= number_format($stats['ready_to_ship'] ?? 0) ?></div>
+                <div class="stat-label">Ready to Ship</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon bg-green">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value"><?= number_format($stats['shipped'] ?? 0) ?></div>
+                <div class="stat-label">Shipped</div>
             </div>
         </div>
     </div>
-    
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h2 class="section-header">
-            <i class="fas fa-bolt"></i> Quick Actions
-        </h2>
-        <div class="actions-grid">
-            <a href="/shop/add-product" class="action-card">
-                <i class="fas fa-plus-circle"></i>
-                <h3>Add New Product</h3>
-                <p>List a new item in your shop</p>
-            </a>
-            
-            <a href="/shop/orders" class="action-card">
-                <i class="fas fa-receipt"></i>
-                <h3>View Orders</h3>
-                <p>Manage customer orders</p>
-            </a>
-            
-            <a href="/shop/products" class="action-card">
-                <i class="fas fa-edit"></i>
-                <h3>Edit Products</h3>
-                <p>Update your product listings</p>
-            </a>
-            
-            <a href="/shop/addresses" class="action-card">
-                <i class="fas fa-map-marker-alt"></i>
-                <h3>Manage Addresses</h3>
-                <p>Update shipping addresses</p>
-            </a>
-        </div>
-    </div>
-    
-    <!-- Recent Orders -->
-    <div class="recent-section">
-        <div class="section-header-row">
-            <h2 class="section-header">
-                <i class="fas fa-history"></i> Recent Orders
-            </h2>
-            <a href="/shop/orders" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
-        </div>
-        
-        <?php if (!empty($recentOrders)): ?>
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Customer</th>
-                            <th>Product</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($recentOrders as $order): ?>
-                            <tr>
-                                <td><strong>#<?= htmlspecialchars($order['id']) ?></strong></td>
-                                <td><?= htmlspecialchars($order['customer_name']) ?></td>
-                                <td><?= htmlspecialchars($order['product_name']) ?></td>
-                                <td>₱<?= number_format($order['amount'], 2) ?></td>
-                                <td>
-                                    <span class="status-badge status-<?= strtolower($order['status']) ?>">
-                                        <?= htmlspecialchars($order['status']) ?>
-                                    </span>
-                                </td>
-                                <td><?= date('M d, Y', strtotime($order['created_at'])) ?></td>
-                                <td>
-                                    <a href="/shop/orders/<?= $order['id'] ?>" class="btn-table-action">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+
+    <div class="filters-section">
+        <form method="GET" action="/shop/orders" class="filters-form">
+            <div class="filter-group">
+                <?php $filter = $currentFilter ?? 'all'; ?>
+                <select name="status" class="filter-select" onchange="this.form.submit()">
+                    <option value="all" <?= $filter === 'all' ? 'selected' : '' ?>>All Orders</option>
+                    <option value="processing" <?= $filter === 'processing' ? 'selected' : '' ?>>Processing</option>
+                    <option value="ready_to_ship" <?= $filter === 'ready_to_ship' ? 'selected' : '' ?>>Ready to Ship</option>
+                    <option value="shipped" <?= $filter === 'shipped' ? 'selected' : '' ?>>Shipped</option>
+                    <option value="delivered" <?= $filter === 'delivered' ? 'selected' : '' ?>>Delivered</option>
+                    <option value="cancelled" <?= $filter === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                </select>
             </div>
-        <?php else: ?>
+
+            <div class="search-group">
+                <input 
+                    type="text" 
+                    name="search" 
+                    class="search-input" 
+                    placeholder="Search by Order ID or Customer..." 
+                    value="<?= htmlspecialchars($searchTerm ?? '') ?>"
+                >
+                <button type="submit" class="btn-search">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+
+            <?php if (($currentFilter ?? 'all') !== 'all' || !empty($searchTerm)): ?>
+                <a href="/shop/orders" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Clear Filters
+                </a>
+            <?php endif; ?>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <?php if (empty($orders)): ?>
             <div class="empty-state">
                 <i class="fas fa-inbox empty-icon"></i>
-                <h3>No Recent Orders</h3>
-                <p>Your recent orders will appear here once customers start purchasing.</p>
-            </div>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Top Selling Products -->
-    <div class="recent-section">
-        <div class="section-header-row">
-            <h2 class="section-header">
-                <i class="fas fa-fire"></i> Top Selling Products
-            </h2>
-            <a href="/shop/products" class="view-all-link">View All <i class="fas fa-arrow-right"></i></a>
-        </div>
-        
-        <?php if (!empty($topProducts)): ?>
-            <div class="products-list">
-                <?php foreach ($topProducts as $product): ?>
-                    <div class="product-list-item">
-                        <div class="product-list-image">
-                            <?php if (!empty($product['image'])): ?>
-                                <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
-                            <?php else: ?>
-                                <div class="placeholder-image">
-                                    <i class="fas fa-image"></i>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="product-list-info">
-                            <h4><?= htmlspecialchars($product['name']) ?></h4>
-                            <p class="product-category"><?= htmlspecialchars($product['category']) ?></p>
-                        </div>
-                        <div class="product-list-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Sales:</span>
-                                <span class="stat-value"><?= number_format($product['sales']) ?></span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Stock:</span>
-                                <span class="stat-value <?= $product['stock'] < 10 ? 'text-warning' : '' ?>">
-                                    <?= number_format($product['stock']) ?>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="product-list-price">
-                            ₱<?= number_format($product['price'], 2) ?>
-                        </div>
-                        <div class="product-list-actions">
-                            <a href="/shop/products/edit/<?= $product['id'] ?>" class="btn-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                <h3>No Orders Found</h3>
+                <p>
+                    <?php if (!empty($searchTerm)): ?>
+                        No orders match your search "<?= htmlspecialchars($searchTerm) ?>"
+                    <?php elseif (($currentFilter ?? 'all') !== 'all'): ?>
+                        No orders with status "<?= htmlspecialchars($currentFilter) ?>"
+                    <?php else: ?>
+                        You haven't received any orders yet
+                    <?php endif; ?>
+                </p>
             </div>
         <?php else: ?>
-            <div class="empty-state">
-                <i class="fas fa-box-open empty-icon"></i>
-                <h3>No Products Yet</h3>
-                <p>Start adding products to see your top sellers here.</p>
-                <a href="/shop/add-product" class="btn btn-primary">Add Your First Product</a>
-            </div>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th>Order Date</th>
+                        <th width="150">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order): ?>
+                        <tr>
+                            <td>
+                                <strong class="order-id">#<?= str_pad($order['order_id'] ?? 0, 6, '0', STR_PAD_LEFT) ?></strong>
+                            </td>
+                            <td>
+                                <div class="customer-info">
+                                    <div class="customer-name">
+                                        <?= htmlspecialchars($order['customer_name'] ?? 'N/A') ?>
+                                    </div>
+                                    <div class="customer-email">
+                                        <?= htmlspecialchars($order['customer_email'] ?? '') ?>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="item-count">
+                                    <?= number_format($order['item_count'] ?? 0) ?> item(s) 
+                                    <span class="text-muted">(<?= number_format($order['total_items'] ?? 0) ?> qty)</span>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="order-amount">
+                                    <strong>₱<?= number_format($order['total_amount'] ?? 0, 2) ?></strong>
+                                    <?php if (($order['shipping_fee'] ?? 0) > 0): ?>
+                                        <div class="text-muted small">+ ₱<?= number_format($order['shipping_fee'], 2) ?> shipping</div>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td>
+                                <?php 
+                                $status = $order['order_status'] ?? 'PENDING';
+                                $statusClass = strtolower(str_replace('_', '-', $status));
+                                $statusDisplay = ucwords(str_replace('_', ' ', $status));
+                                ?>
+                                <span class="order-status status-<?= $statusClass ?>">
+                                    <?= $statusDisplay ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="date">
+                                    <?= date('M d, Y', strtotime($order['created_at'] ?? 'now')) ?>
+                                </span>
+                                <div class="text-muted small">
+                                    <?= date('g:i A', strtotime($order['created_at'] ?? 'now')) ?>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button 
+                                        onclick="viewOrderDetails(<?= $order['order_id'] ?? 0 ?>)" 
+                                        class="btn-icon" 
+                                        title="View Details"
+                                    >
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    <?php if (($order['order_status'] ?? '') === 'PROCESSING'): ?>
+                                        <button 
+                                            onclick="updateOrderStatus(<?= $order['order_id'] ?>, 'READY_TO_SHIP')" 
+                                            class="btn-icon btn-success" 
+                                            title="Mark Ready to Ship"
+                                        >
+                                            <i class="fas fa-box"></i>
+                                        </button>
+                                    <?php elseif (($order['order_status'] ?? '') === 'READY_TO_SHIP'): ?>
+                                        <button 
+                                            onclick="updateOrderStatus(<?= $order['order_id'] ?>, 'SHIPPED')" 
+                                            class="btn-icon btn-primary" 
+                                            title="Mark as Shipped"
+                                        >
+                                            <i class="fas fa-truck"></i>
+                                        </button>
+                                    <?php elseif (($order['order_status'] ?? '') === 'SHIPPED'): ?>
+                                        <button 
+                                            onclick="updateOrderStatus(<?= $order['order_id'] ?>, 'DELIVERED')" 
+                                            class="btn-icon btn-success" 
+                                            title="Mark as Delivered"
+                                        >
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         <?php endif; ?>
     </div>
 </div>
+
+<div id="orderDetailsModal" class="modal">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h3><i class="fas fa-file-invoice"></i> Order Details</h3>
+            <button class="modal-close" onclick="closeOrderDetailsModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading order details...
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="statusUpdateModal" class="modal">
+    <div class="modal-content">
+        <h3>Update Order Status</h3>
+        <p id="statusUpdateMessage"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeStatusUpdateModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="confirmStatusUpdate()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+<script src="/js/shop-orders.js"></script>

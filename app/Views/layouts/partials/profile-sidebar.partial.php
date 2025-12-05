@@ -18,6 +18,9 @@ if (empty($activeTab)) {
     }
 }
 ?>
+
+
+
 <div class="sidebar-header">
     <div class="sidebar-avatar-container">
         <div class="sidebar-avatar">
@@ -50,12 +53,13 @@ if (empty($activeTab)) {
         <span>Account Settings</span>
     </a>
     
-    <div class="menu-divider"></div>
-    
-    <form method="POST" action="/logout" style="margin: 0;">
-        <button type="submit" class="menu-item logout">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </button>
-    </form>
+    <div class="sidebar-footer">
+        <form method="POST" action="/logout" style="margin: 0;">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <button type="submit" class="menu-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </button>
+        </form>
+    </div>
 </nav>
