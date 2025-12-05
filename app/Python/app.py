@@ -4,12 +4,18 @@ import os
 import traceback
 import logging
 import numpy as np
+from scipy.sparse import load_npz
+from sklearn.metrics.pairwise import cosine_similarity
 
 app = Flask(__name__)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Global variables for models
+MODEL_LOADED = False
+SEARCH_MODEL_LOADED = False
 
 # Load model components at startup
 try:
@@ -19,6 +25,7 @@ try:
     logger.info("Loading ML models...")
     logger.info(f"ML Directory: {ML_DIR}")
     
+    # ========== AUTO-TAGGING MODELS ==========
     # Load all components from the SAME training session
     vectorizer_path = os.path.join(ML_DIR, 'lumora_autotagger_vectorizer.joblib')
     mlb_path = os.path.join(ML_DIR, 'lumora_autotagger_mlb.joblib')
@@ -52,29 +59,190 @@ try:
         logger.warning(f"Tag list size ({len(tags_list)}) doesn't match MLB classes ({num_classes_mlb})")
     
     logger.info("=" * 60)
-    logger.info("ALL MODELS LOADED SUCCESSFULLY!")
+    logger.info("AUTO-TAGGING MODELS LOADED SUCCESSFULLY!")
     logger.info("=" * 60)
     MODEL_LOADED = True
     
 except Exception as e:
-    logger.error(f"Error loading models: {str(e)}")
+    logger.error(f"Error loading auto-tagging models: {str(e)}")
     logger.error(traceback.format_exc())
     MODEL_LOADED = False
+
+# ========== SMART SEARCH MODELS ==========
+try:
+    logger.info("Loading Smart Search models...")
+    
+    # Load TF-IDF vectorizer for search
+    search_tfidf_path = os.path.join(ML_DIR, 'tfidf_vectorizer.joblib')
+    product_vectors_path = os.path.join(ML_DIR, 'product_vectors_X.npz')
+    product_metadata_path = os.path.join(ML_DIR, 'product_metadata.joblib')
+    
+    if not os.path.exists(search_tfidf_path):
+        raise FileNotFoundError(f"TF-IDF vectorizer not found at {search_tfidf_path}")
+    if not os.path.exists(product_vectors_path):
+        raise FileNotFoundError(f"Product vectors not found at {product_vectors_path}")
+    
+    # Load search components
+    search_tfidf = joblib.load(search_tfidf_path)
+    product_vectors = load_npz(product_vectors_path)
+    
+    # Load product metadata if available (product IDs, names, etc.)
+    if os.path.exists(product_metadata_path):
+        product_metadata = joblib.load(product_metadata_path)
+        logger.info(f"✓ Product metadata loaded - {len(product_metadata)} products")
+    else:
+        product_metadata = None
+        logger.warning("Product metadata not found, will return indices only")
+    
+    logger.info(f"✓ Search TF-IDF loaded - Vocabulary: {len(search_tfidf.vocabulary_)}")
+    logger.info(f"✓ Product vectors loaded - Shape: {product_vectors.shape}")
+    logger.info("=" * 60)
+    logger.info("SMART SEARCH MODELS LOADED SUCCESSFULLY!")
+    logger.info("=" * 60)
+    SEARCH_MODEL_LOADED = True
+    
+except Exception as e:
+    logger.error(f"Error loading smart search models: {str(e)}")
+    logger.error(traceback.format_exc())
+    SEARCH_MODEL_LOADED = False
 
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
-    if MODEL_LOADED:
+    return jsonify({
+        'status': 'healthy' if (MODEL_LOADED or SEARCH_MODEL_LOADED) else 'unhealthy',
+        'auto_tagging_loaded': MODEL_LOADED,
+        'smart_search_loaded': SEARCH_MODEL_LOADED,
+        'num_classes': len(mlb.classes_) if MODEL_LOADED else 0,
+        'vocabulary_size': len(vectorizer.vocabulary_) if MODEL_LOADED else 0,
+        'search_vocabulary_size': len(search_tfidf.vocabulary_) if SEARCH_MODEL_LOADED else 0,
+        'num_products_indexed': product_vectors.shape[0] if SEARCH_MODEL_LOADED else 0
+    }), 200 if (MODEL_LOADED or SEARCH_MODEL_LOADED) else 500
+
+@app.route('/search', methods=['POST'])
+def smart_search():
+    """
+    Smart search endpoint using TF-IDF and cosine similarity
+    
+    Request JSON:
+    {
+        "query": "gold earrings",
+        "top_k": 10,
+        "min_similarity": 0.1
+    }
+    
+    Response JSON:
+    {
+        "success": true,
+        "query": "gold earrings",
+        "results": [
+            {
+                "product_id": 123,
+                "similarity_score": 0.85,
+                "rank": 1
+            },
+            ...
+        ],
+        "total_results": 10
+    }
+    """
+    try:
+        if not SEARCH_MODEL_LOADED:
+            return jsonify({
+                'success': False,
+                'error': 'Search models not loaded. Please train and save models first.'
+            }), 500
+        
+        # Get request data
+        data = request.get_json()
+        
+        if not data or 'query' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'No query provided. Send JSON with "query" field.'
+            }), 400
+        
+        query = data.get('query', '').strip()
+        top_k = data.get('top_k', 10)  # Number of results to return
+        min_similarity = data.get('min_similarity', 0.1)  # Minimum similarity threshold
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'error': 'Query cannot be empty'
+            }), 400
+        
+        logger.info(f"Search query: '{query}' (top_k={top_k}, min_similarity={min_similarity})")
+        
+        # Transform query using TF-IDF
+        query_vector = search_tfidf.transform([query])
+        logger.debug(f"Query vector shape: {query_vector.shape}")
+        
+        # Calculate cosine similarity between query and all products
+        similarities = cosine_similarity(query_vector, product_vectors).flatten()
+        logger.debug(f"Similarities shape: {similarities.shape}")
+        
+        # Get indices of top-k most similar products
+        # Filter by minimum similarity threshold
+        valid_indices = np.where(similarities >= min_similarity)[0]
+        
+        if len(valid_indices) == 0:
+            logger.info(f"No products found with similarity >= {min_similarity}")
+            return jsonify({
+                'success': True,
+                'query': query,
+                'results': [],
+                'total_results': 0,
+                'message': 'No products found matching your search'
+            }), 200
+        
+        # Sort by similarity score (descending)
+        sorted_indices = valid_indices[np.argsort(similarities[valid_indices])[::-1]]
+        
+        # Take top k results
+        top_indices = sorted_indices[:top_k]
+        top_similarities = similarities[top_indices]
+        
+        # Build results
+        results = []
+        for rank, (idx, score) in enumerate(zip(top_indices, top_similarities), start=1):
+            result = {
+                'rank': rank,
+                'similarity_score': float(score),
+                'product_index': int(idx)
+            }
+            
+            # Add metadata if available
+            if product_metadata is not None and idx < len(product_metadata):
+                metadata = product_metadata[idx]
+                result.update({
+                    'product_id': metadata.get('product_id'),
+                    'name': metadata.get('name'),
+                    'slug': metadata.get('slug')
+                })
+            
+            results.append(result)
+        
+        logger.info(f"Found {len(results)} products (similarity >= {min_similarity})")
+        
         return jsonify({
-            'status': 'healthy', 
-            'model_loaded': True,
-            'num_classes': len(mlb.classes_),
-            'vocabulary_size': len(vectorizer.vocabulary_)
+            'success': True,
+            'query': query,
+            'results': results,
+            'total_results': len(results),
+            'parameters': {
+                'top_k': top_k,
+                'min_similarity': min_similarity
+            }
         }), 200
-    else:
+        
+    except Exception as e:
+        logger.error(f"Error in smart_search: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({
-            'status': 'unhealthy', 
-            'model_loaded': False
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc() if app.debug else None
         }), 500
 
 @app.route('/predict-tags', methods=['POST'])
@@ -85,7 +253,7 @@ def predict_tags():
         if not MODEL_LOADED:
             return jsonify({
                 'success': False,
-                'error': 'Models not loaded. Check server logs.'
+                'error': 'Auto-tagging models not loaded. Check server logs.'
             }), 500
         
         # Get JSON data
@@ -101,7 +269,7 @@ def predict_tags():
         product_name = data.get('product_name', '')
         description = data.get('description', '')
         short_description = data.get('short_description', '')
-        threshold = data.get('threshold', 0.05)  # Lower threshold for better recall (default 0.3)
+        threshold = data.get('threshold', 0.05)  # Lower threshold for better recall
         
         # Validate input
         if not product_name and not description:
@@ -119,9 +287,8 @@ def predict_tags():
         text_vectorized = vectorizer.transform([combined_text])
         logger.debug(f"Text vectorized shape: {text_vectorized.shape}")
         
-        # Get probability predictions instead of binary predictions
+        # Get probability predictions
         if hasattr(model, 'predict_proba'):
-            # Get probabilities for each tag
             probabilities = model.predict_proba(text_vectorized)[0]
             logger.debug(f"Probabilities shape: {probabilities.shape}")
             
@@ -133,21 +300,21 @@ def predict_tags():
                     'error': f'Model dimension mismatch. Please retrain all models together.'
                 }), 500
             
-            # Apply custom threshold to get predictions
+            # Apply custom threshold
             predictions = (probabilities >= threshold).astype(int)
-            predictions = predictions.reshape(1, -1)  # Reshape for inverse_transform
+            predictions = predictions.reshape(1, -1)
             
             # Get predicted tags
             predicted_labels = mlb.inverse_transform(predictions)[0]
             
-            # Get confidence scores for predicted tags
+            # Get confidence scores
             predicted_indices = np.where(predictions[0] == 1)[0]
             confidences = {
                 mlb.classes_[idx]: float(probabilities[idx]) 
                 for idx in predicted_indices
             }
             
-            # Also return top probabilities for all tags (for debugging)
+            # Top probabilities for debugging
             all_probs = {
                 mlb.classes_[idx]: float(probabilities[idx])
                 for idx in range(len(probabilities))
@@ -155,18 +322,8 @@ def predict_tags():
             top_probs = dict(sorted(all_probs.items(), key=lambda x: x[1], reverse=True)[:10])
             
         else:
-            # Fallback to default predict if predict_proba not available
-            logger.warning("Model does not support predict_proba, using default threshold")
+            # Fallback
             predictions = model.predict(text_vectorized)
-            logger.debug(f"Predictions shape: {predictions.shape}")
-            
-            if predictions.shape[1] != len(mlb.classes_):
-                logger.error(f"Dimension mismatch! Predictions: {predictions.shape[1]}, MLB: {len(mlb.classes_)}")
-                return jsonify({
-                    'success': False,
-                    'error': f'Model dimension mismatch. Please retrain all models together.'
-                }), 500
-            
             predicted_labels = mlb.inverse_transform(predictions)[0]
             confidences = {}
             top_probs = {}
@@ -178,7 +335,7 @@ def predict_tags():
             'tags': list(predicted_labels),
             'confidences': confidences,
             'threshold_used': threshold,
-            'top_probabilities': top_probs  # For debugging threshold tuning
+            'top_probabilities': top_probs
         }), 200
         
     except Exception as e:
@@ -197,12 +354,12 @@ def batch_predict_tags():
         if not MODEL_LOADED:
             return jsonify({
                 'success': False,
-                'error': 'Models not loaded'
+                'error': 'Auto-tagging models not loaded'
             }), 500
         
         data = request.get_json()
         products = data.get('products', [])
-        threshold = data.get('threshold', 0.3)  # Lower threshold for better recall
+        threshold = data.get('threshold', 0.3)
         
         if not products:
             return jsonify({
@@ -232,20 +389,17 @@ def batch_predict_tags():
                 text_vectorized = vectorizer.transform([combined_text])
                 
                 if hasattr(model, 'predict_proba'):
-                    # Use probability-based prediction with threshold
                     probabilities = model.predict_proba(text_vectorized)[0]
                     predictions = (probabilities >= threshold).astype(int)
                     predictions = predictions.reshape(1, -1)
                     predicted_labels = mlb.inverse_transform(predictions)[0]
                     
-                    # Get confidences for predicted tags
                     predicted_indices = np.where(predictions[0] == 1)[0]
                     confidences = {
                         mlb.classes_[idx]: float(probabilities[idx]) 
                         for idx in predicted_indices
                     }
                 else:
-                    # Fallback to default predict
                     predictions = model.predict(text_vectorized)
                     predicted_labels = mlb.inverse_transform(predictions)[0]
                     confidences = {}
