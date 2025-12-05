@@ -1,0 +1,325 @@
+/* =========================================
+   SELLER GUIDELINES – Enhanced Visual Layout
+========================================= */
+
+/* Hero */
+.guidelines-hero {
+  background: linear-gradient(135deg, #111 0%, #222 100%);
+  color: #ffffff;
+  padding-block: 3.5rem 4rem;
+  text-align: left;
+  position: relative;
+}
+
+.guidelines-hero h1 {
+  font-size: clamp(2.2rem, 4vw, 2.9rem);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.guidelines-eyebrow {
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+}
+
+.guidelines-intro {
+  max-width: 720px;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  opacity: 0.95;
+  margin-bottom: 1rem;
+}
+
+.guidelines-updated {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+/* Pills */
+.guidelines-pill-row {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 1.7rem;
+  flex-wrap: wrap;
+}
+
+.guidelines-pill {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.11em;
+  background-color: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* Layout: TOC + Content */
+.guidelines-body {
+  background-color: #faf7f4;
+  padding-block: 3rem 5rem;
+}
+
+.guidelines-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 3rem;
+}
+
+/* TOC */
+.guidelines-toc {
+  position: sticky;
+  top: 120px;
+  align-self: start;
+}
+
+.guidelines-toc h2 {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e0d5c6;
+  margin-bottom: 0.8rem;
+}
+
+.guidelines-toc ul {
+  list-style: none;
+  padding: 0;
+}
+
+.guidelines-toc li {
+  margin-bottom: 0.5rem;
+}
+
+.guidelines-toc a {
+  color: #6c584c;
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: color 0.2s ease;
+  display: block;
+  padding: 0.3rem 0;
+}
+
+.guidelines-toc a:hover,
+.guidelines-toc a.active-section {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* Content Card */
+.guidelines-content {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 2.3rem 2.4rem;
+  border: 1px solid #eee2d5;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* Sections */
+.guidelines-section {
+  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid #eee2d5;
+  scroll-margin-top: 130px;
+
+  /* make content visible by default */
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* still safe if JS adds this class */
+.guidelines-section.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.guidelines-section:last-child {
+  border-bottom: none;
+}
+
+.guidelines-section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.7rem;
+  font-weight: 600;
+  color: #2b2b2b;
+}
+
+.guidelines-section p {
+  font-size: 0.97rem;
+  color: #555;
+  line-height: 1.65;
+  margin-bottom: 0.6rem;
+}
+
+.guidelines-section ul {
+  margin-left: 1.2rem;
+  padding-left: 0.5rem;
+}
+
+.guidelines-section li {
+  font-size: 0.93rem;
+  margin-bottom: 0.35rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Critical badge */
+.critical-badge {
+  display: inline-block;
+  background: #d9534f;
+  color: #fff;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  margin-left: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+}
+
+/* CTA */
+.guidelines-cta {
+  text-align: center;
+  padding-top: 2.5rem;
+  padding-bottom: 1rem;
+}
+
+.guidelines-btn {
+  display: inline-block;
+  background-color: var(--primary);
+  color: #fff;
+  padding: 0.8rem 1.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.25s ease, transform 0.15s ease,
+              box-shadow 0.25s ease;
+  margin-top: 1rem;
+}
+
+.guidelines-btn:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+}
+
+/* =========================================
+   READING PROGRESS BAR
+========================================= */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  background-color: var(--primary);
+  width: 0;
+  z-index: 9999;
+  transition: width 0.1s ease;
+}
+
+/* =========================================
+   BACK TO TOP BUTTON
+========================================= */
+.back-to-top {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background-color: var(--primary);
+  color: #fff;
+  border: none;
+
+  /* square size */
+  width: 46px;
+  height: 46px;
+
+  /* rounded corners, not a circle */
+  border-radius: 10px;
+
+  font-size: 1.2rem;
+  cursor: pointer;
+
+  /* start hidden */
+  display: none;
+  opacity: 0;
+  transform: translateY(6px);
+
+  box-shadow: 0 5px 18px rgba(0,0,0,0.25);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  /* center the arrow inside the square */
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1500;
+}
+
+.back-to-top:hover {
+  background-color: var(--primary-dark);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.3);
+  transform: translateY(0);
+}
+
+/* class toggled via JS on scroll */
+.back-to-top-visible {
+  display: flex !important;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .guidelines-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .guidelines-toc {
+    position: relative;
+    top: 0;
+    margin-bottom: 2rem;
+  }
+
+  .guidelines-hero {
+    padding-block: 2.5rem 3rem;
+  }
+
+  .guidelines-content {
+    padding: 1.8rem 1.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .guidelines-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .guidelines-intro {
+    font-size: 0.95rem;
+  }
+
+  .guidelines-content {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .guidelines-section h2 {
+    font-size: 1.15rem;
+  }
+
+  .back-to-top {
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+}

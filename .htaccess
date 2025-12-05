@@ -1,0 +1,7 @@
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks -MultiViews
+    RewriteEngine On
+
+    # If the request is NOT for the "public" folder, send it there
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
