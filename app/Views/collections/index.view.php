@@ -2,8 +2,6 @@
 // app/Views/collections/index.view.php
 ?>
 
-<link rel="stylesheet" href="/css/collections.css">
-
 <section class="hero">
     <h1><?= isset($category) ? htmlspecialchars($category['name']) : 'All Collections' ?></h1>
     <p>Discover handcrafted luxury accessories</p>
@@ -125,7 +123,7 @@
             <a href="/collections/index" class="btn btn-primary">Browse All Products</a>
         </div>
     <?php else: ?>
-        <div class="products-grid">
+        <div class="product-grid">
             <?php foreach ($products as $product): ?>
                 <a href="/products/<?= htmlspecialchars($product['slug']) ?>" class="product-card">
                     <div class="product-image">
@@ -162,18 +160,3 @@
     <?php endif; ?>
 </div>
 
-<script>
-    function toggleFilters() {
-        const panel = document.getElementById('filtersPanel');
-        panel.classList.toggle('active');
-    }
-
-    document.addEventListener('click', function(e) {
-        const panel = document.getElementById('filtersPanel');
-        const btn = e.target.closest('.btn-outline');
-        
-        if (panel && !panel.contains(e.target) && !btn) {
-            panel.classList.remove('active');
-        }
-    });
-</script>

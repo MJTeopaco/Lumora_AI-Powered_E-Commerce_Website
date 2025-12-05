@@ -204,21 +204,20 @@ $isLoggedIn = $isLoggedIn ?? false;
 
       <div class="product-grid">
         <?php foreach ($products as $product): ?>
-          <div class="product-card">
+          <a href="/collections/index" class="product-card">
             <div class="product-image">
               <?php if (!empty($product['image'])): ?>
                   <img src="<?= htmlspecialchars($product['image']) ?>" 
                        alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>"
                        loading="lazy">
               <?php else: ?>
-                  <div class="no-image-placeholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
+                  <div class="no-image-placeholder">
                       <i class="fas fa-image" style="font-size: 2rem; color: #ccc;"></i>
                   </div>
               <?php endif; ?>
             </div>
             
             <div class="product-info">
-                <div class="product-category"><?= htmlspecialchars($product['category'] ?? 'General') ?></div>
                 <h3 class="product-name"><?= htmlspecialchars($product['name'] ?? 'Unnamed Product') ?></h3>
                 
                 <?php if (!empty($product['description'])): ?>
@@ -233,39 +232,8 @@ $isLoggedIn = $isLoggedIn ?? false;
                     ₱<?= number_format($product['price'] ?? 0, 2) ?>
                   <?php endif; ?>
                 </p>
-                
-                <?php 
-                    $stock = $product['stock'] ?? 0;
-                    $stockClass = $stock > 10 ? 'stock-available' : ($stock > 0 ? 'stock-low' : 'stock-out');
-                ?>
-                <div class="product-stock <?= $stockClass ?>">
-                    <?php if ($stock > 10): ?>
-                        ✓ In Stock
-                    <?php elseif ($stock > 0): ?>
-                        ⚠ Only <?= $stock ?> left!
-                    <?php else: ?>
-                        ✗ Out of Stock
-                    <?php endif; ?>
-                </div>
-                
-                <?php if ($isLoggedIn): ?>
-                    <?php if ($stock > 0): ?>
-                        <form method="POST" action="/cart/add">
-                            <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
-                            <input type="hidden" name="product_id" value="<?= $product['id'] ?? '' ?>">
-                            <input type="hidden" name="quantity" value="1">
-                            <button type="submit" class="btn btn-add-cart">Add to Cart</button>
-                        </form>
-                    <?php else: ?>
-                        <button class="btn btn-add-cart btn-disabled" disabled>Out of Stock</button>
-                    <?php endif; ?>
-                <?php else: ?>
-                    <button class="btn btn-add-cart btn-disabled" disabled title="Please login to add items to cart">
-                        Login to Purchase
-                    </button>
-                <?php endif; ?>
             </div>
-          </div>
+          </a>
         <?php endforeach; ?>
       </div>
 

@@ -141,6 +141,7 @@
                         placeholder="leather, backpack, travel, premium (separated by commas)"
                     >
                     <span class="form-hint">Add keywords to help customers find your product</span>
+                                
                 </div>
             </div>
         </div>

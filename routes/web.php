@@ -81,6 +81,7 @@ $router->post('/seller/register', 'SellerController@registerSubmit');
 $router->get('/collections', 'CollectionsController@index');
 $router->get('/collections/index', 'CollectionsController@index');
 $router->get('/collections/category/{slug}', 'CollectionsController@byCategory');
+$router->post('/collections/smart-search', 'SearchController@smartSearch');
 
 // PRODUCT DETAIL ROUTES (Customer)
 $router->get('/products/{slug}', 'ProductController@show');
@@ -90,6 +91,9 @@ $router->get('/products/{slug}', 'ProductController@show');
 $router->get('/shop/dashboard', 'ShopController@dashboard');
 $router->get('/shop/add-product', 'ShopController@addProduct');
 $router->post('/shop/products/store', 'ShopController@storeProduct');
+$router->post('/api/products/predict-tags', 'ShopController@predictTags'); // Added from incoming
+
+$router->get('/shop/products', 'ShopController@products'); // Added from incoming
 $router->get('/shop/cancellations', 'ShopController@cancellations');
 $router->get('/shop/addresses', 'ShopController@addresses');
 
@@ -110,6 +114,14 @@ $router->post('/shop/products/update-status', 'ProductManagementController@updat
 $router->post('/shop/products/delete', 'ProductManagementController@delete');
 $router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
 $router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
+
+
+// Shop Profile Routes
+$router->get('/shop/shop-profile', 'ShopProfileController@index');
+$router->post('/shop/profile/update-basic-info', 'ShopProfileController@updateBasicInfo');
+$router->post('/shop/profile/update-address', 'ShopProfileController@updateAddress');
+$router->post('/shop/profile/upload-banner', 'ShopProfileController@uploadBanner');
+$router->post('/shop/profile/upload-profile', 'ShopProfileController@uploadProfile');
 
 // <----------------------------------------------------------------------------------------->
 // CHECKOUT ROUTES (Phase 3)
@@ -144,13 +156,13 @@ $router->post('/admin/users/unlock', 'AdminController@unlockUser');
 $router->get('/admin/support', 'AdminController@support');
 $router->post('/admin/support/resolve', 'AdminController@resolveTicket');
 
-// Reporting Hub (Fixed: Added leading slash)
+// Reporting Hub
 $router->get('/admin/reports', 'AdminController@reports');
 
-// Audit Logs (Fixed: Added leading slash)
+// Audit Logs
 $router->get('/admin/audit-logs', 'AdminController@auditLogs');
 
-// Sales Reports (Fixed: Added leading slash)
+// Sales Reports
 $router->get('/admin/sales-reports', 'AdminController@salesReports');
 
 // <----------------------------------------------------------------------------------------->

@@ -2,7 +2,13 @@
  * Theme: Lumora Luxury (White, Black, Gold)
  */
 
-/* ==================== SHOP HEADER ==================== */
+/* ==================== SHOP HEADER (UNIQUE DESIGN) ==================== */
+
+body {
+        margin: 0;
+        padding: 0;
+    }
+    
 .shop-header {
     background: #ffffff;
     border-bottom: 1px solid #e5e5e5;
@@ -34,7 +40,7 @@
     align-items: center;
     gap: 0.75rem;
     text-decoration: none;
-    color: #1A1A1A;
+    color: #D4AF37;
     font-weight: 700;
     font-size: 1.25rem;
     padding: 0.5rem 1rem;
@@ -59,7 +65,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: #1A1A1A; /* Black badge */
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
     border-radius: 20px;
     color: #ffffff;
     font-size: 0.875rem;
@@ -106,13 +112,13 @@
 }
 
 .shop-nav-item:hover {
-    background-color: #f9f9f9;
-    color: #1A1A1A;
+    color: #D4AF37;
+    background-color: #f9f4e9;
 }
 
 .shop-nav-item.active {
     color: #D4AF37;
-    background-color: #fffcf5;
+    background-color: #f9f4e9;
 }
 
 .shop-nav-item.active::after {
@@ -123,7 +129,7 @@
     transform: translateX(-50%);
     width: 30px;
     height: 3px;
-    background: #D4AF37;
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
     border-radius: 3px 3px 0 0;
 }
 
@@ -149,7 +155,7 @@
 }
 
 .shop-icon-btn:hover {
-    background-color: #f9f9f9;
+    background-color: #f0f5f3;
     border-color: #D4AF37;
 }
 
@@ -189,9 +195,10 @@
 }
 
 .shop-view-store-btn:hover {
-    background: #1A1A1A;
-    color: #ffffff;
-    border-color: #1A1A1A;
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+    /* border-color: #1e4d3d; -> New Gold Color */
+    border-color: #D4AF37;
+    color: #1f2937; /* Dark text for contrast */
 }
 
 /* Profile Dropdown */
@@ -220,7 +227,7 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: #D4AF37;
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -254,8 +261,8 @@
     top: calc(100% + 0.5rem);
     right: 0;
     width: 280px;
-    background: #ffffff;
-    border: 1px solid #e5e5e5;
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     opacity: 0;
@@ -346,8 +353,8 @@
 }
 
 .shop-profile-menu-item:hover {
-    background-color: #fffcf5;
     color: #D4AF37;
+    background-color: #f9f4e9;
 }
 
 .shop-profile-menu-item i {
@@ -368,8 +375,8 @@
 /* ==================== SHOP LAYOUT ==================== */
 .shop-layout {
     display: flex;
-    min-height: calc(100vh - 160px);
-    background-color: #f9f9f9;
+    min-height: 100vh;
+    background-color: #f5f5f5;
 }
 
 /* ==================== SIDEBAR ==================== */
@@ -379,15 +386,16 @@
     border-right: 1px solid #e5e5e5;
     position: sticky;
     top: 0;
-    height: calc(100vh - 160px);
+    height: 100vh;
     overflow-y: auto;
     flex-shrink: 0;
 }
 
 .sidebar-header {
     padding: 2rem 1.5rem;
-    border-bottom: 1px solid #e5e5e5;
-    background: #1A1A1A; /* Black sidebar header */
+    border-bottom: 1px solid #e5e7eb;
+    background: #D4AF37;
+    /*background: linear-gradient(135deg, #D4AF37 50%, #ffffff 100%);*/
 }
 
 .sidebar-header h2 {
@@ -408,7 +416,9 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1.5rem;
-    color: #666;
+    background-color: #f9f4e9; /* Lightest gold background */
+    /* color: #1e4d3d; -> New Gold Color */
+    color: #D4AF37;
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 500;
@@ -429,8 +439,10 @@
 }
 
 .sidebar-link.active {
-    background-color: #fffcf5;
+    background-color: #f9f4e9;
+    /* color: #1e4d3d; -> New Gold Color */
     color: #D4AF37;
+    /* border-left-color: #1e4d3d; -> New Gold Color */
     border-left-color: #D4AF37;
     font-weight: 600;
 }
@@ -471,15 +483,18 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1.5rem 0.75rem 3rem;
-    color: #666;
+    background-color: #f5f5f5; 
+    /* color: #1e4d3d; -> New Gold Color */
+    color: #D4AF37;
     text-decoration: none;
     font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
-    background-color: #e5e5e5;
-    color: #1A1A1A;
+    background-color: #f5f5f5; 
+    /* color: #1e4d3d; -> New Gold Color */
+    color: #D4AF37;
 }
 
 .dropdown-item.active {
@@ -505,13 +520,23 @@
 }
 
 .dashboard-header {
+    display: flex;
+    justify-content: space-between; /* To keep the button on the right */
+    align-items: center; /* Vertically align button and text-group */
     margin-bottom: 2rem;
+    
+}
+
+.header-text-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .dashboard-title {
     font-size: 2rem;
     font-weight: 700;
-    color: #1A1A1A;
+    color: #1f2937;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -521,6 +546,8 @@
 .dashboard-subtitle {
     color: #666;
     font-size: 1rem;
+    margin-top: 0;
+    
 }
 
 /* ==================== STATISTICS CARDS ==================== */
@@ -559,7 +586,7 @@
 }
 
 .stat-icon-primary {
-    background: #D4AF37; /* Gold */
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
 }
 
 .stat-icon-success {
@@ -599,7 +626,7 @@
 .section-header {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1f2937;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -648,7 +675,7 @@
 
 .action-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border-color: #D4AF37;
 }
 
@@ -662,7 +689,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #1A1A1A;
+    color: #D4AF37;
 }
 
 .action-card p {
@@ -755,7 +782,7 @@
 }
 
 .btn-table-action:hover {
-    background-color: #D4AF37;
+    background-color: #1f2937;
     color: #ffffff;
 }
 
@@ -866,9 +893,11 @@
 }
 
 .btn-icon:hover {
-    background-color: #D4AF37;
+    background-color: #1f2937;
+    /* border-color: #1e4d3d; -> New Black Color */
+    border-color: #1f2937;
     color: #ffffff;
-    border-color: #D4AF37;
+    
 }
 
 /* ==================== EMPTY STATE ==================== */
@@ -901,7 +930,7 @@
 .form-section-header h2 {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1f2937;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -962,7 +991,8 @@
 .form-textarea:focus {
     outline: none;
     border-color: #D4AF37;
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    /* box-shadow: 0 0 0 3px rgba(30, 77, 61, 0.1); -> New Gold Shadow */
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
 .form-input:disabled,
@@ -993,17 +1023,20 @@
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    background-color: #f9f9f9;
+    border-color: #D4AF37;
+    /* background-color: #f0f5f3; -> Light Gray/Off-White */
+    background-color: #f9f4e9;
 }
 
 .file-upload-area:hover {
     border-color: #D4AF37;
-    background-color: #fffcf5;
+    background-color: #f9f4e9;
 }
 
 .file-upload-area.drag-over {
     border-color: #D4AF37;
-    background-color: #fffcf5;
+    /* background-color: #e8f4f0; -> Light Greenish */
+    background-color: #f5edda;
 }
 
 .file-input {
@@ -1033,7 +1066,7 @@
 }
 
 .file-upload-content strong {
-    color: #1A1A1A;
+    color: #D4AF37;
 }
 
 .file-upload-content span {
@@ -1101,8 +1134,7 @@
 }
 
 .btn-outline:hover {
-    background-color: #D4AF37;
-    color: white;
+    background-color: #f9f4e9;
 }
 
 /* Button with icon */
@@ -1336,7 +1368,7 @@
 .variant-file-upload-area:hover,
 .variant-file-upload-area.drag-over {
     border-color: #D4AF37;
-    background: #fffcf5;
+    background: #f9f4e9;
 }
 
 .variant-file-input {

@@ -64,9 +64,6 @@ categoryItems.forEach(item => {
   item.addEventListener('click', () => {
     categoryItems.forEach(i => i.classList.remove('is-active'));
     item.classList.add('is-active');
-
-    const name = item.textContent.trim();
-    alert(`Viewing ${name} category`);
   });
 });
 
@@ -76,20 +73,20 @@ const featureButtons = document.querySelectorAll('.feature-btn');
 
 featureButtons.forEach(btn => {
   btn.addEventListener('click', e => {
-    e.preventDefault();
-    const title = btn.parentElement.querySelector('h3')?.textContent ?? 'this item';
-    alert(`Viewing: ${title}`);
+    // Let the default link behavior work
+    // e.preventDefault(); // Remove this to allow navigation
   });
 });
 
 
 // ========== TRENDING PRODUCTS ==========
+// Product cards are now links, so they work automatically
+// Just add smooth hover animation
 const productCards = document.querySelectorAll('.product-card');
 
 productCards.forEach(card => {
-  card.addEventListener('click', () => {
-    const productName = card.querySelector('.product-name')?.textContent ?? 'this product';
-    alert(`Viewing details for: ${productName}`);
+  card.addEventListener('mouseenter', () => {
+    card.style.cursor = 'pointer';
   });
 });
 
@@ -99,8 +96,8 @@ const promoBtn = document.querySelector('.promo-banner .btn');
 
 if (promoBtn) {
   promoBtn.addEventListener('click', e => {
-    // e.preventDefault();
-    alert('Interested in selling on Lumora? We’ll guide you soon!');
+    // Let default link behavior work
+    // alert('Interested in selling on Lumora? We'll guide you soon!');
   });
 }
 
@@ -220,6 +217,7 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.2 });
 
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
 /* =========================================
    READING PROGRESS BAR
 ========================================= */
