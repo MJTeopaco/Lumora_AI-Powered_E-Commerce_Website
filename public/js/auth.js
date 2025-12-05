@@ -18,6 +18,46 @@ document.querySelectorAll('.toggle-password').forEach(button => {
     });
 });
 
+// Support Modal Functionality - Fixed Initialization
+function initSupportModal() {
+    const supportBtn = document.getElementById('openSupportBtn');
+    const supportModal = document.getElementById('supportModal');
+    const closeSupport = document.getElementById('closeSupportBtn');
+
+    if (supportBtn && supportModal) {
+        // Clone and replace to remove any old event listeners
+        const newBtn = supportBtn.cloneNode(true);
+        if (supportBtn.parentNode) {
+            supportBtn.parentNode.replaceChild(newBtn, supportBtn);
+        }
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            supportModal.classList.add('active');
+        });
+
+        if (closeSupport) {
+            closeSupport.addEventListener('click', function(e) {
+                e.preventDefault();
+                supportModal.classList.remove('active');
+            });
+        }
+
+        supportModal.addEventListener('click', function(e) {
+            if (e.target === supportModal) {
+                supportModal.classList.remove('active');
+            }
+        });
+    }
+}
+
+// Robust initialization check for DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSupportModal);
+} else {
+    initSupportModal();
+}
+
 // OTP Resend Functionality with 2-minute cooldown
 class OTPResendManager {
     constructor(buttonId, timerId, resendActionUrl) {
@@ -433,9 +473,7 @@ document.getElementById('register-email-form-element')?.addEventListener('submit
     }
 });
 
-// REMOVED: Register - Step 2 (OTP) validation - no longer needed
-
-// 4. Register - Step 3 (Google reCAPTCHA) - now Step 2
+// 4. Register - Step 3 (Google reCAPTCHA)
 document.getElementById('register-captcha-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const recaptchaResponse = grecaptcha.getResponse();
@@ -446,7 +484,7 @@ document.getElementById('register-captcha-form-element')?.addEventListener('subm
     }
 });
 
-// 5. Register - Step 4 (Details) - now Step 3
+// 5. Register - Step 4 (Details)
 document.getElementById('register-form-element')?.addEventListener('submit', function(e) {
     hideAlert();
     const username = document.getElementById('register-username').value.trim();

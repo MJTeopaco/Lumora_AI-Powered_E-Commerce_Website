@@ -30,6 +30,12 @@ $currentPage = basename(parse_url($currentPath, PHP_URL_PATH));
         </a>
     </li>
     <li>
+        <a href="/admin/support" class="<?= strpos($currentPath, '/admin/support') !== false ? 'active' : '' ?>">
+            <i class="fas fa-headset"></i>
+            <span>Support Requests</span>
+        </a>
+    </li>
+    <li>
         <a href="/admin/settings" class="<?= strpos($currentPath, '/admin/settings') !== false ? 'active' : '' ?>">
             <i class="fas fa-cog"></i>
             <span>Configure Settings</span>
@@ -38,7 +44,7 @@ $currentPage = basename(parse_url($currentPath, PHP_URL_PATH));
     <li>
         <a href="/admin/reports" class="<?= strpos($currentPath, '/admin/reports') !== false ? 'active' : '' ?>">
             <i class="fas fa-chart-bar"></i>
-            <span>Reports</span>
+            <span>Reports & Logs</span>
         </a>
     </li>
     <li>

@@ -56,7 +56,7 @@ class User {
         $stmt->execute();
         $result = $stmt->get_result();
 
-        return $result->num_rows > 0;  // ✔ return TRUE or FALSE
+        return $result->num_rows > 0;
     }
 
 
@@ -89,10 +89,10 @@ class User {
 
     public function incrementLoginAttempts($user_id, $new_attempts) {
         define('MAX_LOGIN_ATTEMPTS', 3);
-        define('LOCKOUT_TIME_MINUTES', 15);
 
         if ($new_attempts >= MAX_LOGIN_ATTEMPTS) {
-            $lockout_expiry = (new DateTime())->add(new \DateInterval('PT' . LOCKOUT_TIME_MINUTES . 'M'))->format('Y-m-d H:i:s');
+            // Indefinite lockout (Year 9999)
+            $lockout_expiry = '9999-12-31 23:59:59';
             $stmt = $this->conn->prepare("UPDATE users SET failed_login_attempts = ?, lockout_until = ? WHERE user_id = ?");
             $stmt->bind_param("isi", $new_attempts, $lockout_expiry, $user_id);
             $stmt->execute();
@@ -106,8 +106,6 @@ class User {
             return false; // Account not locked
         }
     }
-
-// app/Models/User.php
 
     public function create($username, $email, $password) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);

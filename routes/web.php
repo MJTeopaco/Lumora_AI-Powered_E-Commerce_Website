@@ -47,6 +47,10 @@ $router->post('/auth/resend-register-otp', 'AuthController@resendRegisterOtp');
 $router->post('/auth/resend-forgot-otp', 'AuthController@resendForgotOtp');
 
 // <----------------------------------------------------------------------------------------->
+// SUPPORT ROUTES (NEW)
+$router->post('/support/submit', 'SupportController@submit');
+
+// <----------------------------------------------------------------------------------------->
 // CART ROUTES (Phase 2)
 $router->get('/cart', 'CartController@index');
 $router->post('/cart/add', 'CartController@add');
@@ -56,10 +60,15 @@ $router->post('/cart/clear', 'CartController@clear');
 $router->get('/cart/count', 'CartController@getCartCountAjax');
 $router->post('/cart/validate', 'CartController@validateCart');
 
-// Notifications
+// <----------------------------------------------------------------------------------------->
+// NOTIFICATION ROUTES (Consolidated)
 $router->get('/notifications', 'NotificationsController@index');
-$router->get('/notifications/latest', 'NotificationsController@getLatest'); // For AJAX header
-$router->post('/notifications/mark-read', 'NotificationsController@markAsRead'); // For AJAX click
+$router->get('/notifications/get-latest', 'NotificationsController@getLatest');
+$router->get('/notifications/get-counts', 'NotificationsController@getCounts');
+$router->post('/notifications/mark-read', 'NotificationsController@markAsRead');
+$router->post('/notifications/mark-all-read', 'NotificationsController@markAllAsRead');
+$router->post('/notifications/delete', 'NotificationsController@deleteNotification');
+$router->post('/notifications/delete-all-read', 'NotificationsController@deleteAllRead');
 
 // <----------------------------------------------------------------------------------------->
 // SELLER REGISTRATION ROUTES
@@ -81,9 +90,16 @@ $router->get('/products/{slug}', 'ProductController@show');
 $router->get('/shop/dashboard', 'ShopController@dashboard');
 $router->get('/shop/add-product', 'ShopController@addProduct');
 $router->post('/shop/products/store', 'ShopController@storeProduct');
-$router->get('/shop/orders', 'ShopController@orders');
 $router->get('/shop/cancellations', 'ShopController@cancellations');
 $router->get('/shop/addresses', 'ShopController@addresses');
+
+// Shop Orders
+$router->get('/shop/orders', 'ShopController@orders');
+$router->get('/shop/orders/details', 'ShopController@getOrderDetails');
+$router->post('/shop/orders/update-status', 'ShopController@updateOrderStatus');
+
+// Shop Reviews Management
+$router->get('/shop/reviews', 'ShopController@reviews');
 
 // My Products Routes
 $router->get('/shop/products', 'ProductManagementController@index');
@@ -104,8 +120,8 @@ $router->get('/checkout/failed', 'CheckoutController@failed');
 
 // <----------------------------------------------------------------------------------------->
 // PAYMENT WEBHOOKS
-// Note: Webhooks usually require POST
 $router->post('/webhooks/paymongo', 'WebhookController@paymongo');
+$router->get('/webhooks/test', 'WebhookController@paymongo'); // Temporary Test Route
 
 // <----------------------------------------------------------------------------------------->
 // ADMIN ROUTES
@@ -114,44 +130,36 @@ $router->get('/admin/sellers', 'AdminController@sellers');
 $router->post('/admin/approve-seller', 'AdminController@approveSeller');
 $router->post('/admin/reject-seller', 'AdminController@rejectSeller');
 $router->post('/admin/suspend-seller', 'AdminController@suspendSeller');
+
 $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
 $router->post('/admin/delete-category', 'AdminController@deleteCategory');
 
-// TEMPORARY TEST ROUTE
-$router->get('/webhooks/test', 'WebhookController@paymongo');
-// Shop Orders - Main Page
-$router->get('/shop/orders', 'ShopController@orders');
+// User Management Routes
+$router->get('/admin/users', 'AdminController@users');
+$router->post('/admin/users/unlock', 'AdminController@unlockUser');
 
-// Shop Orders - Get Order Details (AJAX)
-$router->get('/shop/orders/details', 'ShopController@getOrderDetails');
+// Support Routes (Admin Side)
+$router->get('/admin/support', 'AdminController@support');
+$router->post('/admin/support/resolve', 'AdminController@resolveTicket');
 
-// Shop Orders - Update Status (AJAX)
-$router->post('/shop/orders/update-status', 'ShopController@updateOrderStatus');
+// Reporting Hub (Fixed: Added leading slash)
+$router->get('/admin/reports', 'AdminController@reports');
 
-// Customer Review Routes
+// Audit Logs (Fixed: Added leading slash)
+$router->get('/admin/audit-logs', 'AdminController@auditLogs');
+
+// Sales Reports (Fixed: Added leading slash)
+$router->get('/admin/sales-reports', 'AdminController@salesReports');
+
+// <----------------------------------------------------------------------------------------->
+// CUSTOMER REVIEWS
 $router->get('/reviews/create', 'ReviewController@showReviewForm');
 $router->post('/reviews/submit', 'ReviewController@submitReview');
 $router->get('/reviews/get-product-reviews', 'ReviewController@getProductReviews');
 $router->post('/reviews/update', 'ReviewController@updateReview');
 $router->post('/reviews/delete', 'ReviewController@deleteReview');
 $router->post('/reviews/mark-helpful', 'ReviewController@markHelpful');
-
-// Seller Response to Reviews
 $router->post('/reviews/seller-response', 'ReviewController@addSellerResponse');
-
-// User's Own Reviews (in Profile)
 $router->get('/profile/reviews', 'ProfileController@myReviews');
-
-// Shop Reviews Management (for sellers)
-$router->get('/shop/reviews', 'ShopController@reviews');
-
-// ENHANCED NOTIFICATION ROUTES
-$router->get('/notifications', 'NotificationsController@index');
-$router->get('/notifications/get-latest', 'NotificationsController@getLatest');
-$router->get('/notifications/get-counts', 'NotificationsController@getCounts');
-$router->post('/notifications/mark-read', 'NotificationsController@markAsRead');
-$router->post('/notifications/mark-all-read', 'NotificationsController@markAllAsRead');
-$router->post('/notifications/delete', 'NotificationsController@deleteNotification');
-$router->post('/notifications/delete-all-read', 'NotificationsController@deleteAllRead');
