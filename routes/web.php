@@ -72,6 +72,7 @@ $router->post('/seller/register', 'SellerController@registerSubmit');
 $router->get('/collections', 'CollectionsController@index');
 $router->get('/collections/index', 'CollectionsController@index');
 $router->get('/collections/category/{slug}', 'CollectionsController@byCategory');
+$router->post('/collections/smart-search', 'SearchController@smartSearch');
 
 // PRODUCT DETAIL ROUTES (Customer)
 $router->get('/products/{slug}', 'ProductController@show');

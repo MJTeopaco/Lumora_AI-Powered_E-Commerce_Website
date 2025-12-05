@@ -537,6 +537,8 @@ class ShopController extends Controller {
         
         // Explicitly use the 'shop' layout to avoid the default header
         $this->view('shop/reviews', $data, 'shop');
+    }
+
         /**
      * AJAX endpoint to get predicted tags
      * This allows real-time tag suggestions in the frontend

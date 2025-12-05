@@ -128,3 +128,17 @@
   console.log('✓ Collections module loaded');
 
 })();
+
+    function toggleFilters() {
+        const panel = document.getElementById('filtersPanel');
+        panel.classList.toggle('active');
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('filtersPanel');
+        const btn = e.target.closest('.btn-outline');
+        
+        if (panel && !panel.contains(e.target) && !btn) {
+            panel.classList.remove('active');
+        }
+    });

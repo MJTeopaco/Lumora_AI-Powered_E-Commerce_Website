@@ -1,8 +1,6 @@
 <?php
 // app/Views/cart/index.view.php
 ?>
-<link rel="stylesheet" href="/css/cart.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="cart-container">
     <div class="cart-header">
@@ -331,4 +329,3 @@
 
 <input type="hidden" id="csrfToken" value="<?= \App\Core\Session::get('csrf_token') ?>">
 
-<script src="/js/cart.js"></script>

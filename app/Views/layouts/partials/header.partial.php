@@ -29,7 +29,7 @@ if ($isLoggedIn && $cartCount === 0) {
         <a href="<?= base_url('/') ?>" class="logo">LUMORA</a>
         
         <div class="search-container">
-            <form action="<?= base_url('/search') ?>" method="GET">
+            <form action="<?= base_url('/collections/smart-search') ?>" method="POST">
                 <input type="text" name="q" class="search-bar" placeholder="Search for accessories...">
                 <button type="submit" class="search-btn">
                     <i class="fas fa-search"></i>
