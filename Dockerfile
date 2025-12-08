@@ -1,49 +1,58 @@
 # STEP 1: Use the official PHP image with Apache
 FROM php:8.2-apache
 
-# THE FIX: Install system dependencies required for PHP extensions.
-# This installs the 'libzip' development package needed to compile the 'zip' PHP extension.
+# STEP 2: Install system dependencies required for PHP extensions
 RUN apt-get update && \
-    apt-get install -y libzip-dev && \
+    apt-get install -y libzip-dev git unzip && \
     rm -rf /var/lib/apt/lists/*
 
-# STEP 2: Install Required PHP Extensions
-# This step will now succeed because the system dependency is present.
+# STEP 3: Install Required PHP Extensions
 RUN docker-php-ext-install mysqli pdo_mysql zip
 
-# -------------------- Application Setup --------------------
-
-# STEP 3: Set the Working Directory in the container
-WORKDIR /app
-
-# STEP 4: Copy the application code into the container
-# NOTE: Ensure your composer.json and composer.lock are in the root 
-# directory of your repository for this COPY command to work correctly.
-COPY . /app
-
-# STEP 5: Install Composer dependencies
-# Copy Composer binary first
+# STEP 4: Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-# Run installation
-RUN composer install --no-dev --optimize-autoloader
 
-# STEP 6: Configure Apache Document Root 
-# Points Apache to your public/ directory.
-RUN mv /var/www/html /var/www/html_old \
-    && ln -s /app/public /var/www/html
+# STEP 5: Set the Working Directory
+WORKDIR /var/www/html
 
-# STEP 7: Enable Apache's rewrite module (essential for clean URLs)
+# STEP 6: Copy composer files first (better layer caching)
+COPY composer.json composer.lock ./
+
+# STEP 7: Install Composer dependencies
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# STEP 8: Copy the rest of the application code
+COPY . .
+
+# STEP 9: Run post-install scripts if any
+RUN composer dump-autoload --optimize
+
+# STEP 10: Set proper permissions
+RUN chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html
+
+# STEP 11: Configure Apache for the public directory
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf && \
+    sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# STEP 12: Enable Apache's rewrite module (essential for clean URLs)
 RUN a2enmod rewrite
 
-# -------------------- CRITICAL FIX FOR 502 ERROR --------------------
+# STEP 13: Configure AllowOverride for .htaccess
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/lumora.conf && \
+    a2enconf lumora
 
-# STEP 8: Configure Apache to listen on port 8080
-# The default PHP-Apache container listens on port 80.
-# We modify the configuration files to listen on 8080, as required by Railway.
-RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf \
-    && sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-enabled/000-default.conf
+# STEP 14: Configure Apache to listen on port 8080 (Railway requirement)
+RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf && \
+    sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-available/*.conf
 
-# STEP 9: Expose the port (8080) to be used by Railway
+# STEP 15: Expose the port
 EXPOSE 8080
 
-CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+# STEP 16: Start Apache
+CMD ["apache2-foreground"]

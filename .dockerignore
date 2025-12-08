@@ -1,0 +1,47 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+documentation/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files (these should be set via Railway env vars)
+.env
+.env.local
+.env.*.local
+
+# Node modules (if any)
+node_modules/
+
+# Vendor directory will be rebuilt by composer
+# vendor/
+
+# Test files
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Temporary files
+tmp/
+temp/
