@@ -15,7 +15,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # STEP 5: Set the Working Directory
 WORKDIR /var/www/html
 
-# STEP 6: Copy composer files first (better layer caching)
+# STEP 6: Copy composer files first 
 COPY composer.json composer.lock ./
 
 # STEP 7: Install Composer dependencies
