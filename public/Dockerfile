@@ -32,3 +32,5 @@ RUN mv /var/www/html /var/www/html_old \
 
 # STEP 7: Enable Apache's rewrite module (essential for clean URLs)
 RUN a2enmod rewrite
+
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
