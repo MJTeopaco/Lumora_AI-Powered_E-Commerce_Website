@@ -43,7 +43,7 @@ RUN a2enmod rewrite
 RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf \
     && sed -i 's/<VirtualHost \*:80>/<VirtualHost \*:8080>/g' /etc/apache2/sites-enabled/000-default.conf
 
-# STEP 9: Expose the port
+# STEP 9: Expose the port (8080) to be used by Railway
 EXPOSE 8080
 
 CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
