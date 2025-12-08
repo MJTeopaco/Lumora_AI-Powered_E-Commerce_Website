@@ -25,7 +25,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Run installation
 RUN composer install --no-dev --optimize-autoloader
 
-# STEP 6: Configure Apache Document Root
+# STEP 6: Configure Apache Document Root <----- THIS IS THE CRITICAL FIX
 # Points Apache to your public/ directory.
 RUN mv /var/www/html /var/www/html_old \
     && ln -s /app/public /var/www/html
