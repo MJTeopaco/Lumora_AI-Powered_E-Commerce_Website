@@ -23,6 +23,7 @@ class Database {
     public static function getConnection() {
         if (!self::$conn) {
             // *** UPDATED TO INCLUDE DB_PORT AS THE FIFTH ARGUMENT ***
+            error_log("DB_HOST: " . DB_HOST . " | DB_PORT: " . DB_PORT . " | DB_USER: " . DB_USER);
             $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
 
             if ($conn->connect_error) {
