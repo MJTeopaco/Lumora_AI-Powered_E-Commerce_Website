@@ -1,0 +1,8 @@
+{
+  "build": {
+    "builder": "dockerfile",
+    "dockerfilePath": "Lumora_AI-Powered_E-Commerce_Website/Dockerfile",
+    "buildCommand": "composer install --no-dev --optimize-autoloader",
+    "rootDirectory": "Lumora_AI-Powered_E-Commerce_Website"
+  }
+}
