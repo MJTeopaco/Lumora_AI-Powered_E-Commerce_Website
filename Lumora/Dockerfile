@@ -16,7 +16,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # STEP 6: Copy ONLY files needed for Composer
-COPY Lumora/composer.json Lumora/composer.lock ./
+COPY composer.json composer.lock ./
 
 
 # STEP 7: Install Composer dependencies
@@ -24,7 +24,7 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 
 # STEP 8: Copy the rest of the application code
-COPY Lumora/ .
+COPY . .
 
 
 # STEP 9: Run post-install scripts if any
