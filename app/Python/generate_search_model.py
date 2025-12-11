@@ -33,7 +33,7 @@ def fetch_products_from_db():
                 p.name,
                 p.slug,
                 p.short_description,
-                p.long_description,
+                p.description,
                 MIN(pv.price) as price,
                 GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
             FROM products p
