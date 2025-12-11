@@ -49,12 +49,6 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Addresses -->
-        <a href="/shop/addresses" class="sidebar-link <?= ($currentPage ?? '') === 'addresses' ? 'active' : '' ?>">
-            <i class="fas fa-map-marker-alt"></i>
-            <span>Addresses</span>
-        </a>
     </nav>
     
     <script>
@@ -63,10 +57,8 @@
             const content = dropdown.querySelector('.dropdown-content');
             const icon = button.querySelector('.dropdown-icon');
             
-            // Toggle active state
             dropdown.classList.toggle('open');
             
-            // Rotate icon
             if (dropdown.classList.contains('open')) {
                 icon.style.transform = 'rotate(180deg)';
             } else {
@@ -74,7 +66,6 @@
             }
         }
         
-        // Auto-open dropdown if child is active
         document.addEventListener('DOMContentLoaded', function() {
             const activeDropdownItems = document.querySelectorAll('.dropdown-item.active');
             activeDropdownItems.forEach(item => {

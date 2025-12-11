@@ -7,10 +7,13 @@
 </div>
 
 <form method="POST" 
-      action="<?= isset($isEdit) && $isEdit ? '/profile/addresses/edit/' . htmlspecialchars($address['address_id'] ?? '') : '/profile/addresses/add' ?>" 
+      action="<?= isset($isEdit) && $isEdit ? '/profile/addresses/edit' : '/profile/addresses/add' ?>" 
       id="addressForm">
     
     <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
+    <?php if (isset($isEdit) && $isEdit && !empty($address['address_id'])): ?>
+        <input type="hidden" name="address_id" value="<?= htmlspecialchars($address['address_id']) ?>">
+    <?php endif; ?>
     
     <div class="form-group">
         <label class="form-label">
@@ -34,14 +37,23 @@
         </label>
         <select name="region" id="region" class="form-select" required>
             <option value="">Select Region</option>
-            <?php if (isset($regions) && is_array($regions)): ?>
-                <?php foreach ($regions as $key => $name): ?>
-                    <option value="<?= htmlspecialchars($key) ?>" 
-                            <?= (isset($address['region']) && $address['region'] === $key) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($name) ?>
-                    </option>
-                <?php endforeach; ?>
-            <?php endif; ?>
+            <option value="NCR" <?= (isset($address['region']) && $address['region'] === 'NCR') ? 'selected' : '' ?>>National Capital Region (NCR)</option>
+            <option value="Region I" <?= (isset($address['region']) && $address['region'] === 'Region I') ? 'selected' : '' ?>>Region I - Ilocos Region</option>
+            <option value="Region II" <?= (isset($address['region']) && $address['region'] === 'Region II') ? 'selected' : '' ?>>Region II - Cagayan Valley</option>
+            <option value="Region III" <?= (isset($address['region']) && $address['region'] === 'Region III') ? 'selected' : '' ?>>Region III - Central Luzon</option>
+            <option value="Region IV-A" <?= (isset($address['region']) && $address['region'] === 'Region IV-A') ? 'selected' : '' ?>>Region IV-A - CALABARZON</option>
+            <option value="Region IV-B" <?= (isset($address['region']) && $address['region'] === 'Region IV-B') ? 'selected' : '' ?>>Region IV-B - MIMAROPA</option>
+            <option value="Region V" <?= (isset($address['region']) && $address['region'] === 'Region V') ? 'selected' : '' ?>>Region V - Bicol Region</option>
+            <option value="Region VI" <?= (isset($address['region']) && $address['region'] === 'Region VI') ? 'selected' : '' ?>>Region VI - Western Visayas</option>
+            <option value="Region VII" <?= (isset($address['region']) && $address['region'] === 'Region VII') ? 'selected' : '' ?>>Region VII - Central Visayas</option>
+            <option value="Region VIII" <?= (isset($address['region']) && $address['region'] === 'Region VIII') ? 'selected' : '' ?>>Region VIII - Eastern Visayas</option>
+            <option value="Region IX" <?= (isset($address['region']) && $address['region'] === 'Region IX') ? 'selected' : '' ?>>Region IX - Zamboanga Peninsula</option>
+            <option value="Region X" <?= (isset($address['region']) && $address['region'] === 'Region X') ? 'selected' : '' ?>>Region X - Northern Mindanao</option>
+            <option value="Region XI" <?= (isset($address['region']) && $address['region'] === 'Region XI') ? 'selected' : '' ?>>Region XI - Davao Region</option>
+            <option value="Region XII" <?= (isset($address['region']) && $address['region'] === 'Region XII') ? 'selected' : '' ?>>Region XII - SOCCSKSARGEN</option>
+            <option value="Region XIII" <?= (isset($address['region']) && $address['region'] === 'Region XIII') ? 'selected' : '' ?>>Region XIII - Caraga</option>
+            <option value="CAR" <?= (isset($address['region']) && $address['region'] === 'CAR') ? 'selected' : '' ?>>Cordillera Administrative Region (CAR)</option>
+            <option value="BARMM" <?= (isset($address['region']) && $address['region'] === 'BARMM') ? 'selected' : '' ?>>Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
         </select>
     </div>
 
@@ -105,11 +117,12 @@
 </form>
 
 <script>
-    window.existingAddress = {
-        province: '<?= htmlspecialchars($address["province"] ?? "") ?>',
-        city: '<?= htmlspecialchars($address["city"] ?? "") ?>',
-        barangay: '<?= htmlspecialchars($address["barangay"] ?? "") ?>'
-    };
+// Store existing values for edit mode
+window.existingAddress = {
+    province: '<?= htmlspecialchars($address["province"] ?? "") ?>',
+    city: '<?= htmlspecialchars($address["city"] ?? "") ?>',
+    barangay: '<?= htmlspecialchars($address["barangay"] ?? "") ?>'
+};
 </script>
 
 <script src="/js/address-data.js"></script>

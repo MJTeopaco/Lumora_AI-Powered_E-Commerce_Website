@@ -68,7 +68,7 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--very-light-gold) 0%, var(--light-gold) 100%);
+    background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
 }
 
 .banner-image {
@@ -161,7 +161,7 @@ body {
     border: 6px solid var(--white);
     box-shadow: var(--shadow-lg);
     position: relative;
-    background: var(--light-gold);
+    background: #f0f0f0;
 }
 
 .profile-avatar img {
@@ -265,7 +265,8 @@ body {
     align-items: center;
     gap: 15px;
     padding: 20px;
-    background: var(--very-light-gold);
+    background: var(--white);
+    border: 1px solid #f0f0f0;
     border-radius: 12px;
     transition: var(--transition);
 }
@@ -287,15 +288,15 @@ body {
 }
 
 .stat-icon.products {
-    background: linear-gradient(135deg, #667EEA, #764BA2);
+    background: #007bff;
 }
 
 .stat-icon.orders {
-    background: linear-gradient(135deg, #F093FB, #F5576C);
+    background: #28A745;
 }
 
 .stat-icon.revenue {
-    background: linear-gradient(135deg, var(--primary-gold), var(--dark-gold));
+    background: var(--primary-gold);
 }
 
 .stat-info {
@@ -334,7 +335,7 @@ body {
 .tabs-container {
     display: flex;
     border-bottom: 2px solid var(--light-gray);
-    background: var(--very-light-gold);
+    background: #f9f9f9;
 }
 
 .tab-btn {
@@ -368,7 +369,7 @@ body {
 
 .tab-btn:hover {
     color: var(--black);
-    background: rgba(212, 175, 55, 0.1);
+    background: #e5e5e5;
 }
 
 .tab-btn.active {
@@ -444,6 +445,14 @@ body {
     font-size: 24px;
 }
 
+/* Section Description (for billing section) */
+.section-description {
+    font-size: 14px;
+    color: var(--gray);
+    margin: -15px 0 25px 0;
+    line-height: 1.6;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -471,10 +480,21 @@ body {
 
 .required {
     color: var(--error);
+    animation: pulse-required 2s infinite;
+}
+
+@keyframes pulse-required {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     padding: 12px 16px;
     border: 2px solid var(--light-gray);
     border-radius: 8px;
@@ -486,7 +506,8 @@ body {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--primary-gold);
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
@@ -497,10 +518,40 @@ body {
     min-height: 100px;
 }
 
+/* Select Dropdown Styling */
+.form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.form-group select:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 .form-hint {
     font-size: 12px;
     color: var(--gray);
     margin-top: 5px;
+}
+
+/* Enhanced Form Hint with Icon */
+.form-hint i {
+    margin-right: 4px;
+    color: var(--success);
+}
+
+.form-hint.secure-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--success);
+    font-weight: 500;
 }
 
 .char-count {
@@ -511,6 +562,77 @@ body {
 #descCharCount {
     color: var(--primary-gold);
     font-weight: 600;
+}
+
+/* ========================================
+   Billing Status Card
+   ======================================== */
+
+.billing-status-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 25px;
+    border: 2px solid;
+    background: var(--white);
+    transition: var(--transition);
+}
+
+.billing-status-card.verified {
+    border-color: var(--success);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.billing-status-card.warning {
+    border-color: var(--warning);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.billing-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+
+.billing-status-card.verified .status-icon {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--success);
+}
+
+.billing-status-card.warning .status-icon {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--warning);
+}
+
+.status-content {
+    flex: 1;
+}
+
+.status-content h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--black);
+    margin: 0 0 6px 0;
+}
+
+.status-content p {
+    font-size: 14px;
+    color: var(--gray);
+    margin: 0;
+    line-height: 1.5;
 }
 
 /* ========================================
@@ -732,9 +854,9 @@ body {
     }
 
     .tab-btn.active {
-    color: var(--primary-gold); /* Or your primary accent color */
-    border-bottom: 2px solid var(--primary-gold);
-}
+        color: var(--primary-gold);
+        border-bottom: 2px solid var(--primary-gold);
+    }
 
     .tab-content-container {
         padding: 25px 20px;
@@ -767,6 +889,19 @@ body {
 
     .toast.show {
         bottom: 20px;
+    }
+
+    /* Mobile Responsive for Billing */
+    .billing-status-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .status-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 28px;
     }
 }
 

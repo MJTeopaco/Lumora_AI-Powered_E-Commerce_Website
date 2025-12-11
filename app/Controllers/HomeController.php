@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Session;
 use App\Core\Controller;
 use App\Models\Product;
+use App\Models\ProductReview;
 use App\Models\RememberMeToken;
 use App\Models\User;
 use App\Models\UserProfile;
@@ -15,11 +16,13 @@ class HomeController extends Controller {
     protected $productModel;
     protected $userModel;
     protected $profileModel;
+    protected $reviewModel;
 
     public function __construct() {
         $this->productModel = new Product();
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
+        $this->reviewModel = new ProductReview();
         
         // Check for remember-me cookie (but don't force login)
         if (!Session::has('user_id')) {
@@ -72,12 +75,22 @@ class HomeController extends Controller {
             $cartCount = 0; // Placeholder
         }
 
-
         // Check if user is a seller
-        $isSeller = $this->userModel->checkRole($userId);
+        $isSeller = $userId ? $this->userModel->checkRole($userId) : false;
 
-        // Get all products (or featured products)
+        // 1. Get Real-Time Category Counts
+        $categoryCounts = $this->productModel->getCategoryCounts();
+
+        // 2. Get all products (or featured products)
         $products = $this->productModel->getAllProducts();
+
+        // 3. Get Review Stats for each product
+        foreach ($products as &$product) {
+            $stats = $this->reviewModel->getProductReviewStats($product['id']);
+            $product['average_rating'] = $stats['average_rating'] ?? 0;
+            $product['review_count'] = $stats['total_reviews'] ?? 0;
+        }
+        unset($product); // Break reference
 
         // Check for status messages from URL
         $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
@@ -92,6 +105,7 @@ class HomeController extends Controller {
             'notificationCount' => $notificationCount,
             'cartCount' => $cartCount,
             'products' => $products,
+            'categoryCounts' => $categoryCounts, // Pass dynamic counts
             'statusMessage' => $statusMessage,
             'statusType' => $statusType,
             'isSeller' => $isSeller

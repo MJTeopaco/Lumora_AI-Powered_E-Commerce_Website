@@ -42,6 +42,12 @@ $currentPage = basename(parse_url($currentPath, PHP_URL_PATH));
         </a>
     </li>
     <li>
+    <a href="/admin/payouts" class="<?= strpos($currentPath, '/admin/payouts') !== false ? 'active' : '' ?>">
+        <i class="fas fa-wallet"></i>
+        <span>Seller Payouts</span>
+    </a>
+</li>
+    <li>
         <a href="/admin/reports" class="<?= strpos($currentPath, '/admin/reports') !== false ? 'active' : '' ?>">
             <i class="fas fa-chart-bar"></i>
             <span>Reports & Logs</span>

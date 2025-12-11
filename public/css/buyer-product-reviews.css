@@ -770,3 +770,32 @@
         font-size: 2rem;
     }
 }
+
+/* ============================================================
+   TOAST NOTIFICATION STYLES (Copied from buyer-product-detail.css)
+   ============================================================ */
+.toast-notification {
+    position: fixed;
+    top: 90px;
+    right: -400px;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-left: 4px solid #212529;
+}
+
+.toast-notification.show { right: 2rem; }
+.toast-success { border-left-color: #198754; }
+.toast-success i { color: #198754; }
+.toast-error { border-left-color: #dc3545; }
+.toast-error i { color: #dc3545; }
+.toast-warning { border-left-color: #ffc107; }
+.toast-warning i { color: #ffc107; }
+.toast-info { border-left-color: #17a2b8; }
+.toast-info i { color: #17a2b8; }

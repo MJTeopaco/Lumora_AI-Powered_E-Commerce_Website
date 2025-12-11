@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Product;
+use App\Models\ProductReview; // Added Review Model
 use App\Models\User;
 use App\Models\UserProfile;
 
@@ -14,11 +15,13 @@ class CollectionsController extends Controller {
     protected $productModel;
     protected $userModel;
     protected $profileModel;
+    protected $reviewModel; // Added property
 
     public function __construct() {
         $this->productModel = new Product();
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
+        $this->reviewModel = new ProductReview(); // Instantiate Review Model
     }
 
     /**
@@ -89,7 +92,6 @@ class CollectionsController extends Controller {
         // Filter by category
         if ($category) {
             $products = array_filter($products, function($product) use ($category) {
-                // FIXED: Check if 'categories' exists and is not null before checking string position
                 return !empty($product['categories']) && stripos($product['categories'], $category) !== false;
             });
         }
@@ -129,8 +131,15 @@ class CollectionsController extends Controller {
                 // For now, just random shuffle
                 shuffle($products);
                 break;
-            // 'newest' is default, already sorted by created_at DESC
         }
+
+        // Attach Review Stats to each product
+        foreach ($products as &$product) {
+            $stats = $this->reviewModel->getProductReviewStats($product['id']);
+            $product['average_rating'] = $stats['average_rating'] ?? 0;
+            $product['review_count'] = $stats['total_reviews'] ?? 0;
+        }
+        unset($product);
 
         // Get all categories for filter
         $categories = $this->productModel->getAllCategories();
@@ -204,6 +213,14 @@ class CollectionsController extends Controller {
             $products[] = $row;
         }
         $stmt->close();
+
+        // Attach Review Stats
+        foreach ($products as &$product) {
+            $stats = $this->reviewModel->getProductReviewStats($product['id']);
+            $product['average_rating'] = $stats['average_rating'] ?? 0;
+            $product['review_count'] = $stats['total_reviews'] ?? 0;
+        }
+        unset($product);
 
         // Get all categories for navigation
         $categories = $this->productModel->getAllCategories();

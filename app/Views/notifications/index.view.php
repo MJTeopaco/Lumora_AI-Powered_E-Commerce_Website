@@ -1,65 +1,9 @@
 <?php
 // app/Views/notifications/index.view.php
+// NOTE: Header and footer are handled by default.layout.php - don't include them here!
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?? 'Notifications - Lumora' ?></title>
-    
-    <link rel="stylesheet" href="<?= base_url('/css/main.css') ?>?v=<?= time() ?>">
-    <link rel="stylesheet" href="<?= base_url('/css/notifications.css') ?>?v=<?= time() ?>">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <style>
-        .notifications-page-container {
-            max-width: 1200px;
-            width: 95%;
-            margin: 40px auto !important; /* Forces centering */
-            padding: 0 15px;
-            min-height: 60vh;
-            display: block; /* Ensures it takes up space */
-        }
-
-        .notification-stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        /* Ensure header doesn't overlap */
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        
-        /* Fix for buttons */
-        .header-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn-outline {
-            border: 1px solid #D4AF37;
-            color: #D4AF37;
-            background: transparent;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .btn-outline:hover {
-            background: #D4AF37;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/../layouts/partials/header.partial.php'; ?>
-
+<main class="main-content">
     <div class="notifications-page-container">
         <div class="content-header">
             <div class="header-text">
@@ -73,7 +17,7 @@
                 <button id="markAllReadBtn" class="btn btn-outline" <?= ($counts['unread'] ?? 0) == 0 ? 'disabled' : '' ?>>
                     <i class="fas fa-check-double"></i> Mark all as read
                 </button>
-                <button id="deleteAllReadBtn" class="btn btn-outline-danger" style="border: 1px solid #dc3545; color: #dc3545; background: transparent; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                <button id="deleteAllReadBtn" class="btn btn-outline-danger">
                     <i class="fas fa-trash-alt"></i> Clear read
                 </button>
             </div>
@@ -153,7 +97,6 @@
                 <?php else: ?>
                     <?php foreach ($notifications as $notif): ?>
                         <?php
-                            // Determine icon and color based on type
                             $iconMap = [
                                 'order_placed' => ['icon' => 'fa-shopping-bag', 'bg' => 'bg-primary'],
                                 'order_confirmed' => ['icon' => 'fa-check-circle', 'bg' => 'bg-success'],
@@ -227,65 +170,62 @@
             </div>
         </div>
     </div>
+</main>
 
-    <?php include __DIR__ . '/../layouts/partials/footer.partial.php'; ?>
+<input type="hidden" id="csrfToken" value="<?= \App\Core\Session::get('csrf_token') ?>">
 
-    <input type="hidden" id="csrfToken" value="<?= \App\Core\Session::get('csrf_token') ?>">
+<script src="<?= base_url('/js/notifications.js') ?>?v=<?= time() ?>"></script>
 
-    <script src="<?= base_url('/js/notifications.js') ?>?v=<?= time() ?>"></script>
+<script>
+// Time ago function
+function timeAgo(datetime) {
+    const timestamp = new Date(datetime).getTime();
+    const now = new Date().getTime();
+    const diff = Math.floor((now - timestamp) / 1000);
     
-    <script>
-    // Time ago function
-    function timeAgo(datetime) {
-        const timestamp = new Date(datetime).getTime();
-        const now = new Date().getTime();
-        const diff = Math.floor((now - timestamp) / 1000);
-        
-        if (diff < 60) return 'Just now';
-        if (diff < 3600) {
-            const mins = Math.floor(diff / 60);
-            return mins + ' minute' + (mins > 1 ? 's' : '') + ' ago';
-        }
-        if (diff < 86400) {
-            const hours = Math.floor(diff / 3600);
-            return hours + ' hour' + (hours > 1 ? 's' : '') + ' ago';
-        }
-        if (diff < 604800) {
-            const days = Math.floor(diff / 86400);
-            return days + ' day' + (days > 1 ? 's' : '') + ' ago';
-        }
-        
-        const date = new Date(datetime);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) {
+        const mins = Math.floor(diff / 60);
+        return mins + ' minute' + (mins > 1 ? 's' : '') + ' ago';
     }
-
-    // Update all time displays
-    function updateTimestamps() {
-        document.querySelectorAll('.notif-time').forEach(el => {
-            const time = el.getAttribute('data-time');
-            if (time) {
-                el.textContent = timeAgo(time);
-            }
-        });
+    if (diff < 86400) {
+        const hours = Math.floor(diff / 3600);
+        return hours + ' hour' + (hours > 1 ? 's' : '') + ' ago';
     }
+    if (diff < 604800) {
+        const days = Math.floor(diff / 86400);
+        return days + ' day' + (days > 1 ? 's' : '') + ' ago';
+    }
+    
+    const date = new Date(datetime);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
-    // Update timestamps every minute
-    updateTimestamps();
-    setInterval(updateTimestamps, 60000);
-
-    // Filter tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const filter = this.getAttribute('data-filter');
-            window.location.href = '<?= base_url('/notifications') ?>?filter=' + filter;
-        });
+// Update all time displays
+function updateTimestamps() {
+    document.querySelectorAll('.notif-time').forEach(el => {
+        const time = el.getAttribute('data-time');
+        if (time) {
+            el.textContent = timeAgo(time);
+        }
     });
-    </script>
-</body>
-</html>
+}
+
+// Update timestamps every minute
+updateTimestamps();
+setInterval(updateTimestamps, 60000);
+
+// Filter tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const filter = this.getAttribute('data-filter');
+        window.location.href = '<?= base_url('/notifications') ?>?filter=' + filter;
+    });
+});
+</script>
 
 <?php
-// Helper function for time ago (PHP version for initial render)
+// Helper function for time ago
 function timeAgo($datetime) {
     $timestamp = strtotime($datetime);
     $diff = time() - $timestamp;

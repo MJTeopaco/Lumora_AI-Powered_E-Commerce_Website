@@ -43,7 +43,7 @@ class ShopProfileController extends Controller {
     }
 
     /**
-     * Update shop basic information
+     * Update shop basic information (INCLUDING BILLING)
      */
     public function updateBasicInfo() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -62,13 +62,18 @@ class ShopProfileController extends Controller {
 
             $shop_id = $shopData['shop_id'];
 
-            // Validate and sanitize input
+            // Validate and sanitize shop information
             $shop_name = trim($_POST['shop_name'] ?? '');
             $contact_email = trim($_POST['contact_email'] ?? '');
             $contact_phone = trim($_POST['contact_phone'] ?? '');
             $shop_description = trim($_POST['shop_description'] ?? '');
 
-            // Validation
+            // Validate and sanitize billing information
+            $payout_provider = trim($_POST['payout_provider'] ?? '');
+            $payout_account_name = trim($_POST['payout_account_name'] ?? '');
+            $payout_account_number = trim($_POST['payout_account_number'] ?? '');
+
+            // Basic validation
             if (empty($shop_name)) {
                 $this->jsonResponse(['success' => false, 'message' => 'Shop name is required']);
                 return;
@@ -84,6 +89,38 @@ class ShopProfileController extends Controller {
                 return;
             }
 
+            // Billing validation
+            if (!empty($payout_provider) || !empty($payout_account_name) || !empty($payout_account_number)) {
+                // If any billing field is filled, all must be filled
+                if (empty($payout_provider)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Payment provider is required']);
+                    return;
+                }
+                
+                if (empty($payout_account_name)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Account name is required']);
+                    return;
+                }
+                
+                if (empty($payout_account_number)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Account number is required']);
+                    return;
+                }
+
+                // Validate provider
+                if (!in_array($payout_provider, ['GCash', 'Maya'])) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid payment provider']);
+                    return;
+                }
+
+                // Validate account number format (Philippine mobile number)
+                $cleanNumber = preg_replace('/\D/', '', $payout_account_number);
+                if (strlen($cleanNumber) !== 11 || !preg_match('/^09/', $cleanNumber)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Invalid account number format. Must be a valid Philippine mobile number (09XX XXX XXXX)']);
+                    return;
+                }
+            }
+
             // Check if shop name is already taken
             if ($this->shopProfileModel->isShopNameTaken($shop_name, $shop_id)) {
                 $this->jsonResponse(['success' => false, 'message' => 'Shop name is already taken']);
@@ -96,14 +133,18 @@ class ShopProfileController extends Controller {
                 return;
             }
 
-            // Update shop
+            // Prepare update data
             $updateData = [
                 'shop_name' => $shop_name,
                 'contact_email' => $contact_email,
                 'contact_phone' => $contact_phone,
-                'shop_description' => $shop_description
+                'shop_description' => $shop_description,
+                'payout_provider' => $payout_provider ?: null,
+                'payout_account_name' => $payout_account_name ?: null,
+                'payout_account_number' => $payout_account_number ?: null
             ];
 
+            // Update shop
             $result = $this->shopProfileModel->update($shop_id, $updateData);
 
             if ($result) {
@@ -116,6 +157,7 @@ class ShopProfileController extends Controller {
             }
 
         } catch (\Exception $e) {
+            error_log('Shop profile update error: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -142,8 +184,8 @@ class ShopProfileController extends Controller {
 
             // Validate and sanitize input
             $addressData = [
-                'address_line1' => trim($_POST['address_line1'] ?? ''),
-                'address_line2' => trim($_POST['address_line2'] ?? ''),
+                'address_line_1' => trim($_POST['address_line1'] ?? ''),
+                'address_line_2' => trim($_POST['address_line2'] ?? ''),
                 'barangay' => trim($_POST['barangay'] ?? ''),
                 'city' => trim($_POST['city'] ?? ''),
                 'province' => trim($_POST['province'] ?? ''),
@@ -152,7 +194,7 @@ class ShopProfileController extends Controller {
             ];
 
             // Validation
-            if (empty($addressData['address_line1'])) {
+            if (empty($addressData['address_line_1'])) {
                 $this->jsonResponse(['success' => false, 'message' => 'Address line 1 is required']);
                 return;
             }
@@ -220,8 +262,11 @@ class ShopProfileController extends Controller {
                 return;
             }
 
-            // Create upload directory if it doesn't exist
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/uploads/shop/banners/';
+            // === FIX START: Path Logic for Nested Public Folder ===
+            $relativePath = 'uploads/shop/banners/';
+            // We use DOCUMENT_ROOT/public/ to reach the inner 'public' folder where uploads live
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/' . $relativePath;
+            
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
@@ -230,26 +275,38 @@ class ShopProfileController extends Controller {
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'banner_' . $shop_id . '_' . time() . '.' . $extension;
             $filepath = $uploadDir . $filename;
+            
+            // This is what we save to DB: 'uploads/shop/banners/filename.jpg'
+            $dbPath = $relativePath . $filename;
 
             // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $filepath)) {
                 // Delete old banner if exists
                 if (!empty($shopData['shop_banner'])) {
-                    $oldFile = $uploadDir . $shopData['shop_banner'];
-                    if (file_exists($oldFile)) {
+                    // Handle both old filename-only paths and new relative paths
+                    $oldBannerPath = $shopData['shop_banner'];
+                    if (strpos($oldBannerPath, '/') === false) {
+                        // Old format: just filename
+                        $oldFile = $uploadDir . $oldBannerPath;
+                    } else {
+                        // New format: relative path
+                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/public/' . ltrim($oldBannerPath, '/');
+                    }
+                    
+                    if (file_exists($oldFile) && is_file($oldFile)) {
                         unlink($oldFile);
                     }
                 }
 
-                // Update database
-                $result = $this->shopProfileModel->updateBanner($shop_id, $filename);
+                // Update database with FULL RELATIVE PATH
+                $result = $this->shopProfileModel->updateBanner($shop_id, $dbPath);
 
                 if ($result) {
                     $this->jsonResponse([
                         'success' => true,
                         'message' => 'Banner uploaded successfully',
                         'filename' => $filename,
-                        'url' => '/public/uploads/shop/banners/' . $filename
+                        'url' => base_url('public/' . $dbPath) // Return full URL for JS preview
                     ]);
                 } else {
                     // Delete uploaded file if database update fails
@@ -259,6 +316,7 @@ class ShopProfileController extends Controller {
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to move uploaded file']);
             }
+            // === FIX END ===
 
         } catch (\Exception $e) {
             $this->jsonResponse(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -306,8 +364,10 @@ class ShopProfileController extends Controller {
                 return;
             }
 
-            // Create upload directory if it doesn't exist
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/uploads/shop/profiles/';
+            // === FIX START: Path Logic for Nested Public Folder ===
+            $relativePath = 'uploads/shop/profiles/';
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/' . $relativePath;
+            
             if (!is_dir($uploadDir)) {
                 mkdir($uploadDir, 0755, true);
             }
@@ -316,26 +376,35 @@ class ShopProfileController extends Controller {
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'profile_' . $shop_id . '_' . time() . '.' . $extension;
             $filepath = $uploadDir . $filename;
+            
+            // This is what we save to DB: 'uploads/shop/profiles/filename.jpg'
+            $dbPath = $relativePath . $filename;
 
             // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $filepath)) {
                 // Delete old profile picture if exists
                 if (!empty($shopData['shop_profile'])) {
-                    $oldFile = $uploadDir . $shopData['shop_profile'];
-                    if (file_exists($oldFile)) {
+                    $oldProfilePath = $shopData['shop_profile'];
+                    if (strpos($oldProfilePath, '/') === false) {
+                        $oldFile = $uploadDir . $oldProfilePath;
+                    } else {
+                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/public/' . ltrim($oldProfilePath, '/');
+                    }
+                    
+                    if (file_exists($oldFile) && is_file($oldFile)) {
                         unlink($oldFile);
                     }
                 }
 
-                // Update database
-                $result = $this->shopProfileModel->updateProfilePicture($shop_id, $filename);
+                // Update database with FULL RELATIVE PATH
+                $result = $this->shopProfileModel->updateProfilePicture($shop_id, $dbPath);
 
                 if ($result) {
                     $this->jsonResponse([
                         'success' => true,
                         'message' => 'Profile picture uploaded successfully',
                         'filename' => $filename,
-                        'url' => '/public/uploads/shop/profiles/' . $filename
+                        'url' => base_url('public/' . $dbPath) // Return full URL for JS preview
                     ]);
                 } else {
                     // Delete uploaded file if database update fails
@@ -345,6 +414,7 @@ class ShopProfileController extends Controller {
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to move uploaded file']);
             }
+            // === FIX END ===
 
         } catch (\Exception $e) {
             $this->jsonResponse(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
@@ -361,3 +431,4 @@ class ShopProfileController extends Controller {
         exit;
     }
 }
+?>

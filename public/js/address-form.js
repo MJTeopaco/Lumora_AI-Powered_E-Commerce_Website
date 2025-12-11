@@ -1,22 +1,21 @@
-/**
- * Address Form JavaScript
- * app/public/js/address-form.js
- * Handles cascade dropdown functionality
- */
+// js/address-form.js
+// Address form handler with cascade dropdowns
 
 document.addEventListener('DOMContentLoaded', function() {
     const regionSelect = document.getElementById('region');
     const provinceSelect = document.getElementById('province');
     const citySelect = document.getElementById('city');
     const barangaySelect = document.getElementById('barangay');
-
-    // Get existing values (set by view)
+    
+    // Get existing address data for edit mode
     const existingAddress = window.existingAddress || {};
-
-    // Populate select options
+    
+    // Function to populate select options
     function populateSelect(selectElement, options, selectedValue = '') {
-        const capitalizedName = selectElement.name.charAt(0).toUpperCase() + selectElement.name.slice(1);
-        selectElement.innerHTML = `<option value="">Select ${capitalizedName}</option>`;
+        const placeholder = selectElement.getAttribute('name');
+        const capitalizedPlaceholder = placeholder.charAt(0).toUpperCase() + placeholder.slice(1);
+        
+        selectElement.innerHTML = `<option value="">Select ${capitalizedPlaceholder}</option>`;
         
         options.forEach(option => {
             const optionElement = document.createElement('option');
@@ -28,71 +27,85 @@ document.addEventListener('DOMContentLoaded', function() {
             selectElement.appendChild(optionElement);
         });
     }
-
+    
     // Region change handler
-    regionSelect.addEventListener('change', function() {
-        const selectedRegion = this.value;
-        provinceSelect.innerHTML = '<option value="">Select Province</option>';
-        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && window.addressData[selectedRegion]) {
-            const provinces = Object.keys(window.addressData[selectedRegion]);
-            populateSelect(provinceSelect, provinces);
-        }
-    });
-
+    if (regionSelect) {
+        regionSelect.addEventListener('change', function() {
+            const selectedRegion = this.value;
+            
+            // Reset dependent dropdowns
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+            citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            
+            if (selectedRegion && addressData[selectedRegion]) {
+                const provinces = Object.keys(addressData[selectedRegion]);
+                populateSelect(provinceSelect, provinces);
+            }
+        });
+    }
+    
     // Province change handler
-    provinceSelect.addEventListener('change', function() {
-        const selectedRegion = regionSelect.value;
-        const selectedProvince = this.value;
-        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && selectedProvince && 
-            window.addressData[selectedRegion] && 
-            window.addressData[selectedRegion][selectedProvince]) {
-            const cities = Object.keys(window.addressData[selectedRegion][selectedProvince]);
-            populateSelect(citySelect, cities);
-        }
-    });
-
+    if (provinceSelect) {
+        provinceSelect.addEventListener('change', function() {
+            const selectedRegion = regionSelect.value;
+            const selectedProvince = this.value;
+            
+            // Reset dependent dropdowns
+            citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            
+            if (selectedRegion && selectedProvince && 
+                addressData[selectedRegion] && 
+                addressData[selectedRegion][selectedProvince]) {
+                const cities = Object.keys(addressData[selectedRegion][selectedProvince]);
+                populateSelect(citySelect, cities);
+            }
+        });
+    }
+    
     // City change handler
-    citySelect.addEventListener('change', function() {
-        const selectedRegion = regionSelect.value;
-        const selectedProvince = provinceSelect.value;
-        const selectedCity = this.value;
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && selectedProvince && selectedCity && 
-            window.addressData[selectedRegion][selectedProvince] && 
-            window.addressData[selectedRegion][selectedProvince][selectedCity]) {
-            const barangays = window.addressData[selectedRegion][selectedProvince][selectedCity];
-            populateSelect(barangaySelect, barangays);
-        }
-    });
-
-    // Initialize for edit mode
-    function initAddressForm() {
+    if (citySelect) {
+        citySelect.addEventListener('change', function() {
+            const selectedRegion = regionSelect.value;
+            const selectedProvince = provinceSelect.value;
+            const selectedCity = this.value;
+            
+            // Reset barangay dropdown
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            
+            if (selectedRegion && selectedProvince && selectedCity && 
+                addressData[selectedRegion] && 
+                addressData[selectedRegion][selectedProvince] && 
+                addressData[selectedRegion][selectedProvince][selectedCity]) {
+                const barangays = addressData[selectedRegion][selectedProvince][selectedCity];
+                populateSelect(barangaySelect, barangays);
+            }
+        });
+    }
+    
+    // Initialize selects for edit mode
+    (function initAddressForm() {
         if (existingAddress.province || existingAddress.city || existingAddress.barangay) {
             if (regionSelect.value) {
                 const selectedRegion = regionSelect.value;
                 
-                if (window.addressData[selectedRegion]) {
-                    const provinces = Object.keys(window.addressData[selectedRegion]);
+                if (addressData[selectedRegion]) {
+                    const provinces = Object.keys(addressData[selectedRegion]);
                     populateSelect(provinceSelect, provinces, existingAddress.province);
                     
-                    // Populate cities after delay
+                    // Populate cities after a delay
                     setTimeout(() => {
-                        if (existingAddress.province && window.addressData[selectedRegion][existingAddress.province]) {
-                            const cities = Object.keys(window.addressData[selectedRegion][existingAddress.province]);
+                        if (existingAddress.province && 
+                            addressData[selectedRegion][existingAddress.province]) {
+                            const cities = Object.keys(addressData[selectedRegion][existingAddress.province]);
                             populateSelect(citySelect, cities, existingAddress.city);
                             
-                            // Populate barangays after delay
+                            // Populate barangays after another delay
                             setTimeout(() => {
                                 if (existingAddress.city && 
-                                    window.addressData[selectedRegion][existingAddress.province][existingAddress.city]) {
-                                    const barangays = window.addressData[selectedRegion][existingAddress.province][existingAddress.city];
+                                    addressData[selectedRegion][existingAddress.province][existingAddress.city]) {
+                                    const barangays = addressData[selectedRegion][existingAddress.province][existingAddress.city];
                                     populateSelect(barangaySelect, barangays, existingAddress.barangay);
                                 }
                             }, 100);
@@ -101,8 +114,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+    })();
+    
+    // Form validation before submit
+    const addressForm = document.getElementById('addressForm');
+    if (addressForm) {
+        addressForm.addEventListener('submit', function(e) {
+            const requiredFields = ['region', 'province', 'city', 'barangay', 'address_line_1'];
+            let isValid = true;
+            
+            requiredFields.forEach(fieldName => {
+                const field = document.querySelector(`[name="${fieldName}"]`);
+                if (field && !field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('error');
+                    
+                    // Remove error class on input
+                    field.addEventListener('change', function() {
+                        this.classList.remove('error');
+                    }, { once: true });
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+            }
+        });
     }
-
-    // Run initialization
-    initAddressForm();
 });

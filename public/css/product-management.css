@@ -15,8 +15,9 @@
 
 .dashboard-title {
     font-size: 2rem;
-    color: #1f2937;
+    color: #1A1A1A; /* Matched Dashboard Black */
     margin-bottom: 0.5rem;
+    font-weight: 700;
 }
 
 .dashboard-subtitle {
@@ -53,15 +54,16 @@
     color: white;
 }
 
-.bg-blue { background: #3b82f6; }
-.bg-green { background: #D4AF37; }
-.bg-yellow { background: #f59e0b; }
+/* Aligned colors with dashboard preferences */
+.bg-blue { background: #007bff; }
+.bg-green { background: #28a745; }
+.bg-yellow { background: #ffc107; }
 .bg-red { background: #ef4444; }
 
 .stat-value {
     font-size: 2rem;
     font-weight: bold;
-    color: #1f2937;
+    color: #1A1A1A;
 }
 
 .stat-label {
@@ -117,11 +119,15 @@
 
 .btn-search {
     padding: 0.5rem 1rem;
-    background: #1f2937;
+    background: #D4AF37; /* Gold Button */
     color: white;
     border: none;
     border-radius: 0 6px 6px 0;
     cursor: pointer;
+}
+
+.btn-search:hover {
+    background: #B8942C;
 }
 
 .bulk-actions-form {
@@ -144,12 +150,12 @@
 }
 
 .btn-primary {
-    background: #1f2937;
+    background: #D4AF37; /* Gold Primary */
     color: white;
 }
 
 .btn-primary:hover {
-    background: #374151;
+    background: #B8942C;
 }
 
 .btn-secondary {
@@ -205,7 +211,7 @@
 
 /* Product Image */
 .product-image {
-    width: 45px; /* Shrinking image size here */
+    width: 45px;
     height: 45px;
     border-radius: 6px;
     overflow: hidden;
@@ -231,14 +237,14 @@
 /* Product Info */
 .product-name {
     font-weight: 600;
-    color: #1f2937;
+    color: #1A1A1A;
     text-decoration: none;
     display: block;
     margin-bottom: 0.25rem;
 }
 
 .product-name:hover {
-    color: #374151;
+    color: #D4AF37;
     text-decoration: underline;
 }
 
@@ -365,7 +371,7 @@
 
 .empty-state h3 {
     font-size: 1.5rem;
-    color: #374151;
+    color: #1A1A1A;
     margin-bottom: 0.5rem;
 }
 
@@ -432,4 +438,4 @@
         width: 40px;
         height: 40px;
     }
-}   
+}

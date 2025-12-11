@@ -21,8 +21,11 @@ $router->post('/profile/orders/cancel', 'ProfileController@cancelOrder');
 $router->get('/profile/addresses', 'AddressController@index');
 $router->get('/profile/addresses/add', 'AddressController@add');
 $router->post('/profile/addresses/add', 'AddressController@store');
-$router->get('/profile/addresses/edit', 'AddressController@edit');
+
+// FIXED: Added {id} parameter to the edit route so /edit/4 works
+$router->get('/profile/addresses/edit/{id}', 'AddressController@edit');
 $router->post('/profile/addresses/edit', 'AddressController@update');
+
 $router->post('/profile/addresses/delete', 'AddressController@delete');
 $router->post('/profile/addresses/set-default', 'AddressController@setDefault');
 
@@ -83,6 +86,10 @@ $router->get('/collections/index', 'CollectionsController@index');
 $router->get('/collections/category/{slug}', 'CollectionsController@byCategory');
 $router->post('/collections/smart-search', 'SearchController@smartSearch');
 
+// Stores Directory Routes
+$router->get('/stores', 'StoresController@index');
+$router->get('/stores/{slug}', 'StoresController@show');
+
 // PRODUCT DETAIL ROUTES (Customer)
 $router->get('/products/{slug}', 'ProductController@show');
 
@@ -91,9 +98,9 @@ $router->get('/products/{slug}', 'ProductController@show');
 $router->get('/shop/dashboard', 'ShopController@dashboard');
 $router->get('/shop/add-product', 'ShopController@addProduct');
 $router->post('/shop/products/store', 'ShopController@storeProduct');
-$router->post('/api/products/predict-tags', 'ShopController@predictTags'); // Added from incoming
+$router->post('/api/products/predict-tags', 'ShopController@predictTags');
 
-$router->get('/shop/products', 'ShopController@products'); // Added from incoming
+$router->get('/shop/products', 'ProductManagementController@index');
 $router->get('/shop/cancellations', 'ShopController@cancellations');
 $router->get('/shop/addresses', 'ShopController@addresses');
 
@@ -106,7 +113,6 @@ $router->post('/shop/orders/update-status', 'ShopController@updateOrderStatus');
 $router->get('/shop/reviews', 'ShopController@reviews');
 
 // My Products Routes
-$router->get('/shop/products', 'ProductManagementController@index');
 $router->get('/shop/products/view/{id}', 'ProductManagementController@show');
 $router->get('/shop/products/edit/{id}', 'ProductManagementController@edit');
 $router->post('/shop/products/update/{id}', 'ProductManagementController@update');
@@ -114,7 +120,6 @@ $router->post('/shop/products/update-status', 'ProductManagementController@updat
 $router->post('/shop/products/delete', 'ProductManagementController@delete');
 $router->post('/shop/products/toggle-variant', 'ProductManagementController@toggleVariant');
 $router->post('/shop/products/bulk-action', 'ProductManagementController@bulkAction');
-
 
 // Shop Profile Routes
 $router->get('/shop/shop-profile', 'ShopProfileController@index');
@@ -133,7 +138,7 @@ $router->get('/checkout/failed', 'CheckoutController@failed');
 // <----------------------------------------------------------------------------------------->
 // PAYMENT WEBHOOKS
 $router->post('/webhooks/paymongo', 'WebhookController@paymongo');
-$router->get('/webhooks/test', 'WebhookController@paymongo'); // Temporary Test Route
+$router->get('/webhooks/test', 'WebhookController@paymongo'); 
 
 // <----------------------------------------------------------------------------------------->
 // ADMIN ROUTES
@@ -142,7 +147,8 @@ $router->get('/admin/sellers', 'AdminController@sellers');
 $router->post('/admin/approve-seller', 'AdminController@approveSeller');
 $router->post('/admin/reject-seller', 'AdminController@rejectSeller');
 $router->post('/admin/suspend-seller', 'AdminController@suspendSeller');
-
+$router->get('/admin/payouts', 'AdminController@payouts');
+$router->post('/admin/payouts/process', 'AdminController@processPayout');
 $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');

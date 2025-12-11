@@ -78,10 +78,6 @@
                             <div class="no-address">
                                 <i class="fas fa-map-marked-alt"></i>
                                 <p>No saved addresses found</p>
-                                <button type="button" class="btn-add-address" onclick="alert('Add address modal - to be implemented')">
-                                    <i class="fas fa-plus"></i>
-                                    Add New Address
-                                </button>
                             </div>
                         <?php else: ?>
                             <div class="address-list">
@@ -123,12 +119,7 @@
                                         </div>
                                     </label>
                                 <?php endforeach; ?>
-                                
-                                <!-- Add New Address Button -->
-                                <button type="button" class="btn-add-address" onclick="alert('Add address modal - to be implemented')">
-                                    <i class="fas fa-plus"></i>
-                                    Add New Address
-                                </button>
+                                                              
                             </div>
                         <?php endif; ?>
                     </div>

@@ -204,7 +204,7 @@ $isLoggedIn = $isLoggedIn ?? false;
 
       <div class="product-grid">
         <?php foreach ($products as $product): ?>
-          <a href="/collections/index" class="product-card">
+          <a href="/products/<?= htmlspecialchars($product['slug']) ?>" class="product-card">
             <div class="product-image">
               <?php if (!empty($product['image'])): ?>
                   <img src="<?= htmlspecialchars($product['image']) ?>" 
@@ -220,8 +220,27 @@ $isLoggedIn = $isLoggedIn ?? false;
             <div class="product-info">
                 <h3 class="product-name"><?= htmlspecialchars($product['name'] ?? 'Unnamed Product') ?></h3>
                 
+                <div class="product-rating">
+                    <?php 
+                        $rating = $product['average_rating'] ?? 0;
+                        $count = $product['review_count'] ?? 0;
+                    ?>
+                    <div class="stars">
+                        <?php for($i = 1; $i <= 5; $i++): ?>
+                            <?php if($i <= round($rating)): ?>
+                                <i class="fas fa-star"></i>
+                            <?php else: ?>
+                                <i class="far fa-star"></i>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+                    </div>
+                    <span class="review-count">(<?= $count ?>)</span>
+                </div>
+
                 <?php if (!empty($product['description'])): ?>
-                    <p class="product-description"><?= htmlspecialchars($product['description']) ?></p>
+                    <p class="product-description">
+                      <?= htmlspecialchars(strlen($product['description']) > 50 ? substr($product['description'], 0, 50) . '...' : $product['description']) ?>
+                    </p>
                 <?php endif; ?>
                 
                 <p class="product-price">

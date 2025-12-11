@@ -20,6 +20,46 @@ class Shop {
         return $this->conn;
     }
 
+    // ... [Previous methods remain unchanged: getSellerStatus, getShopByUserId, getShopById, updateBillingDetails, getDashboardStats, getTopProducts] ...
+
+    /**
+     * Get all shop products
+     */
+    public function getShopProducts($shopId) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                p.product_id,
+                p.name,
+                p.slug,
+                p.short_description,
+                p.cover_picture,
+                p.status,
+                p.created_at,
+                COUNT(DISTINCT pv.variant_id) as variant_count,
+                MIN(pv.price) as min_price,
+                MAX(pv.price) as max_price,
+                SUM(pv.quantity) as total_stock
+            FROM products p
+            LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+            WHERE p.shop_id = ? AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+            GROUP BY p.product_id
+            ORDER BY p.created_at DESC
+        ");
+        
+        $stmt->bind_param("i", $shopId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $products = [];
+        while ($row = $result->fetch_assoc()) {
+            $products[] = $row;
+        }
+        
+        return $products;
+    }
+
+    // ... [Keep all other existing methods: getShopOrders, getRecentOrders, getOrderDetails, getOrderItems, updateOrderStatus, getOrderStatsByStatus, getTotalOrderCount, getCancelledOrders, getShopAddress, createShop, updateShop, deleteShop, getAllCategories, createProduct, linkProductToCategory, getOrCreateTag, linkProductToTag, getAllActiveShops, getFeaturedShops, getShopBySlug, getShopProductPreviews, getShopProductCount, getAvailableRegions, getAvailableSpecialties] ...
+    
     /**
      * Get seller status for a user
      */
@@ -40,12 +80,14 @@ class Shop {
     }
 
     /**
-     * Get shop by user ID
+     * Get shop by user ID (Updated with Payout Fields)
      */
     public function getShopByUserId($userId) {
         $stmt = $this->conn->prepare("
-            SELECT s.*, a.address_line_1, a.address_line_2, a.barangay, 
-                   a.city, a.province, a.region, a.postal_code
+            SELECT s.*, 
+                   a.address_line_1, a.address_line_2, a.barangay, 
+                   a.city, a.province, a.region, a.postal_code,
+                   s.payout_provider, s.payout_account_name, s.payout_account_number
             FROM shops s
             LEFT JOIN addresses a ON s.address_id = a.address_id
             WHERE s.user_id = ? AND s.is_deleted = 0
@@ -66,17 +108,7 @@ class Shop {
     public function getShopById($shopId) {
         $stmt = $this->conn->prepare("
             SELECT 
-                s.shop_id,
-                s.user_id,
-                s.shop_name,
-                s.contact_email,
-                s.contact_phone,
-                s.shop_description,
-                s.shop_banner,
-                s.shop_profile,
-                s.slug,
-                s.status,
-                s.created_at,
+                s.*,
                 a.address_line_1,
                 a.address_line_2,
                 a.barangay,
@@ -96,6 +128,23 @@ class Shop {
         $stmt->close();
         
         return $shop;
+    }
+
+    /**
+     * Update Shop Billing Details (NEW)
+     */
+    public function updateBillingDetails($shopId, $provider, $accName, $accNumber) {
+        $stmt = $this->conn->prepare("
+            UPDATE shops 
+            SET payout_provider = ?,
+                payout_account_name = ?,
+                payout_account_number = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE shop_id = ?
+        ");
+        
+        $stmt->bind_param("sssi", $provider, $accName, $accNumber, $shopId);
+        return $stmt->execute();
     }
 
     /**
@@ -199,45 +248,6 @@ class Shop {
         
         return $products;
     }
-
-    /**
-     * Get all shop products
-     */
-    public function getShopProducts($shopId) {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                p.product_id,
-                p.name,
-                p.short_description,
-                p.cover_picture,
-                p.status,
-                p.created_at,
-                COUNT(DISTINCT pv.variant_id) as variant_count,
-                MIN(pv.price) as min_price,
-                MAX(pv.price) as max_price,
-                SUM(pv.quantity) as total_stock
-            FROM products p
-            LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
-            WHERE p.shop_id = ? AND p.is_deleted = 0
-            GROUP BY p.product_id
-            ORDER BY p.created_at DESC
-        ");
-        
-        $stmt->bind_param("i", $shopId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $products = [];
-        while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
-        }
-        
-        return $products;
-    }
-
-    // ========================================================================
-    // ORDER MANAGEMENT METHODS
-    // ========================================================================
 
     /**
      * Get all orders for a specific shop
@@ -403,15 +413,12 @@ class Shop {
 
     /**
      * Update order status (seller side)
-     * FIX: Updated validation list to include CANCELLED and PENDING_PAYMENT
      */
     public function updateOrderStatus($orderId, $shopId, $newStatus) {
-        // Validate input to prevent blank statuses
         if (empty($newStatus)) {
             return false;
         }
 
-        // Validate status transition
         $validStatuses = [
             'PENDING_PAYMENT',
             'PROCESSING', 
@@ -423,7 +430,6 @@ class Shop {
         ];
         
         if (!in_array($newStatus, $validStatuses)) {
-            // Strictly fail if status is not in the allowed list
             return false;
         }
         
@@ -499,10 +505,6 @@ class Shop {
         
         return $row['total'] ?? 0;
     }
-
-    // ========================================================================
-    // END OF ORDER MANAGEMENT METHODS
-    // ========================================================================
 
     /**
      * Get cancelled orders
@@ -724,5 +726,243 @@ class Shop {
         $stmt->bind_param("ii", $productId, $tagId);
         
         return $stmt->execute();
+    }
+
+    /**
+     * Get all active shops with location and product info
+     */
+    public function getAllActiveShops() {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                s.shop_id,
+                s.user_id,
+                s.shop_name,
+                s.slug,
+                s.shop_description,
+                s.contact_email,
+                s.contact_phone,
+                s.shop_banner,
+                s.shop_profile,
+                s.created_at,
+                a.city,
+                a.province,
+                a.region,
+                up.profile_pic,
+                up.full_name as owner_name,
+                COUNT(DISTINCT p.product_id) as product_count,
+                COUNT(DISTINCT o.order_id) as order_count,
+                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
+            FROM shops s
+            LEFT JOIN addresses a ON s.address_id = a.address_id
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN user_profiles up ON u.user_id = up.user_id
+            LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+            LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
+            LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+            LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+            WHERE s.is_deleted = 0
+            GROUP BY s.shop_id
+            ORDER BY order_count DESC, product_count DESC
+        ");
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $shops = [];
+        while ($row = $result->fetch_assoc()) {
+            $shops[] = $row;
+        }
+        
+        $stmt->close();
+        return $shops;
+    }
+
+    /**
+     * Get featured shops (top sellers)
+     */
+    public function getFeaturedShops($limit = 3) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                s.shop_id,
+                s.shop_name,
+                s.slug,
+                s.shop_description,
+                s.shop_banner,
+                s.shop_profile,
+                s.created_at,
+                a.city,
+                a.province,
+                a.region,
+                up.profile_pic,
+                up.full_name as owner_name,
+                COUNT(DISTINCT p.product_id) as product_count,
+                COUNT(DISTINCT o.order_id) as order_count,
+                COALESCE(SUM(CASE WHEN o.order_status IN ('DELIVERED', 'COMPLETED') THEN o.total_amount ELSE 0 END), 0) as total_revenue,
+                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
+            FROM shops s
+            LEFT JOIN addresses a ON s.address_id = a.address_id
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN user_profiles up ON u.user_id = up.user_id
+            LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+            LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
+            LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+            LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+            WHERE s.is_deleted = 0
+            GROUP BY s.shop_id
+            ORDER BY total_revenue DESC, order_count DESC
+            LIMIT ?
+        ");
+        
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $shops = [];
+        while ($row = $result->fetch_assoc()) {
+            $shops[] = $row;
+        }
+        
+        $stmt->close();
+        return $shops;
+    }
+
+    /**
+     * Get shop by slug
+     */
+    public function getShopBySlug($slug) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                s.*,
+                a.address_line_1,
+                a.address_line_2,
+                a.barangay,
+                a.city,
+                a.province,
+                a.region,
+                a.postal_code,
+                up.profile_pic,
+                up.full_name as owner_name
+            FROM shops s
+            LEFT JOIN addresses a ON s.address_id = a.address_id
+            LEFT JOIN users u ON s.user_id = u.user_id
+            LEFT JOIN user_profiles up ON u.user_id = up.user_id
+            WHERE s.slug = ? AND s.is_deleted = 0
+        ");
+        
+        $stmt->bind_param("s", $slug);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $shop = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $shop;
+    }
+
+    /**
+     * Get product previews for a shop
+     */
+    public function getShopProductPreviews($shopId, $limit = 3) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                p.product_id,
+                p.name,
+                p.slug,
+                p.cover_picture,
+                MIN(pv.price) as price
+            FROM products p
+            LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+            WHERE p.shop_id = ? 
+            AND p.is_deleted = 0 
+            AND p.status = 'PUBLISHED'
+            GROUP BY p.product_id
+            ORDER BY p.created_at DESC
+            LIMIT ?
+        ");
+        
+        $stmt->bind_param("ii", $shopId, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $products = [];
+        while ($row = $result->fetch_assoc()) {
+            $products[] = $row;
+        }
+        
+        $stmt->close();
+        return $products;
+    }
+
+    /**
+     * Get shop product count
+     */
+    public function getShopProductCount($shopId) {
+        $stmt = $this->conn->prepare("
+            SELECT COUNT(*) as count
+            FROM products
+            WHERE shop_id = ? 
+            AND is_deleted = 0 
+            AND status = 'PUBLISHED'
+        ");
+        
+        $stmt->bind_param("i", $shopId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $row['count'] ?? 0;
+    }
+
+    /**
+     * Get available regions
+     */
+    public function getAvailableRegions() {
+        $stmt = $this->conn->prepare("
+            SELECT DISTINCT a.region
+            FROM shops s
+            INNER JOIN addresses a ON s.address_id = a.address_id
+            WHERE s.is_deleted = 0 
+            AND a.region IS NOT NULL 
+            AND a.region != ''
+            ORDER BY a.region ASC
+        ");
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $regions = [];
+        while ($row = $result->fetch_assoc()) {
+            $regions[] = $row['region'];
+        }
+        
+        $stmt->close();
+        return $regions;
+    }
+
+    /**
+     * Get available specialties (categories)
+     */
+    public function getAvailableSpecialties() {
+        $stmt = $this->conn->prepare("
+            SELECT DISTINCT pc.name, pc.slug
+            FROM product_categories pc
+            INNER JOIN product_category_links pcl ON pc.category_id = pcl.category_id
+            INNER JOIN products p ON pcl.product_id = p.product_id
+            INNER JOIN shops s ON p.shop_id = s.shop_id
+            WHERE s.is_deleted = 0 
+            AND p.is_deleted = 0
+            ORDER BY pc.name ASC
+        ");
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $specialties = [];
+        while ($row = $result->fetch_assoc()) {
+            $specialties[] = $row;
+        }
+        
+        $stmt->close();
+        return $specialties;
     }
 }

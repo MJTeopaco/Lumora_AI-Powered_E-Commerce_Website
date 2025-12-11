@@ -206,3 +206,22 @@
 [2025-12-03 20:41:12] Stock reduced for 1 items in Order #44
 [2025-12-03 20:41:15] Email confirmation sent to carlronquillo05@gmail.com
 [2025-12-03 20:41:15] Notification sent to seller (User ID: 3)
+[2025-12-08 09:30:32] ------------------------------------------------
+[2025-12-08 09:30:32] Incoming Webhook: POST
+[2025-12-08 09:30:32] SUCCESS: Signature verified.
+[2025-12-08 09:30:32] Event Type: checkout_session.payment.paid
+[2025-12-08 09:30:32] Processing Checkout Session: cs_R5Wivg8ick2NUXgzNUVKr26Q
+[2025-12-08 09:30:33] Found Order ID: 47
+[2025-12-08 09:30:33] SUCCESS: Database updated for Order #47 to PROCESSING
+[2025-12-08 09:30:33] Stock reduced for 1 items in Order #47
+[2025-12-08 09:30:36] Email confirmation sent to carlronquillo05@gmail.com
+[2025-12-08 09:30:36] Notification sent to seller (User ID: 3)
+[2025-12-08 16:24:57] ------------------------------------------------
+[2025-12-08 16:24:57] Incoming Webhook: POST
+[2025-12-08 16:24:57] SUCCESS: Signature verified.
+[2025-12-08 16:24:57] Event Type: checkout_session.payment.paid
+[2025-12-08 16:24:57] Processing Checkout Session: cs_UKCum86jWDqX6G8h1KGoM4Na
+[2025-12-08 16:24:58] Found Order ID: 48
+[2025-12-08 16:24:58] SUCCESS: Database updated for Order #48 to PROCESSING
+[2025-12-08 16:24:58] Stock reduced for 1 items in Order #48
+[2025-12-08 16:24:58] Earnings recorded for Shop #4 Order #48

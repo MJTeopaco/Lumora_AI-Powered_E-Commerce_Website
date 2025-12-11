@@ -3,82 +3,52 @@
 
 namespace App\Models;
 
-use PDO;
+use App\Core\Database;
 
 class Address
 {
-    private $db;
-    
+    private $conn;
+    private $table = 'addresses';
+
     public function __construct()
     {
-        // Initialize database connection
-        $this->db = $this->getConnection();
+        $this->conn = Database::getConnection();
     }
 
     /**
-     * Get database connection
-     */
-    private function getConnection()
-    {
-        try {
-            $host = 'localhost';
-            $dbname = 'lumora_db';
-            $username = 'root';
-            $password = '';
-
-            $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ];
-
-            return new PDO($dsn, $username, $password, $options);
-        } catch (\PDOException $e) {
-            throw new \PDOException($e->getMessage(), (int)$e->getCode());
-        }
-    }
-
-    /**
-     * Get all addresses for a user
+     * Get all addresses for a user (excluding shop addresses)
      */
     public function getAddressesByUserId_User($userId)
     {
-        // FIX: Added 'AND address_type != :shop_type' to exclude 'shop' addresses.
-        $sql = "SELECT * FROM addresses 
-                WHERE user_id = :user_id 
-                AND address_type != :shop_type
-                ORDER BY is_default DESC, created_at DESC";
+        $query = "SELECT * FROM {$this->table} 
+                  WHERE user_id = ? 
+                  AND address_type != 'shop'
+                  ORDER BY is_default DESC, created_at DESC";
         
-        $stmt = $this->db->prepare($sql);
-        
-        // Execute with both parameters
-        $stmt->execute([
-            'user_id' => $userId,
-            'shop_type' => 'shop' // Parameter to exclude the 'shop' type
-        ]);
-        
-        $addresses = $stmt->fetchAll();
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $addresses = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
         
         return $addresses;
     }
 
     /**
-     * Get a single address by ID and user ID
+     * Get address by ID and user ID
      */
     public function getAddressById($addressId, $userId)
     {
-        $sql = "SELECT * FROM addresses 
-                WHERE address_id = :address_id 
-                AND user_id = :user_id";
+        $query = "SELECT * FROM {$this->table} 
+                  WHERE address_id = ? AND user_id = ?";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'address_id' => $addressId,
-            'user_id' => $userId
-        ]);
-        
-        $address = $stmt->fetch();
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $addressId, $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $address = $result->fetch_assoc();
+        $stmt->close();
         
         return $address;
     }
@@ -88,127 +58,133 @@ class Address
      */
     public function getDefaultAddress($userId)
     {
-        $sql = "SELECT * FROM addresses 
-                WHERE user_id = :user_id 
-                AND is_default = 1 
-                LIMIT 1";
+        $query = "SELECT * FROM {$this->table} 
+                  WHERE user_id = ? AND is_default = 1 
+                  LIMIT 1";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['user_id' => $userId]);
-        
-        $address = $stmt->fetch();
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $address = $result->fetch_assoc();
+        $stmt->close();
         
         return $address;
     }
 
     /**
-     * Create a new address
+     * Create new address
      */
     public function createAddress($data)
     {
-        $sql = "INSERT INTO addresses (
-                    user_id, 
-                    address_type,
-                    address_line_1, 
-                    address_line_2, 
-                    barangay, 
-                    city, 
-                    province, 
-                    region, 
-                    postal_code, 
-                    is_default
-                ) VALUES (
-                    :user_id, 
-                    :address_type,
-                    :address_line_1, 
-                    :address_line_2, 
-                    :barangay, 
-                    :city, 
-                    :province, 
-                    :region, 
-                    :postal_code, 
-                    :is_default
-                )";
+        $query = "INSERT INTO {$this->table} 
+                  (user_id, address_type, address_line_1, address_line_2, 
+                   region, province, city, barangay, postal_code, is_default) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->conn->prepare($query);
         
-        return $stmt->execute([
-            'user_id' => $data['user_id'],
-            'address_type' => $data['address_type'] ?? 'shipping',
-            'address_line_1' => $data['address_line_1'],
-            'address_line_2' => $data['address_line_2'] ?? null,
-            'barangay' => $data['barangay'],
-            'city' => $data['city'],
-            'province' => $data['province'],
-            'region' => $data['region'],
-            'postal_code' => $data['postal_code'] ?? null,
-            'is_default' => $data['is_default'] ?? 0
-        ]);
+        $stmt->bind_param(
+            "issssssssi",
+            $data['user_id'],
+            $data['address_type'],
+            $data['address_line_1'],
+            $data['address_line_2'],
+            $data['region'],
+            $data['province'],
+            $data['city'],
+            $data['barangay'],
+            $data['postal_code'],
+            $data['is_default']
+        );
+        
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
     }
 
     /**
-     * Update an existing address
+     * Update existing address
      */
     public function updateAddress($addressId, $userId, $data)
     {
-        $sql = "UPDATE addresses SET 
-                    address_line_1 = :address_line_1,
-                    address_line_2 = :address_line_2,
-                    barangay = :barangay,
-                    city = :city,
-                    province = :province,
-                    region = :region,
-                    postal_code = :postal_code,
-                    is_default = :is_default,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE address_id = :address_id 
-                AND user_id = :user_id";
+        $query = "UPDATE {$this->table} 
+                  SET address_line_1 = ?,
+                      address_line_2 = ?,
+                      region = ?,
+                      province = ?,
+                      city = ?,
+                      barangay = ?,
+                      postal_code = ?,
+                      is_default = ?,
+                      updated_at = CURRENT_TIMESTAMP
+                  WHERE address_id = ? AND user_id = ?";
         
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->conn->prepare($query);
         
-        return $stmt->execute([
-            'address_id' => $addressId,
-            'user_id' => $userId,
-            'address_line_1' => $data['address_line_1'],
-            'address_line_2' => $data['address_line_2'] ?? null,
-            'barangay' => $data['barangay'],
-            'city' => $data['city'],
-            'province' => $data['province'],
-            'region' => $data['region'],
-            'postal_code' => $data['postal_code'] ?? null,
-            'is_default' => $data['is_default'] ?? 0
-        ]);
+        // Fixed bind_param string: 7 strings + 3 integers = "sssssssiii"
+        $stmt->bind_param(
+            "sssssssiii",
+            $data['address_line_1'],
+            $data['address_line_2'],
+            $data['region'],
+            $data['province'],
+            $data['city'],
+            $data['barangay'],
+            $data['postal_code'],
+            $data['is_default'],
+            $addressId,
+            $userId
+        );
+        
+        $result = $stmt->execute();
+        $stmt->close();
+        
+        return $result;
     }
 
     /**
-     * Delete an address
+     * Delete address
      */
     public function deleteAddress($addressId, $userId)
     {
-        $sql = "DELETE FROM addresses 
-                WHERE address_id = :address_id 
-                AND user_id = :user_id";
+        $query = "DELETE FROM {$this->table} 
+                  WHERE address_id = ? AND user_id = ?";
         
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $addressId, $userId);
+        $result = $stmt->execute();
+        $stmt->close();
         
-        return $stmt->execute([
-            'address_id' => $addressId,
-            'user_id' => $userId
-        ]);
+        return $result;
     }
 
     /**
-     * Unset all default addresses for a user
+     * Unset all default addresses for a user (except specified address)
      */
-    public function unsetDefaultAddresses($userId)
+    public function unsetDefaultAddresses($userId, $exceptAddressId = null)
     {
-        $sql = "UPDATE addresses 
-                SET is_default = 0 
-                WHERE user_id = :user_id";
+        if ($exceptAddressId) {
+            $query = "UPDATE {$this->table} 
+                      SET is_default = 0 
+                      WHERE user_id = ? AND address_id != ?";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("ii", $userId, $exceptAddressId);
+        } else {
+            $query = "UPDATE {$this->table} 
+                      SET is_default = 0 
+                      WHERE user_id = ?";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param("i", $userId);
+        }
         
-        $stmt = $this->db->prepare($sql);
+        $result = $stmt->execute();
+        $stmt->close();
         
-        return $stmt->execute(['user_id' => $userId]);
+        return $result;
     }
 
     /**
@@ -216,18 +192,17 @@ class Address
      */
     public function setAsDefault($addressId, $userId)
     {
-        $sql = "UPDATE addresses 
-                SET is_default = 1,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE address_id = :address_id 
-                AND user_id = :user_id";
+        $query = "UPDATE {$this->table} 
+                  SET is_default = 1,
+                      updated_at = CURRENT_TIMESTAMP
+                  WHERE address_id = ? AND user_id = ?";
         
-        $stmt = $this->db->prepare($sql);
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("ii", $addressId, $userId);
+        $result = $stmt->execute();
+        $stmt->close();
         
-        return $stmt->execute([
-            'address_id' => $addressId,
-            'user_id' => $userId
-        ]);
+        return $result;
     }
 
     /**
@@ -235,15 +210,16 @@ class Address
      */
     public function countUserAddresses($userId)
     {
-        $sql = "SELECT COUNT(*) as count 
-                FROM addresses 
-                WHERE user_id = :user_id";
+        $query = "SELECT COUNT(*) as count FROM {$this->table} WHERE user_id = ?";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['user_id' => $userId]);
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $stmt->close();
         
-        $result = $stmt->fetch();
-        return $result['count'];
+        return (int)$row['count'];
     }
 
     /**
@@ -251,19 +227,25 @@ class Address
      */
     public function getAddressesByType($userId, $type)
     {
-        $sql = "SELECT * FROM addresses 
-                WHERE user_id = :user_id 
-                AND address_type = :address_type
-                ORDER BY is_default DESC, created_at DESC";
+        $query = "SELECT * FROM {$this->table} 
+                  WHERE user_id = ? AND address_type = ?
+                  ORDER BY is_default DESC, created_at DESC";
         
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'user_id' => $userId,
-            'address_type' => $type
-        ]);
-        
-        $addresses = $stmt->fetchAll();
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("is", $userId, $type);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $addresses = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
         
         return $addresses;
+    }
+
+    /**
+     * Get connection (for compatibility with existing code)
+     */
+    public function getConnection()
+    {
+        return $this->conn;
     }
 }

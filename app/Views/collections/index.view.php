@@ -132,7 +132,9 @@
                                  alt="<?= htmlspecialchars($product['name']) ?>"
                                  loading="lazy">
                         <?php else: ?>
-                            🎁
+                            <div class="no-image-placeholder">
+                                <i class="fas fa-image"></i>
+                            </div>
                         <?php endif; ?>
                         
                         <?php if (isset($product['stock']) && $product['stock'] == 0): ?>
@@ -142,8 +144,25 @@
                         <?php endif; ?>
                     </div>
 
-                    <div class="product-details">
+                    <div class="product-info">
                         <h3 class="product-name"><?= htmlspecialchars($product['name']) ?></h3>
+                        
+                        <div class="product-rating">
+                            <?php 
+                                $rating = $product['average_rating'] ?? 0;
+                                $count = $product['review_count'] ?? 0;
+                            ?>
+                            <div class="stars">
+                                <?php for($i = 1; $i <= 5; $i++): ?>
+                                    <?php if($i <= round($rating)): ?>
+                                        <i class="fas fa-star"></i>
+                                    <?php else: ?>
+                                        <i class="far fa-star"></i>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+                            </div>
+                            <span class="review-count">(<?= $count ?>)</span>
+                        </div>
                         
                         <?php if (!empty($product['short_description'])): ?>
                             <p class="product-description">
@@ -159,4 +178,3 @@
         </div>
     <?php endif; ?>
 </div>
-

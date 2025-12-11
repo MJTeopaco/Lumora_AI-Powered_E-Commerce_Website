@@ -3,51 +3,59 @@
 
 namespace App\Controllers;
 
-use App\Core\Controller;  
-use App\Core\Session;     
-use App\Models\Address;
-use App\Models\User;      
+use App\Core\Controller;
+use App\Core\Session;
+use App\Models\User;
 use App\Models\UserProfile;
+use App\Models\Address;
+use App\Helpers\ValidationHelper;
 use App\Helpers\RedirectHelper;
 
-class AddressController extends Controller  
+class AddressController extends Controller
 {
-    private $addressModel;
-    private $userProfileModel;
-    private $userModel;  
+    protected $userModel;
+    protected $profileModel;
+    protected $addressModel;
 
     public function __construct()
     {
+        $this->userModel = new User();
+        $this->profileModel = new UserProfile();
+        $this->addressModel = new Address();
+
+        // Require authentication for all address actions
         if (!Session::has('user_id')) {
             RedirectHelper::redirect('/login');
         }
-
-        $this->addressModel = new Address();
-        $this->userModel = new User();
-        $this->userProfileModel = new UserProfile();
     }
 
     /**
-     * Display all addresses for the logged-in user
+     * Show all user addresses
      */
     public function index()
     {
         $userId = Session::get('user_id');
         $user = $this->userModel->findById($userId);
-        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        
+        // Get all addresses for this user
         $addresses = $this->addressModel->getAddressesByUserId_User($userId);
-
+        
+        // Get status message
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
+        
         $data = [
             'user' => $user,
             'profile' => $profile,
             'addresses' => $addresses,
-            'statusMessage' => $_GET['message'] ?? null,
-            'statusType' => $_GET['status'] ?? 'success',
+            'statusMessage' => $statusMessage,
+            'statusType' => $statusType,
             'activeTab' => 'addresses',
             'pageTitle' => 'My Addresses'
         ];
-
-        $this->view('profile/addresses', $data, '/profile');
+        
+        $this->view('profile/addresses', $data, 'profile');
     }
 
     /**
@@ -57,227 +65,281 @@ class AddressController extends Controller
     {
         $userId = Session::get('user_id');
         $user = $this->userModel->findById($userId);
-        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
-
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        
+        // Get status message
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
+        
         $data = [
             'user' => $user,
             'profile' => $profile,
             'isEdit' => false,
-            'statusMessage' => $_GET['message'] ?? null,
-            'statusType' => $_GET['status'] ?? 'success',
+            'address' => [],
+            'regions' => $this->getRegions(),
+            'statusMessage' => $statusMessage,
+            'statusType' => $statusType,
             'activeTab' => 'addresses',
-            'pageTitle' => 'Add New Address',
-            'regions' => $this->getRegions() // Added missing regions
+            'pageTitle' => 'Add New Address'
         ];
-
-        $this->view('profile/address-form', $data, '/profile');
+        
+        $this->view('profile/address-form', $data, 'profile');
     }
 
     /**
-     * Handle add address form submission
+     * Store new address
      */
     public function store()
     {
         $this->verifyCsrfToken();
-
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('/profile/addresses/add'); // Fixed: Added leading slash
+            RedirectHelper::redirect('/profile/addresses');
         }
-
+        
         $userId = Session::get('user_id');
-
+        
+        // Validate required fields
+        $requiredFields = ['address_line_1', 'region', 'province', 'city', 'barangay'];
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                $this->redirectToAddresses('Please fill in all required fields', 'error');
+                return;
+            }
+        }
+        
+        // Prepare data
         $data = [
             'user_id' => $userId,
-            'address_line_1' => trim($_POST['address_line_1'] ?? ''),
-            'address_line_2' => trim($_POST['address_line_2'] ?? ''),
-            'barangay' => trim($_POST['barangay'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
-            'province' => trim($_POST['province'] ?? ''),
-            'region' => trim($_POST['region'] ?? ''),
-            'postal_code' => trim($_POST['postal_code'] ?? ''),
+            'address_type' => 'shipping', // Default type
+            'address_line_1' => ValidationHelper::sanitize($_POST['address_line_1']),
+            'address_line_2' => ValidationHelper::sanitize($_POST['address_line_2'] ?? ''),
+            'region' => ValidationHelper::sanitize($_POST['region']),
+            'province' => ValidationHelper::sanitize($_POST['province']),
+            'city' => ValidationHelper::sanitize($_POST['city']),
+            'barangay' => ValidationHelper::sanitize($_POST['barangay']),
+            'postal_code' => ValidationHelper::sanitize($_POST['postal_code'] ?? ''),
             'is_default' => isset($_POST['is_default']) ? 1 : 0
         ];
-
-        if (empty($data['address_line_1']) || empty($data['barangay']) || 
-            empty($data['city']) || empty($data['province']) || empty($data['region'])) {
-            $this->redirectWithError('Please fill in all required fields.');
-            return;
-        }
-
+        
+        // If this is set as default, unset other defaults first
         if ($data['is_default']) {
             $this->addressModel->unsetDefaultAddresses($userId);
         }
-
-        $result = $this->addressModel->createAddress($data);
-
-        if ($result) {
-            $this->redirectWithSuccess('Address added successfully!');
+        
+        // Create address
+        if ($this->addressModel->createAddress($data)) {
+            $this->redirectToAddresses('Address added successfully', 'success');
         } else {
-            $this->redirectWithError('Failed to add address. Please try again.');
+            $this->redirectToAddresses('Failed to add address', 'error');
         }
     }
 
     /**
      * Show edit address form
+     * FIXED: Accepts $id from route parameter
      */
-    public function edit($addressId)
+    public function edit($id = null)
     {
-        $userId = Session::get('user_id');
-        $user = $this->userModel->findById($userId);
-        $profile = $this->userProfileModel->getByUserId($userId) ?: ['profile_pic' => ''];
-
-        $address = $this->addressModel->getAddressById($addressId, $userId);
-
-        if (!$address) {
-            $this->redirectWithError('Address not found.');
+        // Use ID from URL path or query param as fallback
+        $addressId = $id ?? $_GET['id'] ?? null;
+        
+        if (!$addressId) {
+            $this->redirectToAddresses('Invalid address ID', 'error');
             return;
         }
-
+        
+        $userId = Session::get('user_id');
+        $user = $this->userModel->findById($userId);
+        $profile = $this->profileModel->getByUserId($userId) ?: ['profile_pic' => ''];
+        
+        // Get address and verify ownership
+        $address = $this->addressModel->getAddressById($addressId, $userId);
+        
+        if (!$address) {
+            $this->redirectToAddresses('Address not found', 'error');
+            return;
+        }
+        
+        // Get status message
+        $statusMessage = isset($_GET['message']) ? urldecode($_GET['message']) : null;
+        $statusType = $_GET['status'] ?? 'success';
+        
         $data = [
             'user' => $user,
             'profile' => $profile,
-            'address' => $address,
             'isEdit' => true,
-            'statusMessage' => $_GET['message'] ?? null,
-            'statusType' => $_GET['status'] ?? 'success',
+            'address' => $address,
+            'regions' => $this->getRegions(),
+            'statusMessage' => $statusMessage,
+            'statusType' => $statusType,
             'activeTab' => 'addresses',
-            'pageTitle' => 'Edit Address',
-            'regions' => $this->getRegions() // Added missing regions
+            'pageTitle' => 'Edit Address'
         ];
-
-        $this->view('profile/address-form', $data, '/profile');
+        
+        $this->view('profile/address-form', $data, 'profile');
     }
 
     /**
-     * Handle edit address form submission
+     * Update existing address
      */
-    public function update($addressId)
+    public function update()
     {
         $this->verifyCsrfToken();
-
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('/profile/addresses/edit/' . $addressId); // Fixed: Added leading slash
+            RedirectHelper::redirect('/profile/addresses');
         }
-
+        
+        // Get address ID from POST
+        $addressId = $_POST['address_id'] ?? null;
+        
+        if (!$addressId) {
+            $this->redirectToAddresses('Invalid address', 'error');
+            return;
+        }
+        
         $userId = Session::get('user_id');
-
+        
+        // Verify ownership
         $existingAddress = $this->addressModel->getAddressById($addressId, $userId);
         if (!$existingAddress) {
-            $this->redirectWithError('Address not found.');
+            $this->redirectToAddresses('Address not found', 'error');
             return;
         }
-
+        
+        // Validate required fields
+        $requiredFields = ['address_line_1', 'region', 'province', 'city', 'barangay'];
+        foreach ($requiredFields as $field) {
+            if (empty($_POST[$field])) {
+                RedirectHelper::redirect('/profile/addresses/edit/' . $addressId . '?status=error&message=' . urlencode('Please fill in all required fields'));
+                return;
+            }
+        }
+        
+        // Prepare data
         $data = [
-            'address_line_1' => trim($_POST['address_line_1'] ?? ''),
-            'address_line_2' => trim($_POST['address_line_2'] ?? ''),
-            'barangay' => trim($_POST['barangay'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
-            'province' => trim($_POST['province'] ?? ''),
-            'region' => trim($_POST['region'] ?? ''),
-            'postal_code' => trim($_POST['postal_code'] ?? ''),
+            'address_line_1' => ValidationHelper::sanitize($_POST['address_line_1']),
+            'address_line_2' => ValidationHelper::sanitize($_POST['address_line_2'] ?? ''),
+            'region' => ValidationHelper::sanitize($_POST['region']),
+            'province' => ValidationHelper::sanitize($_POST['province']),
+            'city' => ValidationHelper::sanitize($_POST['city']),
+            'barangay' => ValidationHelper::sanitize($_POST['barangay']),
+            'postal_code' => ValidationHelper::sanitize($_POST['postal_code'] ?? ''),
             'is_default' => isset($_POST['is_default']) ? 1 : 0
         ];
-
-        if (empty($data['address_line_1']) || empty($data['barangay']) || 
-            empty($data['city']) || empty($data['province']) || empty($data['region'])) {
-            $this->redirectWithError('Please fill in all required fields.');
-            return;
-        }
-
+        
+        // If this is set as default, unset other defaults first
         if ($data['is_default']) {
-            $this->addressModel->unsetDefaultAddresses($userId);
+            $this->addressModel->unsetDefaultAddresses($userId, $addressId);
         }
-
-        $result = $this->addressModel->updateAddress($addressId, $userId, $data);
-
-        if ($result) {
-            $this->redirectWithSuccess('Address updated successfully!');
+        
+        // Update address
+        if ($this->addressModel->updateAddress($addressId, $userId, $data)) {
+            $this->redirectToAddresses('Address updated successfully', 'success');
         } else {
-            $this->redirectWithError('Failed to update address. Please try again.');
+            RedirectHelper::redirect('/profile/addresses/edit/' . $addressId . '?status=error&message=' . urlencode('Failed to update address'));
         }
     }
 
     /**
-     * Delete an address
+     * Delete address
      */
-    public function delete($addressId)
+    public function delete()
     {
         $this->verifyCsrfToken();
-
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('/profile/addresses'); // Fixed: Added leading slash
+            RedirectHelper::redirect('/profile/addresses');
         }
-
-        $userId = Session::get('user_id');
-
-        $address = $this->addressModel->getAddressById($addressId, $userId);
-        if (!$address) {
-            $this->redirectWithError('Address not found.');
+        
+        $addressId = $_POST['address_id'] ?? null;
+        
+        if (!$addressId) {
+            $this->redirectToAddresses('Invalid address', 'error');
             return;
         }
-
-        $result = $this->addressModel->deleteAddress($addressId, $userId);
-
-        if ($result) {
-            $this->redirectWithSuccess('Address deleted successfully!');
+        
+        $userId = Session::get('user_id');
+        
+        // Verify ownership
+        $address = $this->addressModel->getAddressById($addressId, $userId);
+        if (!$address) {
+            $this->redirectToAddresses('Address not found', 'error');
+            return;
+        }
+        
+        // Check if user has other addresses
+        $userAddresses = $this->addressModel->getAddressesByUserId_User($userId);
+        if (count($userAddresses) <= 1) {
+            $this->redirectToAddresses('Cannot delete your only address', 'error');
+            return;
+        }
+        
+        // Delete address
+        if ($this->addressModel->deleteAddress($addressId, $userId)) {
+            $this->redirectToAddresses('Address deleted successfully', 'success');
         } else {
-            $this->redirectWithError('Failed to delete address. Please try again.');
+            $this->redirectToAddresses('Failed to delete address', 'error');
         }
     }
 
     /**
-     * Set an address as default
+     * Set address as default
      */
-    public function setDefault($addressId)
+    public function setDefault()
     {
         $this->verifyCsrfToken();
-
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            RedirectHelper::redirect('/profile/addresses'); // Fixed: Added leading slash
+            RedirectHelper::redirect('/profile/addresses');
         }
-
-        $userId = Session::get('user_id');
-
-        $address = $this->addressModel->getAddressById($addressId, $userId);
-        if (!$address) {
-            $this->redirectWithError('Address not found.');
+        
+        $addressId = $_POST['address_id'] ?? null;
+        
+        if (!$addressId) {
+            $this->redirectToAddresses('Invalid address', 'error');
             return;
         }
-
+        
+        $userId = Session::get('user_id');
+        
+        // Verify ownership
+        $address = $this->addressModel->getAddressById($addressId, $userId);
+        if (!$address) {
+            $this->redirectToAddresses('Address not found', 'error');
+            return;
+        }
+        
+        // Unset all defaults for this user
         $this->addressModel->unsetDefaultAddresses($userId);
-        $result = $this->addressModel->setAsDefault($addressId, $userId);
-
-        if ($result) {
-            $this->redirectWithSuccess('Default address updated successfully!');
+        
+        // Set this address as default
+        if ($this->addressModel->setAsDefault($addressId, $userId)) {
+            $this->redirectToAddresses('Default address updated successfully', 'success');
         } else {
-            $this->redirectWithError('Failed to set default address. Please try again.');
+            $this->redirectToAddresses('Failed to update default address', 'error');
         }
     }
-    
-    private function redirectWithError($message)
-    {
-        $params = [
-            'status' => 'error',
-            'message' => urlencode($message)
-        ];
-        $url = '/profile/addresses?' . http_build_query($params); // Fixed: Added leading slash
-        RedirectHelper::redirect($url);
-    }
 
-    private function redirectWithSuccess($message)
+    /**
+     * Helper to redirect to addresses page with message
+     */
+    private function redirectToAddresses($message, $status = 'success')
     {
         $params = [
-            'status' => 'success',
+            'status' => $status,
             'message' => urlencode($message)
         ];
-        $url = '/profile/addresses?' . http_build_query($params); // Fixed: Added leading slash
+        $url = '/profile/addresses?' . http_build_query($params);
         RedirectHelper::redirect($url);
     }
 
     /**
-     * Get list of regions in Philippines
+     * Get list of Philippine regions
      */
-    private function getRegions() {
+    private function getRegions()
+    {
         return [
             'NCR' => 'National Capital Region',
             'CAR' => 'Cordillera Administrative Region',

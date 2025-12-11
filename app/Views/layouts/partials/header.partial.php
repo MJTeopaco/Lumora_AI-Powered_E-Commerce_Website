@@ -19,6 +19,19 @@ if ($isLoggedIn && $cartCount === 0) {
         error_log("Failed to get cart count: " . $e->getMessage());
     }
 }
+
+// Get notification count from database if logged in and not already set
+if ($isLoggedIn && $notificationCount === 0) {
+    try {
+        $notifModel = new \App\Models\Notification();
+        $userId = $_SESSION['user_id'] ?? null;
+        if ($userId) {
+            $notificationCount = $notifModel->getUnreadCount($userId);
+        }
+    } catch (Exception $e) {
+        error_log("Failed to get notification count: " . $e->getMessage());
+    }
+}
 ?>
 <script>
     const BASE_URL = "<?= rtrim(base_url(), '/') ?>";

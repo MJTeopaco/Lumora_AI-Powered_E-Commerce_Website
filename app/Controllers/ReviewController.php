@@ -7,17 +7,26 @@ use App\Core\Controller;
 use App\Core\Session;
 use App\Models\ProductReview;
 use App\Models\Product;
-use App\Models\Notification; // Added
-use App\Models\Shop;         // Added
+use App\Models\Notification;
+use App\Models\Shop;
+use App\Models\User;        // Added
+use App\Models\UserProfile; // Added
+use App\Models\Cart;        // Added for header count
 
 class ReviewController extends Controller {
     
     protected $reviewModel;
     protected $productModel;
+    protected $userModel;       // Added
+    protected $userProfileModel;// Added
+    protected $cartModel;       // Added
 
     public function __construct() {
         $this->reviewModel = new ProductReview();
         $this->productModel = new Product();
+        $this->userModel = new User();              // Init
+        $this->userProfileModel = new UserProfile();// Init
+        $this->cartModel = new Cart();              // Init
     }
 
     /**
@@ -71,7 +80,7 @@ class ReviewController extends Controller {
 
         $userId = Session::get('user_id');
         
-        // FIX: Use getProductById so we can find the product using the ID from the URL
+        // Use getProductById so we can find the product using the ID from the URL
         $product = $this->productModel->getProductById($productId);
 
         if (!$product) {
@@ -96,11 +105,24 @@ class ReviewController extends Controller {
 
         $purchaseDetails = $this->reviewModel->getUserPurchaseDetails($userId, $productId);
 
+        // --- NEW: Fetch User Data for Header ---
+        $user = $this->userModel->findById($userId);
+        $userProfile = $this->userProfileModel->getByUserId($userId);
+        $isSeller = $this->userModel->checkRole($userId);
+        $cartCount = $this->cartModel->getCartCount($userId);
+        // ---------------------------------------
+
         $data = [
             'pageTitle' => 'Write a Review - ' . $product['name'],
             'product' => $product,
             'hasPurchased' => true, 
-            'purchaseDetails' => $purchaseDetails
+            'purchaseDetails' => $purchaseDetails,
+            // Header Data
+            'isLoggedIn' => true,
+            'username' => $user['username'] ?? 'User',
+            'userProfile' => $userProfile,
+            'isSeller' => $isSeller,
+            'cartCount' => $cartCount
         ];
 
         $this->view('reviews/form', $data);

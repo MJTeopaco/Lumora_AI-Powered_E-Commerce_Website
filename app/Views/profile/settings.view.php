@@ -1,274 +1,417 @@
 <?php
-// app/Views/profile/address-form.view.php - REFACTORED CONTENT ONLY
-// This content is injected into the $content variable of profile.layout.php
-
-// Note: $isEdit, $address, and $user are assumed to be passed from the controller
+// app/Views/profile/settings.view.php
 ?>
 <div class="content-header">
-    <h1 class="content-title"><?= isset($isEdit) && $isEdit ? 'Edit' : 'Add New' ?> Address</h1>
-    <p class="content-subtitle">Please fill in your complete delivery address</p>
+    <div>
+        <h1 class="content-title">Account Settings</h1>
+        <p class="content-subtitle">Manage your account security</p>
+    </div>
 </div>
 
-<form method="POST" action="<?= isset($isEdit) && $isEdit ? '/profile/addresses/edit/' . htmlspecialchars($address['address_id'] ?? '') : '/profile/addresses/add' ?>" id="addressForm">
-    <div class="form-group">
-        <label class="form-label">
-            Address Line 1 <span class="required">*</span>
-        </label>
-        <input 
-            type="text" 
-            name="address_line_1" 
-            class="form-input" 
-            placeholder="House No., Building, Street Name"
-            value="<?= htmlspecialchars($address['address_line_1'] ?? '') ?>"
-            required
-        >
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">
-            Address Line 2 (Optional)
-        </label>
-        <textarea 
-            name="address_line_2" 
-            class="form-textarea" 
-            placeholder="Unit number, floor, nearby landmark"
-        ><?= htmlspecialchars($address['address_line_2'] ?? '') ?></textarea>
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">
-            Region <span class="required">*</span>
-        </label>
-        <select name="region" id="region" class="form-select" required>
-            <option value="">Select Region</option>
-            <option value="NCR" <?= (isset($address['region']) && $address['region'] === 'NCR') ? 'selected' : '' ?>>National Capital Region (NCR)</option>
-            <option value="Region I" <?= (isset($address['region']) && $address['region'] === 'Region I') ? 'selected' : '' ?>>Region I - Ilocos Region</option>
-            <option value="Region II" <?= (isset($address['region']) && $address['region'] === 'Region II') ? 'selected' : '' ?>>Region II - Cagayan Valley</option>
-            <option value="Region III" <?= (isset($address['region']) && $address['region'] === 'Region III') ? 'selected' : '' ?>>Region III - Central Luzon</option>
-            <option value="Region IV-A" <?= (isset($address['region']) && $address['region'] === 'Region IV-A') ? 'selected' : '' ?>>Region IV-A - CALABARZON</option>
-            <option value="Region IV-B" <?= (isset($address['region']) && $address['region'] === 'Region IV-B') ? 'selected' : '' ?>>Region IV-B - MIMAROPA</option>
-            <option value="Region V" <?= (isset($address['region']) && $address['region'] === 'Region V') ? 'selected' : '' ?>>Region V - Bicol Region</option>
-            <option value="Region VI" <?= (isset($address['region']) && $address['region'] === 'Region VI') ? 'selected' : '' ?>>Region VI - Western Visayas</option>
-            <option value="Region VII" <?= (isset($address['region']) && $address['region'] === 'Region VII') ? 'selected' : '' ?>>Region VII - Central Visayas</option>
-            <option value="Region VIII" <?= (isset($address['region']) && $address['region'] === 'Region VIII') ? 'selected' : '' ?>>Region VIII - Eastern Visayas</option>
-            <option value="Region IX" <?= (isset($address['region']) && $address['region'] === 'Region IX') ? 'selected' : '' ?>>Region IX - Zamboanga Peninsula</option>
-            <option value="Region X" <?= (isset($address['region']) && $address['region'] === 'Region X') ? 'selected' : '' ?>>Region X - Northern Mindanao</option>
-            <option value="Region XI" <?= (isset($address['region']) && $address['region'] === 'Region XI') ? 'selected' : '' ?>>Region XI - Davao Region</option>
-            <option value="Region XII" <?= (isset($address['region']) && $address['region'] === 'Region XII') ? 'selected' : '' ?>>Region XII - SOCCSKSARGEN</option>
-            <option value="Region XIII" <?= (isset($address['region']) && $address['region'] === 'Region XIII') ? 'selected' : '' ?>>Region XIII - Caraga</option>
-            <option value="CAR" <?= (isset($address['region']) && $address['region'] === 'CAR') ? 'selected' : '' ?>>Cordillera Administrative Region (CAR)</option>
-            <option value="BARMM" <?= (isset($address['region']) && $address['region'] === 'BARMM') ? 'selected' : '' ?>>Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</option>
-        </select>
-    </div>
-
-    <div class="form-row">
-        <div class="form-group">
-            <label class="form-label">
-                Province <span class="required">*</span>
-            </label>
-            <select name="province" id="province" class="form-select" required>
-                <option value="">Select Province</option>
-            </select>
+<div class="settings-section">
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <div>
+                <h3 class="settings-card-title">Change Password</h3>
+                <p class="settings-card-subtitle">Update your password to keep your account secure</p>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">
-                City/Municipality <span class="required">*</span>
-            </label>
-            <select name="city" id="city" class="form-select" required>
-                <option value="">Select City/Municipality</option>
-            </select>
-        </div>
+        <form method="POST" action="<?= base_url('/profile/change-password') ?>" class="settings-form">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            
+            <div class="form-group">
+                <label class="form-label">Current Password <span class="required">*</span></label>
+                <div class="password-input-wrapper">
+                    <input type="password" name="current_password" id="current_password" 
+                           class="form-input" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('current_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">New Password <span class="required">*</span></label>
+                <div class="password-input-wrapper">
+                    <input type="password" name="new_password" id="new_password" 
+                           class="form-input" required minlength="8">
+                    <button type="button" class="password-toggle" onclick="togglePassword('new_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <!-- Password strength indicator -->
+                <div class="password-strength-container">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strength-fill"></div>
+                    </div>
+                    <div class="strength-text">Password Strength: <span id="strength-label">Very Weak</span></div>
+                </div>
+                
+                <!-- Password requirements (like register) -->
+                <div class="password-requirements">
+                    <div class="requirements-grid">
+                        <div class="requirement" data-requirement="length">
+                            <span class="requirement-icon"></span>
+                            <span>At least 8 characters</span>
+                        </div>
+                        <div class="requirement" data-requirement="uppercase">
+                            <span class="requirement-icon"></span>
+                            <span>One uppercase letter</span>
+                        </div>
+                        <div class="requirement" data-requirement="number">
+                            <span class="requirement-icon"></span>
+                            <span>One number</span>
+                        </div>
+                        <div class="requirement" data-requirement="lowercase">
+                            <span class="requirement-icon"></span>
+                            <span>One lowercase letter</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Confirm New Password <span class="required">*</span></label>
+                <div class="password-input-wrapper">
+                    <input type="password" name="confirm_password" id="confirm_password" 
+                           class="form-input" required minlength="8">
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <p class="form-error" id="password-match-error">Passwords do not match</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Update Password
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="form-row">
-        <div class="form-group">
-            <label class="form-label">
-                Barangay <span class="required">*</span>
-            </label>
-            <select name="barangay" id="barangay" class="form-select" required>
-                <option value="">Select Barangay</option>
-            </select>
-        </div>
+<style>
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
 
-        <div class="form-group">
-            <label class="form-label">
-                Postal Code
-            </label>
-            <input 
-                type="text" 
-                name="postal_code" 
-                class="form-input" 
-                placeholder="Enter postal code"
-                value="<?= htmlspecialchars($address['postal_code'] ?? '') ?>"
-                maxlength="4"
-                pattern="[0-9]{4}"
-            >
-        </div>
-    </div>
+.settings-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
-    <div class="form-group">
-        <div class="checkbox-group">
-            <input 
-                type="checkbox" 
-                id="is_default" 
-                name="is_default" 
-                value="1"
-                <?= (isset($address['is_default']) && $address['is_default'] == 1) ? 'checked' : '' ?>
-            >
-            <label for="is_default">Set as default address</label>
-        </div>
-    </div>
+.settings-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+}
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i>
-            <?= isset($isEdit) && $isEdit ? 'Update' : 'Save' ?> Address
-        </button>
-        <a href="/profile/addresses" class="btn btn-secondary">
-            <i class="fas fa-times"></i>
-            Cancel
-        </a>
-    </div>
-</form>
+.settings-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #D4AF37 0%, #C9A02C 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
 
-<!-- Scripts for Address Data Handling (Must remain in the view) -->
-<script>
-    // Philippine Address Data
-    const addressData = {
-        // ... (The large address data JSON object goes here) ...
-        "NCR": {
-            "Metro Manila": {
-                "Manila": ["Binondo", "Ermita", "Intramuros", "Malate", "Paco", "Pandacan", "Port Area", "Quiapo", "Sampaloc", "San Andres", "San Miguel", "San Nicolas", "Santa Ana", "Santa Cruz", "Santa Mesa", "Tondo"],
-                "Quezon City": ["Bagong Pag-asa", "Bahay Toro", "Balingasa", "Batasan Hills", "Commonwealth", "Culiat", "Fairview", "Kamuning", "Novaliches", "Project 4", "Project 6", "Tandang Sora", "White Plains"],
-                "Makati": ["Bel-Air", "Cembo", "Dasmarinas", "Forbes Park", "Guadalupe Nuevo", "Guadalupe Viejo", "Magallanes", "Olympia", "Palanan", "Poblacion", "Salcedo Village", "San Lorenzo", "Urdaneta"],
-                "Pasig": ["Bagong Ilog", "Bagong Katipunan", "Bambang", "Caniogan", "Kapitolyo", "Manggahan", "Maybunga", "Oranbo", "Palatiw", "Pinagbuhatan", "Rosario", "Sagad", "San Antonio", "Santolan","Santa Lucia"],
-                "Las Piñas": ["Almanza Dos", "Almanza Uno", "BF International", "Daniel Fajardo", "Elias Aldana", "Ilaya", "Manuyo Dos", "Manuyo Uno", "Pamplona Dos", "Pamplona Tres", "Pamplona Uno", "Pilar", "Pulang Lupa Dos", "Pulang Lupa Uno", "Talon Dos", "Talon Kuatro", "Talon Singko", "Talon Tres", "Talon Uno", "Zapote"],
-                "Taguig": ["Bagumbayan", "Bambang", "Calzada", "Central Bicutan", "Central Signal Village", "Fort Bonifacio", "Hagonoy", "Ibayo-Tipas", "Katuparan", "Ligid-Tipas", "Lower Bicutan", "Maharlika Village", "Napindan", "New Lower Bicutan", "North Daang Hari", "North Signal Village", "Palingon", "Pinagsama", "San Miguel", "Santa Ana", "South Daang Hari", "South Signal Village", "Tanyag", "Tuktukan", "Upper Bicutan", "Ususan", "Wawa", "Western Bicutan"],
-                "Parañaque": ["Baclaran", "BF Homes", "Don Bosco", "Don Galo", "La Huerta", "Marcelo Green", "Merville", "Moonwalk", "San Antonio", "San Dionisio", "San Isidro", "San Martin de Porres", "Santo Niño", "Sun Valley", "Tambo", "Vitalez"]
-            },
-            "Region IV-A": {
-                "Cavite": {
-                    "Bacoor": ["Habay I", "Habay II", "Molino I", "Molino II", "Molino III", "Molino IV", "Molino V", "Molino VI", "Molino VII", "Niog I", "Niog II", "Niog III", "Panapaan I", "Panapaan II", "Panapaan III", "Panapaan IV", "Panapaan V", "Panapaan VI", "Panapaan VII", "Panapaan VIII"],
-                    "Imus": ["Alapan I-A", "Alapan I-B", "Alapan I-C", "Alapan II-A", "Alapan II-B", "Anabu I-A", "Anabu I-B", "Anabu I-C", "Anabu II-A", "Anabu II-B", "Anabu II-C", "Bagong Silang", "Bayan Luma I", "Bayan Luma II", "Bayan Luma III"],
-                    "Dasmariñas": ["Burol", "Emmanuel Bergado I", "Emmanuel Bergado II", "Langkaan", "Salitran I", "Salitran II", "Salitran III", "Salitran IV", "Sampaloc I", "Sampaloc II", "Sampaloc III", "Sampaloc IV", "Victoria Reyes"],
-                    "Cavite City": ["Barangay 1", "Barangay 2", "Barangay 3", "Barangay 4", "Barangay 5", "Barangay 6", "Barangay 7", "Barangay 8", "Barangay 9", "Barangay 10"]
-                },
-                "Laguna": {
-                    "Santa Rosa": ["Aplaya", "Balibago", "Caingin", "Dila", "Dita", "Don Jose", "Ibaba", "Kanluran", "Labas", "Macabling", "Malitlit", "Malusak", "Market Area", "Pooc", "Pulong Santa Cruz", "Sinalhan", "Tagapo"],
-                    "Biñan": ["Biñan", "Bungahan", "Canlalay", "Casile", "De La Paz", "Ganado", "Langkiwa", "Loma", "Malaban", "Malamig", "Mamplasan", "Platero", "Poblacion", "San Antonio", "San Francisco", "San Jose", "San Vicente", "Santo Domingo", "Santo Niño", "Santo Tomas", "Soro-soro", "Timbao", "Tubigan", "Zapote"],
-                    "Calamba": ["Bagong Kalsada", "Banlic", "Barandal", "Batino", "Bubuyan", "Bucal", "Bunggo", "Burol", "Camaligan", "Canlubang", "Halang", "Hornalan", "Kay-Anlog", "La Mesa", "Laguerta", "Lawa", "Lecheria", "Lingga", "Looc", "Mabato", "Majada Out", "Makiling", "Mapagong", "Masili", "Maunong", "Mayapa", "Milagrosa", "Paciano Rizal", "Palingon", "Palo-Alto", "Pansol", "Parian", "Prinza", "Punta", "Puting Lupa", "Real", "Saimsim", "Sampiruhan", "San Cristobal", "San Jose", "San Juan", "Sirang Lupa", "Sucol", "Turbina", "Ulango", "Uwisan"],
-                    "San Pedro": ["Bagong Silang", "Calendola", "Cuyab", "Estrella", "G.S.I.S.", "Landayan", "Langgam", "Laram", "Magsaysay", "Maharlika", "Narra", "Nueva", "Pacita I", "Pacita II", "Poblacion", "Riverside", "Rosario", "Sampaguita Village", "San Antonio", "San Lorenzo Ruiz", "San Roque", "San Vicente", "Santo Niño", "United Bayanihan", "United Better Living"]
-                },
-                "Rizal": {
-                    "Antipolo": ["Bagong Nayon", "Beverly Hills", "Calawis", "Cupang", "Dalig", "Dela Paz", "Inarawan", "Mayamot", "Muntindilaw", "San Isidro", "San Jose", "San Juan", "San Luis", "San Roque", "Santa Cruz", "Santo Niño", "Silangan"],
-                    "Cainta": ["San Andres", "San Isidro", "San Juan", "San Roque", "Santo Domingo", "Santo Niño"],
-                    "Taytay": ["Dolores", "Muzon", "San Isidro", "San Juan", "Santa Ana", "Santo Niño"],
-                    "Angono": ["Bagumbayan", "Kalayaan", "Mahabang Parang", "Poblacion Ibaba", "Poblacion Itaas", "San Isidro", "San Pedro", "San Roque", "San Vicente", "Santo Niño"],
-                    "Binangonan": ["Bangad", "Bilibiran", "Boso-Boso", "Calumpang", "Ithan", "Janosa", "Kalawaan", "Kalinawan", "Kasile", "Layunan", "Libid", "Lunsad", "Malakaban", "Malanggam", "Mambog", "Pag-Asa", "Palangoy", "Pantok", "Pila-Pila", "Pipindan", "Poblacion", "Rayap", "Libis ng Nayon", "San Carlos", "Sapang", "Tagpos", "Tatala"]
-                },
-                "Batangas": {
-                    "Batangas City": ["Alangilan", "Balagtas", "Balete", "Banaba Center", "Banaba Ibaba", "Banaba Silangan", "Bolbok", "Conde Itaas", "Conde Labac", "Cuta", "Kumintang Ibaba", "Kumintang Ilaya", "Libjo", "Maapas", "Mabacong", "Mahabang Dahilig", "Mahabang Parang", "Malagonlong", "Malitam", "Pallocan East", "Pallocan West", "Pinamucan", "Pinamucan Ibaba", "San Agapito", "San Agustin", "San Andres", "San Antonio", "San Isidro", "San Jose", "San Miguel", "Santa Clara", "Santa Rita Aplaya", "Santa Rita Karsada", "Santo Domingo", "Santo Niño", "Simlong", "Tabangao Ambulong", "Tabangao Aplaya", "Tabangao Dao", "Talahib Pandayan", "Talahib Payapa", "Talumpok Kanluran", "Talumpok Silangan", "Tinga Itaas", "Tinga Labac", "Tulo"],
-                    "Lipa": ["Adya", "Anilao", "Anilao-Labac", "Antipolo del Norte", "Antipolo del Sur", "Bagong Pook", "Balintawak", "Banaybanay", "Bolbok", "Bugtong na Pulo", "Bulacnin", "Bulaklakan", "Calamias", "Cumba", "Dagatan", "Duhatan", "Halang", "Inosloban", "Kayumanggi", "Latag", "Lodlod", "Lumbang", "Mabini", "Malagonlong", "Malitlit", "Marauoy", "Mataas na Lupa", "Munting Pulo", "Pagolingin Bata", "Pagolingin East", "Pagolingin West", "Pangao", "Pinagkawitan", "Pinagtongulan", "Plaridel", "Poblacion Barangay 1", "Poblacion Barangay 2", "Poblacion Barangay 3", "Poblacion Barangay 4", "Poblacion Barangay 5", "Poblacion Barangay 6", "Poblacion Barangay 7", "Poblacion Barangay 8", "Poblacion Barangay 9", "Poblacion Barangay 9-A", "Poblacion Barangay 10", "Poblacion Barangay 11", "Poblacion Barangay 12", "Pusil", "Quezon", "Rizal", "Sabang", "Sampaguita", "San Benito", "San Carlos", "San Celestino", "San Francisco", "San Guillermo", "San Jose", "San Lucas", "San Salvador", "San Sebastian", "Santa Catalina", "Santa Cruz", "Santo Niño", "Santo Toribio", "Sapac", "Sico", "Talisay", "Tambo", "Tangob", "Tanguay", "Tibig", "Tipacan"],
-                    "Tanauan": ["Altura Bata", "Altura Matanda", "Altura-South", "Ambulong", "Bagbag", "Bagumbayan", "Balele", "Banjo East", "Banjo Laurel", "Banjo West", "Bilog-Bilog", "Boot", "Cale", "Darasa", "Gonzales", "Hernandez", "Janopol", "Janopol Oriental", "Laurel", "Luyos", "Mabini", "Malaking Pulo", "Maria Paz", "Maugat", "Montana", "Natatas", "Pagaspas", "Pantay Matanda", "Pantay na Matanda", "Poblacion Barangay 1", "Poblacion Barangay 2", "Poblacion Barangay 3", "Poblacion Barangay 4", "Poblacion Barangay 5", "Poblacion Barangay 6", "Poblacion Barangay 7", "Sambat", "San Jose", "Santor", "Santol", "Sulpoc", "Suplang", "Trapiche", "Ulango", "Wawa"]
-                }
-            }
-        },
-        "Region I": { /* ... placeholder for other regions ... */ }, 
-        /* ... (rest of the address data structure) ... */
-    };
+.settings-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1A1A1A;
+    margin-bottom: 0.25rem;
+}
 
-    const regionSelect = document.getElementById('region');
-    const provinceSelect = document.getElementById('province');
-    const citySelect = document.getElementById('city');
-    const barangaySelect = document.getElementById('barangay');
+.settings-card-subtitle {
+    font-size: 14px;
+    color: #666;
+}
 
-    // Store existing values for edit mode
-    const existingProvince = '<?= htmlspecialchars($address["province"] ?? "") ?>';
-    const existingCity = '<?= htmlspecialchars($address["city"] ?? "") ?>';
-    const existingBarangay = '<?= htmlspecialchars($address["barangay"] ?? "") ?>';
+.settings-form {
+    max-width: 600px;
+}
 
-    // Function to populate select options
-    function populateSelect(selectElement, options, selectedValue = '') {
-        selectElement.innerHTML = '<option value="">Select ' + selectElement.name.charAt(0).toUpperCase() + selectElement.name.slice(1) + '</option>';
-        options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            if (option === selectedValue) {
-                optionElement.selected = true;
-            }
-            selectElement.appendChild(optionElement);
-        });
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper .form-input {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+    color: #D4AF37;
+}
+
+/* Password Strength Indicator (from register) */
+.password-strength-container {
+    margin: 8px 0 6px 0;
+}
+
+.strength-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.strength-fill {
+    height: 100%;
+    width: 0%;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.strength-text {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#strength-label {
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+/* Password Requirements (from register) */
+.password-requirements {
+    margin: 10px 0 5px 0;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.requirements-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 2px 0;
+}
+
+.requirement.met {
+    color: #10b981;
+}
+
+.requirement-icon {
+    font-size: 18px;
+    font-weight: bold;
+    min-width: 20px;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.requirement-icon::before {
+    content: '☐';
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.requirement.met .requirement-icon {
+    color: #10b981;
+    transform: scale(1.1);
+}
+
+.requirement.met .requirement-icon::before {
+    content: '☑';
+    animation: checkPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes checkPop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
     }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
 
-    // Region change handler
-    regionSelect.addEventListener('change', function() {
-        const selectedRegion = this.value;
-        provinceSelect.innerHTML = '<option value="">Select Province</option>';
-        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && addressData[selectedRegion]) {
-            const provinces = Object.keys(addressData[selectedRegion]);
-            populateSelect(provinceSelect, provinces);
-        }
-    });
+/* Strength level colors */
+.strength-very-weak {
+    background: #ef4444 !important;
+}
 
-    // Province change handler
-    provinceSelect.addEventListener('change', function() {
-        const selectedRegion = regionSelect.value;
-        const selectedProvince = this.value;
-        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && selectedProvince && addressData[selectedRegion] && addressData[selectedRegion][selectedProvince]) {
-            const cities = Object.keys(addressData[selectedRegion][selectedProvince]);
-            populateSelect(citySelect, cities);
-        }
-    });
+.strength-weak {
+    background: #f59e0b !important;
+}
 
-    // City change handler
-    citySelect.addEventListener('change', function() {
-        const selectedRegion = regionSelect.value;
-        const selectedProvince = provinceSelect.value;
-        const selectedCity = this.value;
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        
-        if (selectedRegion && selectedProvince && selectedCity && 
-            addressData[selectedRegion][selectedProvince] && addressData[selectedRegion][selectedProvince][selectedCity]) {
-            const barangays = addressData[selectedRegion][selectedProvince][selectedCity];
-            populateSelect(barangaySelect, barangays);
-        }
-    });
+.strength-fair {
+    background: #eab308 !important;
+}
 
-    // Initialize selects for edit mode
-    // This runs once on page load if existing values are present
-    (function initAddressForm() {
-        if (existingProvince || existingCity || existingBarangay) {
-            if (regionSelect.value) {
-                const selectedRegion = regionSelect.value;
-                if (addressData[selectedRegion]) {
-                    const provinces = Object.keys(addressData[selectedRegion]);
-                    populateSelect(provinceSelect, provinces, existingProvince);
-                    
-                    // Populate cities after a delay to ensure province is set
-                    setTimeout(() => {
-                        if (existingProvince && addressData[selectedRegion][existingProvince]) {
-                            const cities = Object.keys(addressData[selectedRegion][existingProvince]);
-                            populateSelect(citySelect, cities, existingCity);
-                            
-                            // Populate barangays after a delay
-                            setTimeout(() => {
-                                if (existingCity && addressData[selectedRegion][existingProvince][existingCity]) {
-                                    const barangays = addressData[selectedRegion][existingProvince][existingCity];
-                                    populateSelect(barangaySelect, barangays, existingBarangay);
-                                }
-                            }, 100);
-                        }
-                    }, 100);
-                }
+.strength-good {
+    background: #84cc16 !important;
+}
+
+.strength-strong {
+    background: #10b981 !important;
+}
+
+@media (max-width: 768px) {
+    .settings-form {
+        max-width: 100%;
+    }
+    
+    .requirements-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Toggle password visibility
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.parentElement.querySelector('.password-toggle i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Password strength checker (from register)
+const newPasswordInput = document.getElementById('new_password');
+const strengthIndicator = document.querySelector('.password-strength-container');
+const strengthFill = document.getElementById('strength-fill');
+const strengthLabel = document.getElementById('strength-label');
+
+newPasswordInput.addEventListener('input', function() {
+    const password = this.value;
+    
+    if (password.length === 0) {
+        strengthIndicator.style.display = 'none';
+        // Reset all requirements
+        document.querySelectorAll('.requirement').forEach(req => {
+            req.classList.remove('met');
+        });
+        return;
+    }
+    
+    strengthIndicator.style.display = 'block';
+    
+    // Define requirements
+    const requirements = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password)
+    };
+    
+    // Update requirement checkboxes
+    Object.keys(requirements).forEach(req => {
+        const element = document.querySelector(`[data-requirement="${req}"]`);
+        if (element) {
+            if (requirements[req]) {
+                element.classList.add('met');
+            } else {
+                element.classList.remove('met');
             }
         }
-    })();
+    });
+    
+    // Calculate strength (0-4)
+    const metCount = Object.values(requirements).filter(Boolean).length;
+    
+    // Define strength levels
+    const strengthLevels = {
+        0: { width: '0%', className: 'strength-very-weak', label: 'Very Weak', color: '#6b7280' },
+        1: { width: '25%', className: 'strength-very-weak', label: 'Very Weak', color: '#ef4444' },
+        2: { width: '50%', className: 'strength-weak', label: 'Weak', color: '#f59e0b' },
+        3: { width: '75%', className: 'strength-good', label: 'Good', color: '#84cc16' },
+        4: { width: '100%', className: 'strength-strong', label: 'Strong', color: '#10b981' }
+    };
+    
+    const currentStrength = strengthLevels[metCount];
+    
+    // Remove all strength classes
+    strengthFill.className = 'strength-fill';
+    
+    // Apply new strength
+    strengthFill.style.width = currentStrength.width;
+    strengthFill.classList.add(currentStrength.className);
+    strengthLabel.textContent = currentStrength.label;
+    strengthLabel.style.color = currentStrength.color;
+});
+
+// Password match validation
+const confirmPasswordInput = document.getElementById('confirm_password');
+const matchError = document.getElementById('password-match-error');
+
+confirmPasswordInput.addEventListener('input', function() {
+    if (this.value !== newPasswordInput.value && this.value.length > 0) {
+        matchError.style.display = 'block';
+        this.classList.add('error');
+    } else {
+        matchError.style.display = 'none';
+        this.classList.remove('error');
+    }
+});
+
+// Form validation before submit
+document.querySelector('.settings-form').addEventListener('submit', function(e) {
+    if (newPasswordInput.value !== confirmPasswordInput.value) {
+        e.preventDefault();
+        matchError.style.display = 'block';
+        confirmPasswordInput.classList.add('error');
+        confirmPasswordInput.focus();
+    }
+});
 </script>

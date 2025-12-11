@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Helpers\EncryptionHelper;
 
 class Admin {
     protected $conn;
@@ -234,7 +235,7 @@ class Admin {
     // ==================== SELLER MANAGEMENT ====================
 
     /**
-     * Get pending sellers
+     * Get pending sellers (with decrypted billing info)
      */
     public function getPendingSellers() {
         $stmt = $this->conn->prepare("
@@ -248,6 +249,9 @@ class Admin {
                 s.contact_email,
                 s.contact_phone,
                 s.slug,
+                s.payout_provider,
+                s.payout_account_name,
+                s.payout_account_number,
                 s.created_at as applied_at,
                 ur.assigned_at,
                 a.address_line_1,
@@ -268,11 +272,22 @@ class Admin {
         $result = $stmt->get_result();
         $sellers = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        // DECRYPT SENSITIVE BILLING FIELDS
+        foreach ($sellers as &$seller) {
+            if (!empty($seller['payout_account_name'])) {
+                $seller['payout_account_name'] = EncryptionHelper::decrypt($seller['payout_account_name']);
+            }
+            if (!empty($seller['payout_account_number'])) {
+                $seller['payout_account_number'] = EncryptionHelper::decrypt($seller['payout_account_number']);
+            }
+        }
+        
         return $sellers;
     }
 
     /**
-     * Get approved sellers
+     * Get approved sellers (with decrypted billing info)
      */
     public function getApprovedSellers() {
         $stmt = $this->conn->prepare("
@@ -286,6 +301,9 @@ class Admin {
                 s.contact_email,
                 s.contact_phone,
                 s.slug,
+                s.payout_provider,
+                s.payout_account_name,
+                s.payout_account_number,
                 s.created_at as shop_created_at,
                 ur.assigned_at as approved_at,
                 a.address_line_1,
@@ -306,6 +324,17 @@ class Admin {
         $result = $stmt->get_result();
         $sellers = $result->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        
+        // DECRYPT SENSITIVE BILLING FIELDS
+        foreach ($sellers as &$seller) {
+            if (!empty($seller['payout_account_name'])) {
+                $seller['payout_account_name'] = EncryptionHelper::decrypt($seller['payout_account_name']);
+            }
+            if (!empty($seller['payout_account_number'])) {
+                $seller['payout_account_number'] = EncryptionHelper::decrypt($seller['payout_account_number']);
+            }
+        }
+        
         return $sellers;
     }
 
@@ -424,6 +453,7 @@ class Admin {
         $stmt->close();
         return $categories;
     }
+    
     // ==================== REPORTING & SALES ====================
 
     public function getSalesOverview($startDate, $endDate) {
@@ -489,5 +519,69 @@ class Admin {
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    // ==================== PAYOUT MANAGEMENT ====================
+
+    /**
+     * Get all pending payouts grouped by shop (with decrypted billing info)
+     */
+    public function getPendingPayouts() {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                s.shop_name,
+                s.shop_id,
+                s.payout_provider,
+                s.payout_account_name,
+                s.payout_account_number,
+                s.contact_phone,
+                s.contact_email,
+                u.username as seller_name,
+                u.email as seller_email,
+                SUM(e.net_payout_amount) as total_payout,
+                COUNT(e.earning_id) as order_count,
+                MIN(e.created_at) as oldest_order
+            FROM shop_earnings e
+            JOIN shops s ON e.shop_id = s.shop_id
+            JOIN users u ON s.user_id = u.user_id
+            WHERE e.payout_status = 'PENDING'
+            GROUP BY s.shop_id
+            ORDER BY total_payout DESC
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $payouts = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        // DECRYPT SENSITIVE BILLING FIELDS
+        foreach ($payouts as &$payout) {
+            if (!empty($payout['payout_account_name'])) {
+                $payout['payout_account_name'] = EncryptionHelper::decrypt($payout['payout_account_name']);
+            }
+            if (!empty($payout['payout_account_number'])) {
+                $payout['payout_account_number'] = EncryptionHelper::decrypt($payout['payout_account_number']);
+            }
+        }
+        
+        return $payouts;
+    }
+
+    /**
+     * Mark earnings as PAID
+     */
+    public function markPayoutAsPaid($shopId) {
+        // Generate a batch reference ID
+        $batchRef = 'PAYOUT-' . date('Ymd') . '-' . strtoupper(uniqid());
+        
+        $stmt = $this->conn->prepare("
+            UPDATE shop_earnings 
+            SET payout_status = 'PAID',
+                payout_date = CURRENT_TIMESTAMP,
+                payout_reference = ?
+            WHERE shop_id = ? AND payout_status = 'PENDING'
+        ");
+        
+        $stmt->bind_param("si", $batchRef, $shopId);
+        return $stmt->execute();
     }
 }

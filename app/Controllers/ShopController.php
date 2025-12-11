@@ -478,10 +478,6 @@ class ShopController extends Controller {
         $this->view('shop/addresses', $data, 'shop');
     }
 
-    /**
-     * Shop Reviews Management Page
-     * Updated to use the correct 'shop' layout
-     */
     public function reviews() {
         // Check authentication and seller status
         if (!Session::has('user_id')) {
@@ -499,7 +495,6 @@ class ShopController extends Controller {
         
         $shopId = $shopData['shop_id'];
         
-        // Get review model
         $reviewModel = new \App\Models\ProductReview();
         
         // Get all reviews for this shop's products
@@ -535,14 +530,40 @@ class ShopController extends Controller {
             'stats' => $stats
         ];
         
-        // Explicitly use the 'shop' layout to avoid the default header
         $this->view('shop/reviews', $data, 'shop');
     }
 
-        /**
-     * AJAX endpoint to get predicted tags
-     * This allows real-time tag suggestions in the frontend
+    /**
+     * [NEW] Shop Earnings Page
      */
+    public function earnings() {
+        if (!Session::has('user_id')) {
+            Session::set('error', 'Please login to access this page');
+            RedirectHelper::redirect('/login');
+        }
+
+        $userId = Session::get('user_id');
+        $shopData = $this->shopModel->getShopByUserId($userId);
+        
+        if (!$shopData) {
+            Session::set('error', 'Shop not found');
+            RedirectHelper::redirect('/');
+        }
+
+        $earningsModel = new \App\Models\ShopEarnings();
+        
+        $data = [
+            'pageTitle' => 'Shop Earnings',
+            'currentPage' => 'earnings',
+            'shop' => $shopData,
+            'balance' => $earningsModel->getPendingBalance($shopData['shop_id']),
+            'total_paid' => $earningsModel->getTotalPaid($shopData['shop_id']),
+            'history' => $earningsModel->getShopEarnings($shopData['shop_id'])
+        ];
+
+        $this->view('shop/earnings', $data, 'shop');
+    }
+
     public function predictTags() {
         header('Content-Type: application/json');
 
@@ -551,14 +572,12 @@ class ShopController extends Controller {
             return;
         }
 
-        // Get JSON input
         $input = json_decode(file_get_contents('php://input'), true);
         
         $productName = $input['product_name'] ?? '';
         $description = $input['description'] ?? '';
         $shortDescription = $input['short_description'] ?? '';
 
-        // Check if service is healthy
         if (!$this->taggingService->isServiceHealthy()) {
             echo json_encode([
                 'success' => false,
@@ -567,7 +586,6 @@ class ShopController extends Controller {
             return;
         }
 
-        // Get predictions
         $result = $this->taggingService->predictTags(
             $productName,
             $description,

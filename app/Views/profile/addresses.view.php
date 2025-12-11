@@ -42,14 +42,13 @@
                                 title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <form method="POST" action="/profile/addresses/delete" style="display: inline;" 
-                              onsubmit="return confirm('Are you sure you want to delete this address?')">
-                            <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
-                            <input type="hidden" name="address_id" value="<?= htmlspecialchars($address['address_id']) ?>">
-                            <button type="submit" class="icon-btn delete" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        
+                        <button type="button" 
+                                class="icon-btn delete" 
+                                onclick="confirmDeleteAddress('<?= $address['address_id'] ?>')"
+                                title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -85,3 +84,45 @@
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+
+<div id="deleteAddressModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Delete Address</h2>
+            <button class="modal-close" onclick="closeModal('deleteAddressModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this address? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <form id="deleteAddressForm" method="POST" action="/profile/addresses/delete">
+                <input type="hidden" name="csrf_token" value="<?= \App\Core\Session::get('csrf_token') ?>">
+                <input type="hidden" name="address_id" id="deleteAddressId">
+                
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteAddressModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background-color: #DC3545; border-color: #DC3545;">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDeleteAddress(addressId) {
+        document.getElementById('deleteAddressId').value = addressId;
+        const modal = document.getElementById('deleteAddressModal');
+        modal.classList.add('active');
+    }
+
+    if (typeof closeModal === 'undefined') {
+        window.closeModal = function(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteAddressModal');
+        if (event.target === modal) {
+            modal.classList.remove('active');
+        }
+    }
+</script>

@@ -8,7 +8,8 @@ use App\Models\User;
 use App\Models\Notification; 
 use App\Models\Shop;
 use App\Models\SupportTicket;
-use App\Models\AuditLog; // Added this import
+use App\Models\AuditLog;
+use App\Helpers\RedirectHelper; // Added missing helper import
 
 class AdminController extends Controller {
 
@@ -517,5 +518,47 @@ class AdminController extends Controller {
         ];
 
         $this->view('admin/sales_reports', $data, 'admin');
+    }
+
+    // ==================== PAYOUT MANAGEMENT (NEW) ====================
+
+    /**
+     * Payout Management Page
+     */
+    public function payouts() {
+        $this->checkAdminAccess();
+        
+        $data = [
+            'pageTitle' => 'Payout Management - Lumora',
+            'headerTitle' => 'Seller Payouts',
+            'username' => Session::get('username'),
+            'userRole' => 'Administrator',
+            'pendingPayouts' => $this->adminModel->getPendingPayouts()
+        ];
+
+        $this->view('admin/payouts', $data, 'admin');
+    }
+
+    /**
+     * Process Payout (Mark as Paid)
+     */
+    public function processPayout() {
+        $this->verifyCsrfToken();
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin/payouts');
+            exit;
+        }
+
+        $shopId = (int)($_POST['shop_id'] ?? 0);
+        
+        if ($shopId > 0 && $this->adminModel->markPayoutAsPaid($shopId)) {
+            Session::set('success', 'Payout marked as PAID successfully.');
+        } else {
+            Session::set('error', 'Failed to update payout status.');
+        }
+        
+        header('Location: /admin/payouts');
+        exit;
     }
 }

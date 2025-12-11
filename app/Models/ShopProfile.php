@@ -4,6 +4,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Helpers\EncryptionHelper;
 
 class ShopProfile
 {
@@ -49,6 +50,14 @@ class ShopProfile
         $shopData = $result->fetch_assoc();
         $stmt->close();
         
+        // DECRYPT SENSITIVE BILLING FIELDS
+        if ($shopData && !empty($shopData['payout_account_name'])) {
+            $shopData['payout_account_name'] = EncryptionHelper::decrypt($shopData['payout_account_name']);
+        }
+        if ($shopData && !empty($shopData['payout_account_number'])) {
+            $shopData['payout_account_number'] = EncryptionHelper::decrypt($shopData['payout_account_number']);
+        }
+        
         return $shopData;
     }
 
@@ -60,8 +69,8 @@ class ShopProfile
         $stmt = $this->conn->prepare("
             SELECT 
                 s.*,
-                a.address_line1,
-                a.address_line2,
+                a.address_line_1,
+                a.address_line_2,
                 a.barangay,
                 a.city,
                 a.province,
@@ -78,11 +87,19 @@ class ShopProfile
         $shopData = $result->fetch_assoc();
         $stmt->close();
         
+        // DECRYPT SENSITIVE BILLING FIELDS
+        if ($shopData && !empty($shopData['payout_account_name'])) {
+            $shopData['payout_account_name'] = EncryptionHelper::decrypt($shopData['payout_account_name']);
+        }
+        if ($shopData && !empty($shopData['payout_account_number'])) {
+            $shopData['payout_account_number'] = EncryptionHelper::decrypt($shopData['payout_account_number']);
+        }
+        
         return $shopData;
     }
 
     /**
-     * Update shop profile
+     * Update shop profile (with billing fields support and encryption)
      */
     public function update($shop_id, $data)
     {
@@ -129,6 +146,32 @@ class ShopProfile
         if (isset($data['shop_profile'])) {
             $fieldsToUpdate[] = "shop_profile = ?";
             $params[] = $data['shop_profile'] ?: null;
+            $types .= "s";
+        }
+
+        // Handle billing/payout fields
+        if (isset($data['payout_provider'])) {
+            $fieldsToUpdate[] = "payout_provider = ?";
+            $params[] = $data['payout_provider'] ?: null;
+            $types .= "s";
+        }
+
+        // ENCRYPT SENSITIVE BILLING FIELDS BEFORE SAVING
+        if (isset($data['payout_account_name'])) {
+            $fieldsToUpdate[] = "payout_account_name = ?";
+            // Encrypt if not empty, otherwise store null
+            $params[] = !empty($data['payout_account_name']) 
+                ? EncryptionHelper::encrypt($data['payout_account_name']) 
+                : null;
+            $types .= "s";
+        }
+
+        if (isset($data['payout_account_number'])) {
+            $fieldsToUpdate[] = "payout_account_number = ?";
+            // Encrypt if not empty, otherwise store null
+            $params[] = !empty($data['payout_account_number']) 
+                ? EncryptionHelper::encrypt($data['payout_account_number']) 
+                : null;
             $types .= "s";
         }
 
@@ -235,8 +278,6 @@ class ShopProfile
         return $row['count'] > 0;
     }
 
-// app/Models/ShopProfile.php (getShopStats function)
-
     /**
      * Get shop statistics
      */
@@ -244,7 +285,7 @@ class ShopProfile
     {
         $stats = [];
 
-        // 1. Total products (Query is correct, only needs to reference products table)
+        // 1. Total products
         $stmt = $this->conn->prepare("
             SELECT COUNT(*) as total 
             FROM products 
@@ -256,7 +297,7 @@ class ShopProfile
         $stats['total_products'] = $result->fetch_assoc()['total'];
         $stmt->close();
 
-        // 2. Total orders (CORRECTED: Added join to product_variants)
+        // 2. Total orders
         $stmt = $this->conn->prepare("
             SELECT COUNT(DISTINCT o.order_id) as total
             FROM orders o
@@ -271,7 +312,7 @@ class ShopProfile
         $stats['total_orders'] = $result->fetch_assoc()['total'];
         $stmt->close();
 
-        // 3. Pending orders (CORRECTED: Added join to product_variants)
+        // 3. Pending orders
         $stmt = $this->conn->prepare("
             SELECT COUNT(DISTINCT o.order_id) as total
             FROM orders o
@@ -286,8 +327,7 @@ class ShopProfile
         $stats['pending_orders'] = $result->fetch_assoc()['total'];
         $stmt->close();
 
-        // 4. Total revenue (CORRECTED: Added join to product_variants)
-        // NOTE: This query references oi.subtotal which is not in the schema. I've updated it to use oi.total_price.
+        // 4. Total revenue
         $stmt = $this->conn->prepare("
             SELECT COALESCE(SUM(oi.total_price), 0) as total  
             FROM order_items oi

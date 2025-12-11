@@ -14,7 +14,7 @@
 
     /* Button seller guidelines colors */
     --primary: #d59f49; 
-    --primary-dark: #c08c3e; /* A slightly darker shade for the hover state */
+    --primary-dark: #c08c3e; 
     
     /* Neutral Colors */
     --color-black: #1A1A1A;          /* Rich Black */
@@ -525,12 +525,38 @@ body {
     font-weight: 600;
     color: var(--color-black);
     line-height: 1.4;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     min-height: 2.8em;
+}
+
+/* Product Rating (NEW) */
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.product-rating .stars {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+/* FIXED: Target the icons directly to ensure they are Gold */
+.product-rating .stars i {
+    color: #FFD700 !important; /* Force Gold Color */
+}
+
+.product-rating .review-count {
+    color: var(--color-medium-gray);
+    font-size: 0.8rem;
+    padding-top: 2px;
 }
 
 /* Product Description */

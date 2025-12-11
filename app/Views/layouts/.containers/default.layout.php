@@ -1,51 +1,73 @@
-<?php 
-// app/Views/layouts/.containers/default.layout.php
-$partialsPath = __DIR__ . '/../partials/';
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?? 'Lumora - Exquisite Accessories' ?></title>
-    <link rel="stylesheet" href="/css/new-main.css">
-    <link rel="stylesheet" href="/css/home.css">
-    <link rel="stylesheet" href="/css/guidelines.css">
-    <link rel="stylesheet" href="/css/collections.css">
-    <link rel="stylesheet" href="/css/product-detail.css">
-    <link rel="stylesheet" href="/css/buyer-product-detail.css">
-    <link rel="stylesheet" href="/css/buyer-product-reviews.css">
-    <link rel="stylesheet" href="/css/cart.css">
-    <link rel="stylesheet" href="/css/checkout.css">
-    <link rel="stylesheet" href="/css/notifications.css">
+    <?php 
+    // app/Views/layouts/containers/default.layout.php
+    // Ensure this path matches your directory structure (e.g. inside .containers or containers)
+    $partialsPath = __DIR__ . '/../partials/';
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?= $pageTitle ?? 'Lumora - Exquisite Accessories' ?></title>
+        
+        <link rel="stylesheet" href="<?= base_url('/css/new-main.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/home.css') ?>"> 
+        <link rel="stylesheet" href="<?= base_url('/css/guidelines.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/collections.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/product-detail.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/buyer-product-detail.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/buyer-product-reviews.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/cart.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/checkout.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/notifications.css') ?>">
+        <link rel="stylesheet" href="<?= base_url('/css/stores.css') ?>">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<body>
-    <header class="header">
-        <?php include $partialsPath . 'header.partial.php'; ?>
-    </header>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        
+        <script>
+            const BASE_URL = "<?= rtrim(base_url(), '/') ?>";
+        </script>
+    </head>
+    <body>
+        <header class="header">
+            <?php 
+            if (file_exists($partialsPath . 'header.partial.php')) {
+                include $partialsPath . 'header.partial.php';
+            } else {
+                echo "";
+            }
+            ?>
+        </header>
 
-    <?php if (isset($statusMessage) && $statusMessage): ?>
-        <div class="alert alert-<?= htmlspecialchars($statusType ?? 'info') ?>">
-            <strong><?= $statusType === 'success' ? '✓' : ($statusType === 'error' ? '✗' : 'ℹ') ?></strong>
-            <?= htmlspecialchars($statusMessage) ?>
-        </div>
-    <?php endif; ?>
+        <?php if (isset($statusMessage) && $statusMessage): ?>
+            <div class="container" style="margin-top: 20px;">
+                <div class="alert alert-<?= htmlspecialchars($statusType ?? 'info') ?>">
+                    <strong><?= $statusType === 'success' ? '✓' : ($statusType === 'error' ? '✗' : 'ℹ') ?></strong>
+                    <?= htmlspecialchars($statusMessage) ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
-    <?= $content ?? '' ?> 
+        <main>
+            <?= $content ?? '' ?>
+        </main>
 
-    <footer class="footer">
-        <?php include $partialsPath . 'footer.partial.php'; ?>
-    </footer>
-</body>
+        <footer class="footer">
+            <?php 
+            if (file_exists($partialsPath . 'footer.partial.php')) {
+                include $partialsPath . 'footer.partial.php';
+            } else {
+                echo "";
+            }
+            ?>
+        </footer>
 
-<!-- Link to JavaScript -->
-<script src="/js/home.js" defer></script>
-<script src="/js/guidelines.js" defer></script>
-<script src="/js/collections.js" defer></script>
-<script src="/js/product-detail-user.js" defer></script>
-
-<script src="/js/cart.js" defer></script>
-
-</html>
+        <script src="<?= base_url('/js/home.js') ?>" defer></script>
+        <script src="<?= base_url('/js/guidelines.js') ?>" defer></script>
+        <script src="<?= base_url('/js/collections.js') ?>" defer></script>
+        <script src="<?= base_url('/js/product-detail-user.js') ?>" defer></script>
+        <script src="<?= base_url('/js/cart.js') ?>" defer></script>
+        <script src="<?= base_url('/js/notifications.js') ?>" defer></script>
+        <script src="<?= base_url('/js/stores.js') ?>" defer></script>
+    </body>
+    </html>
