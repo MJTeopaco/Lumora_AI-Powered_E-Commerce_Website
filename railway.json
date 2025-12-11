@@ -2,8 +2,7 @@
   "$schema":"https://railway.com/railway.schema.json",
   "build": {
     "builder":"DOCKERFILE",
-    "dockerfilePath": "Lumora_AI-Powered_E-Commerce_Website/Dockerfile",
-    "rootDirectory": "Lumora_AI-Powered_E-Commerce_Website" 
+    "dockerfilePath": "Lumora_AI-Powered_E-Commerce_Website/Dockerfile"
   },
   "deploy": {
     "startCommand": "apache2-foreground"
