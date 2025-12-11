@@ -22,7 +22,7 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # STEP 8: Copy the rest of the application code
-COPY .
+COPY . .
 
 # STEP 9: Run post-install scripts if any
 RUN composer dump-autoload --optimize
