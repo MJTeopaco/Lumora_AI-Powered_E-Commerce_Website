@@ -128,7 +128,11 @@ class EmailHelper {
         $mail->isHTML(true);
         $mail->Subject = 'Activate Your Lumora Account';
         
-$activationLink = "http://lumora.test/auth/verify-email?token=" . $token;        $mail->Body = self::renderEmailView('registration-activation.php', [
+        // FIX: Use the live domain from environment variables
+        $baseUrl = getenv('BASE_URL'); 
+        $activationLink = "{$baseUrl}/auth/verify-email?token=" . $token; 
+
+        $mail->Body = self::renderEmailView('registration-activation.php', [
             'activationLink' => $activationLink
         ]);
         $mail->AltBody = "Welcome to Lumora! Click this link to activate your account: $activationLink (valid for 24 hours)";
