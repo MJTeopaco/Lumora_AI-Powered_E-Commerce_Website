@@ -15,17 +15,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # STEP 5: Set the Working Directory
 WORKDIR /var/www/html
 
-# STEP 6: Copy composer files first 
-# COPY composer.json composer.lock ./
+# STEP 6: Copy ONLY files needed for Composer
+COPY composer.json composer.lock ./
 
-# STEP 6: Copy ALL application code (including composer files)
-COPY . .
 
 # STEP 7: Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
+
 # STEP 8: Copy the rest of the application code
-# COPY . .
+COPY . .
+
 
 # STEP 9: Run post-install scripts if any
 RUN composer dump-autoload --optimize
