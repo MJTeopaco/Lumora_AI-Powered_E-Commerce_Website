@@ -14,7 +14,7 @@ class EmailHelper {
         $mail->Username   = 'lumora.auth@gmail.com';
         $mail->Password   = getenv('MAIL_PASSWORD') ?: 'gxyp utms klzi pwuf'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+        $mail->Port       = 587;
         $mail->setFrom('lumora.auth@gmail.com', 'Lumora');
         return $mail;
     }
