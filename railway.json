@@ -3,7 +3,7 @@
   "build": {
     "builder":"DOCKERFILE",
     "dockerfilePath": "Lumora_AI-Powered_E-Commerce_Website/Dockerfile",
-    "buildCommand": "composer install --no-dev --optimize-autoloader"
+    "rootDirectory": "Lumora_AI-Powered_E-Commerce_Website" 
   },
   "deploy": {
     "startCommand": "apache2-foreground"
