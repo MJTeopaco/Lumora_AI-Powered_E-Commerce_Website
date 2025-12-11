@@ -151,7 +151,7 @@
                     <form id="login-form-element" action="<?= base_url('/auth/login-step-1') ?>" method="POST">
                         <input type="hidden" name="action" value="login_step_1_credentials">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                        
+                        <input type="hidden" name="csrf_token" value="<?= App\Core\Session::get('csrf_token') ?>">
                         <div class="input-group">
                             <label>Email or Username</label>
                             <input type="text" name="identifier" id="login-identifier" placeholder="Enter your email or username" required>
