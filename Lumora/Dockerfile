@@ -6,6 +6,16 @@ RUN apt-get update && \
     apt-get install -y libzip-dev git unzip && \
     rm -rf /var/lib/apt/lists/*
 
+# Ensure these are present
+RUN docker-php-ext-install pdo_mysql opcache
+RUN docker-php-ext-enable opcache
+RUN apt-get update && apt-get install -y libzip-dev
+# You need openssl for secure SMTP connections
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install exif
+# Crucial for secure email sending
+RUN docker-php-ext-install openssl
+
 # STEP 3: Install Required PHP Extensions
 RUN docker-php-ext-install mysqli pdo_mysql zip
 
