@@ -14,7 +14,7 @@ class EmailHelper {
         $mail->Username   = 'lumora.auth@gmail.com';
         $mail->Password   = getenv('MAIL_PASSWORD') ?: 'gxyp utms klzi pwuf'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 587;
+        $mail->Port       = 465;
         $mail->setFrom('lumora.auth@gmail.com', 'Lumora');
         return $mail;
     }
@@ -130,7 +130,7 @@ class EmailHelper {
         
         // FIX: Use the live domain from environment variables
         $baseUrl = getenv('BASE_URL'); 
-        $activationLink = "{$baseUrl}/auth/verify-email?token=" . $token; 
+        $activationLink = "https://lumora-php-web-production.up.railway.app/auth/verify-email?token=" . $token; 
 
         $mail->Body = self::renderEmailView('registration-activation.php', [
             'activationLink' => $activationLink

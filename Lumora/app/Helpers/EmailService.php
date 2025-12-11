@@ -32,7 +32,7 @@ class EmailService {
         $this->mail->Username   = 'lumora.auth@gmail.com';
         $this->mail->Password   = getenv('MAIL_PASSWORD') ?: 'gxyp utms klzi pwuf';
         $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $this->mail->Port       = 587;
+        $this->mail->Port       = 465;
         $this->mail->CharSet    = 'UTF-8';
         
         // Default sender
