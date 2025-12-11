@@ -12,7 +12,7 @@ class EmailHelper {
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
         $mail->Username   = 'lumora.auth@gmail.com';
-        $mail->Password   = getenv('MAIL_PASSWORD') ?: 'lftkvhebzmcuqllu'; 
+        $mail->Password   = getenv('MAIL_PASSWORD') ?: 'authlumora'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
         $mail->setFrom('lumora.auth@gmail.com', 'Lumora');
