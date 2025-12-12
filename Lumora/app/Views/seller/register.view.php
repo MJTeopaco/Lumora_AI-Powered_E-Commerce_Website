@@ -1,17 +1,7 @@
 <?php
 // app/Views/seller/register.view.php
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Become a Seller - Lumora</title>
-    <link rel="stylesheet" href="/css/main.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/seller-register.css">
-</head>
-<body>
+<link rel="stylesheet" href="/css/seller-register.css">
 
 <div class="container">
     <div class="header">
@@ -42,7 +32,7 @@
         </div>
 
         <form action="/seller/register" method="POST" id="sellerRegistrationForm">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             
             <div class="form-section">
                 <div class="section-title">
@@ -169,5 +159,3 @@
 </div>
 
 <script src="/js/seller-register.js"></script>
-</body>
-</html>

@@ -21,10 +21,41 @@ class SellerController extends Controller {
      * Display seller guidelines page
      */
     public function guidelines() {
-        $this->view('main/seller-guidelines');
+        // Initialize default values
+        $isLoggedIn = Session::has('user_id');
+        $username = null;
+        $userProfile = null;
+        $cartCount = 0;
+        $notificationCount = 0;
+        $isSeller = false;
+    
+        // If logged in, fetch user data
+        if ($isLoggedIn) {
+            $userId = Session::get('user_id');
+            $username = Session::get('username');
+            
+            // Fetch profile for the avatar
+            $userProfile = (new \App\Models\UserProfile())->getByUserId($userId);
+    
+            // Fetch cart and notification counts
+            $cartCount = (new \App\Models\Cart())->getCartCount($userId);
+            $notificationCount = (new \App\Models\Notification())->getUnreadCount($userId);
+            
+            // Check if the user is a seller
+            $isSeller = $this->userModel->checkRole($userId);
+        }
+    
+        $data = [
+            'isLoggedIn' => $isLoggedIn,
+            'username' => $username,
+            'userProfile' => $userProfile,
+            'cartCount' => $cartCount,
+            'notificationCount' => $notificationCount,
+            'isSeller' => $isSeller
+        ];
+    
+        $this->view('main/seller-guidelines', $data);
     }
-
-
 
     /**
      * Display seller registration form or appropriate status page
@@ -38,6 +69,14 @@ class SellerController extends Controller {
         }
 
         $userId = Session::get('user_id');
+
+        // --- Header Data Fetching ---
+        $username = Session::get('username');
+        $userProfile = (new \App\Models\UserProfile())->getByUserId($userId);
+        $cartCount = (new \App\Models\Cart())->getCartCount($userId);
+        $notificationCount = (new \App\Models\Notification())->getUnreadCount($userId);
+        $isSeller = $this->userModel->checkRole($userId);
+        // ----------------------------
 
         // Check seller status
         $sellerStatus = $this->sellerModel->getSellerStatus($userId);
@@ -53,7 +92,13 @@ class SellerController extends Controller {
                 // Show pending approval page
                 $data = [
                     'shopName' => $sellerStatus['shop_name'],
-                    'appliedAt' => $sellerStatus['applied_at']
+                    'appliedAt' => $sellerStatus['applied_at'],
+                    'isLoggedIn' => true,
+                    'username' => $username,
+                    'userProfile' => $userProfile,
+                    'cartCount' => $cartCount,
+                    'notificationCount' => $notificationCount,
+                    'isSeller' => $isSeller
                 ];
                 $this->view('seller/pending-approval', $data);
                 break;
@@ -62,7 +107,13 @@ class SellerController extends Controller {
             default:
                 // Show registration form
                 $data = [
-                    'regions' => $this->getPhilippineRegions()
+                    'regions' => $this->getPhilippineRegions(),
+                    'isLoggedIn' => true,
+                    'username' => $username,
+                    'userProfile' => $userProfile,
+                    'cartCount' => $cartCount,
+                    'notificationCount' => $notificationCount,
+                    'isSeller' => $isSeller
                 ];
                 $this->view('seller/register', $data);
                 break;
