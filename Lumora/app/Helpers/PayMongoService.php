@@ -13,7 +13,7 @@ class PayMongoService {
     public function __construct() {
         $this->secretKey = getenv('PAYMONGO_SECRET_KEY') ?: 'sk_test_5h8zTbpc4pAXPGErPpjAvdsc';
         $this->publicKey = getenv('PAYMONGO_PUBLIC_KEY') ?: 'pk_test_vJ9KXg9VSyShjBpaJyYSH3Z4';
-        $this->webhookSecret = trim('whsk_KiPKJC3trqw2wjTYDcufKbtj'); 
+        $this->webhookSecret = trim('whsk_xjMc9YzZNTK2dNVX5dR156bf'); 
     }
 
     // ... (Keep existing createCheckoutSession and verifyWebhookSignature methods) ...
