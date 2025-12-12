@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductReview;
 use App\Models\User;
 use App\Models\UserProfile;
+use App\Models\Collections;
 
 class CollectionsController extends Controller {
     
@@ -16,12 +17,14 @@ class CollectionsController extends Controller {
     protected $userModel;
     protected $profileModel;
     protected $reviewModel;
+    protected $collectionsModel;
 
     public function __construct() {
         $this->productModel = new Product();
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
         $this->reviewModel = new ProductReview();
+        $this->collectionsModel = new Collections();
     }
 
     /**
