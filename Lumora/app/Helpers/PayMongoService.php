@@ -11,12 +11,11 @@ class PayMongoService {
     private $apiUrl = 'https://api.paymongo.com/v1';
     
     public function __construct() {
+        // Use your specific keys here
         $this->secretKey = getenv('PAYMONGO_SECRET_KEY') ?: 'sk_test_5h8zTbpc4pAXPGErPpjAvdsc';
         $this->publicKey = getenv('PAYMONGO_PUBLIC_KEY') ?: 'pk_test_vJ9KXg9VSyShjBpaJyYSH3Z4';
         $this->webhookSecret = trim('whsk_xjMc9YzZNTK2dNVX5dR156bf'); 
     }
-
-    // ... (Keep existing createCheckoutSession and verifyWebhookSignature methods) ...
 
     public function createCheckoutSession($data) {
         $endpoint = '/checkout_sessions';
@@ -42,27 +41,20 @@ class PayMongoService {
         return $this->makeRequest('GET', "/checkout_sessions/{$checkoutSessionId}");
     }
 
-    // [NEW] Helper to get Payment ID from Session
     public function getPaymentIdFromSession($checkoutSessionId) {
-        // 1. Get Session to find Payment Intent
         $session = $this->getCheckoutSession($checkoutSessionId);
         $paymentIntentId = $session['data']['attributes']['payment_intent']['id'] ?? null;
 
         if (!$paymentIntentId) return null;
 
-        // 2. Get Payment Intent to find Payment ID
         $paymentIntent = $this->makeRequest('GET', "/payment_intents/{$paymentIntentId}");
-        
-        // Payments are an array (usually the last one is the successful one)
         $payments = $paymentIntent['data']['attributes']['payments'] ?? [];
         
         if (empty($payments)) return null;
 
-        // Return the ID of the last payment attempt
         return end($payments)['id'];
     }
 
-    // [NEW] Process Refund
     public function createRefund($paymentId, $amount, $reason = 'requested_by_customer') {
         $endpoint = '/refunds';
         $payload = [
@@ -77,11 +69,8 @@ class PayMongoService {
 
         return $this->makeRequest('POST', $endpoint, $payload);
     }
-
-    // ... (Keep existing verifyWebhookSignature, formatAmountToCents, buildLineItems, makeRequest) ...
     
     public function verifyWebhookSignature($rawPayload, $signatureHeader) {
-        // ... (Keep your existing verification logic) ...
         if (empty($this->webhookSecret)) return false;
         $parts = explode(',', $signatureHeader);
         $timestamp = null; $testSignature = null; $liveSignature = null;
@@ -128,6 +117,10 @@ class PayMongoService {
         curl_setopt($ch, CURLOPT_USERPWD, $this->secretKey . ':');
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Accept: application/json']);
         
+        // --- FIX FOR INFINITYFREE SSL ERROR ---
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+        // --------------------------------------
+
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
             if ($data) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
