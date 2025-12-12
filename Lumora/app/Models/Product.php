@@ -38,10 +38,9 @@ class Product {
                   WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
                   GROUP BY p.product_id
                   ORDER BY p.created_at DESC
-                  LIMIT ? OFFSET ?";
+                  ";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         $products = $result->fetch_all(MYSQLI_ASSOC);

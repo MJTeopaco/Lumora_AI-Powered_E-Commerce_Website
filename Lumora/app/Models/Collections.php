@@ -51,7 +51,6 @@ class Collections {
                 AND s.is_deleted = 0
             GROUP BY p.product_id
             ORDER BY p.created_at DESC
-            LIMIT 8
         ";
         
         $stmt = $this->conn->prepare($query);
@@ -85,11 +84,9 @@ class Collections {
                 AND s.is_deleted = 0
             GROUP BY p.product_id
             ORDER BY p.created_at DESC
-            LIMIT ?
         ";
         
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $limit);
+        $stmt = $this->conn->prepare($query);;
         $stmt->execute();
         $result = $stmt->get_result();
         
