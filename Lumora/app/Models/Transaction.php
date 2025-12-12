@@ -17,6 +17,7 @@ class Transaction {
      * Create a new payment transaction
      */
     public function createTransaction($data) {
+        // Table is 'payments', not 'transactions'
         $query = "INSERT INTO payments (
                     order_id,
                     payment_method,
@@ -247,9 +248,24 @@ class Transaction {
         
         return $transactions;
     }
+
+    /**
+     * [FIXED] Get latest transaction for an order (Pending or otherwise)
+     */
     public function getTransactionByOrderId($orderId) {
-        $db = \App\Core\Database::getInstance();
-        $sql = "SELECT * FROM transactions WHERE order_id = :order_id ORDER BY created_at DESC LIMIT 1";
-        return $db->query($sql, [':order_id' => $orderId])->find();
+        // Correct table is 'payments', correct sort is 'payment_date'
+        $query = "SELECT * FROM payments 
+                  WHERE order_id = ? 
+                  ORDER BY payment_date DESC 
+                  LIMIT 1";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $payment = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $payment;
     }
 }
