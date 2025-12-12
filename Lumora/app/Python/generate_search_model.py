@@ -78,8 +78,8 @@ def create_product_vectors_and_metadata(products, output_dir='ML'):
         if product['short_description']:
             text += f"{product['short_description']} "
         
-        if product['long_description']:
-            text += f"{product['long_description']} "
+        if product['description']:
+            text += f"{product['description']} "
         
         if product['categories']:
             text += f"{product['categories']}"

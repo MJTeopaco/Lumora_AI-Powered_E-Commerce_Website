@@ -11,7 +11,7 @@ use mysqli;
 define('DB_HOST', 'sql305.infinityfree.com');
 define('DB_USER', 'if0_40627650');
 define('DB_PASS', 'zDm97qyXmb');
-define('DB_NAME', 'lumora_db');
+define('DB_NAME', 'if0_40627650_lumora_db');
 define('DB_PORT', 3306); // Added port variable
 
 class Database {

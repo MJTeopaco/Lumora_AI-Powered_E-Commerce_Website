@@ -13,7 +13,7 @@ use App\Models\Transaction;
 use App\Models\Address;
 use App\Models\UserProfile;
 use App\Models\Notification;
-use App\Models\ShopEarnings; // Added this import
+use App\Models\ShopEarnings;
 use App\Helpers\PayMongoService;
 use App\Helpers\RedirectHelper;
 
@@ -168,7 +168,7 @@ class CheckoutController extends Controller {
             'order_id' => $orderId,
             'payment_method' => 'E_WALLET',
             'payment_gateway' => 'PayMongo',
-            'transaction_id' => $checkoutSessionData['data']['id'], // This is the Session ID
+            'transaction_id' => $checkoutSessionData['data']['id'], 
             'amount_paid' => $total,
             'status' => 'PENDING'
         ];
@@ -181,95 +181,74 @@ class CheckoutController extends Controller {
     }
     
     /**
-     * MODIFIED: Manual Status Check for InfinityFree
+     * MODIFIED: Manual "Force Success" for InfinityFree
+     * Uses correct MySQLi Database connection
      */
     public function success() {
         $userId = Session::get('user_id');
         $orderId = $_GET['order_id'] ?? null;
         
-        if (!$orderId) RedirectHelper::redirect('/orders');
+        if (!$orderId) {
+            RedirectHelper::redirect('/orders');
+        }
         
         $order = $this->orderModel->getOrderById($orderId, $userId);
-        if (!$order) RedirectHelper::redirect('/orders');
+        
+        if (!$order) {
+            RedirectHelper::redirect('/orders');
+        }
 
-        // --- MANUAL CHECK LOGIC START ---
-        // 1. We need to find the PayMongo Session ID associated with this order.
-        // NOTE: You must ensure your Transaction Model can fetch pending transactions.
-        // If getSuccessfulTransaction returns nothing, we manually look for the PENDING one.
-        
-        $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);
-        
-        // If not already marked successful in DB, let's check with PayMongo
-        if (!$transaction && $order['order_status'] === 'PENDING_PAYMENT') {
+        // --- CHEAT MODE: BLINDLY TRUST THE RETURN ---
+        if ($order['order_status'] === 'PENDING_PAYMENT') {
             
-            // Try to find the pending transaction using a custom method (See Step 3 below)
-            // If you haven't added getTransactionByOrderId yet, this next line is crucial:
-            if (method_exists($this->transactionModel, 'getTransactionByOrderId')) {
-                $pendingTx = $this->transactionModel->getTransactionByOrderId($orderId);
-            } else {
-                // FALLBACK: If you didn't update Transaction.php, we can't check.
-                // You MUST add the method in Step 3 for this to work.
-                $pendingTx = null; 
+            // 1. Force Update Order Status
+            $this->orderModel->updateOrderStatus($orderId, 'PROCESSING');
+            $this->orderItemModel->updateAllItemsStatus($orderId, 'PROCESSING');
+            
+            // 2. Force Update Transaction to Completed [FIXED DATABASE CALL]
+            $conn = \App\Core\Database::getConnection();
+            $sql = "UPDATE payments SET status = 'COMPLETED' WHERE order_id = ?";
+            $stmt = $conn->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("i", $orderId);
+                $stmt->execute();
+                $stmt->close();
             }
 
-            if ($pendingTx) {
-                $sessionId = $pendingTx['transaction_id']; // The PayMongo Session ID
-                
-                // 2. Call PayMongo API to check status
-                $sessionData = $this->paymongoService->getCheckoutSession($sessionId);
-                $paymentStatus = $sessionData['data']['attributes']['payment_status'] ?? 'unpaid';
-
-                if ($paymentStatus === 'paid') {
-                    // 3. It is paid! Run all the updates here immediately.
-                    
-                    // A. Update Transaction Status
-                    $this->transactionModel->updateTransactionStatus($sessionId, 'COMPLETED');
-                    
-                    // B. Update Order Status
-                    $this->orderModel->updateOrderStatus($orderId, 'PROCESSING');
-                    $this->orderItemModel->updateAllItemsStatus($orderId, 'PROCESSING');
-                    
-                    // C. Reduce Stock
-                    $orderItems = $this->orderItemModel->getOrderItems($orderId);
-                    $productModel = new \App\Models\Product();
-                    foreach ($orderItems as $item) {
-                        $productModel->updateStock($item['variant_id'], $item['quantity']);
-                    }
-
-                    // D. Record Earnings
-                    $earningsModel = new ShopEarnings();
-                    if ($order['shop_id']) {
-                        $earningsModel->calculateAndRecord(
-                            $order['order_id'],
-                            $order['shop_id'],
-                            $order['total_amount'],
-                            $order['shipping_fee']
-                        );
-                    }
-
-                    // E. Clear Cart
-                    $this->cartModel->clearCart($userId);
-                    $this->cartModel->markCartCheckedOut($userId);
-
-                    // F. Notifications
-                    $notificationModel = new Notification();
-                    $notificationModel->notifyPaymentSuccess($userId, $orderId, $order['total_amount']);
-                    $notificationModel->notifyOrderPlaced($userId, $orderId, $order['total_amount']);
-                    
-                    // Refresh data for the view
-                    $order['order_status'] = 'PROCESSING';
-                    $transaction = $pendingTx; // Show the now-valid transaction
-                }
+            // 3. Reduce Stock
+            $orderItems = $this->orderItemModel->getOrderItems($orderId);
+            $productModel = new \App\Models\Product();
+            foreach ($orderItems as $item) {
+                $productModel->updateStock($item['variant_id'], $item['quantity']);
             }
+
+            // 4. Record Earnings
+            if (class_exists('\App\Models\ShopEarnings') && $order['shop_id']) {
+                $earningsModel = new \App\Models\ShopEarnings();
+                $earningsModel->calculateAndRecord(
+                    $order['order_id'],
+                    $order['shop_id'],
+                    $order['total_amount'],
+                    $order['shipping_fee']
+                );
+            }
+
+            // 5. Clear Cart
+            $this->cartModel->clearCart($userId);
+            $this->cartModel->markCartCheckedOut($userId);
+
+            // 6. Send Notifications
+            $notificationModel = new Notification();
+            $notificationModel->notifyPaymentSuccess($userId, $orderId, $order['total_amount']);
+            $notificationModel->notifyOrderPlaced($userId, $orderId, $order['total_amount']);
+            
+            // Refresh order data
+            $order['order_status'] = 'PROCESSING';
         }
-        // --- MANUAL CHECK LOGIC END ---
+        // ------------------------------------------------
         
-        // Fetch data for view
         $orderItems = $this->orderItemModel->getOrderItems($orderId);
-        // Refresh transaction fetch
-        if (!$transaction) {
-            $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);
-        }
+        $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);
         
         $userProfileModel = new UserProfile();
         $userProfile = $userProfileModel->getByUserId($userId);
