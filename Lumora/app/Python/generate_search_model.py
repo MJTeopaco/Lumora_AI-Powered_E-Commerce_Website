@@ -35,11 +35,14 @@ def fetch_products_from_db():
                 p.short_description,
                 p.description,
                 MIN(pv.price) as price,
-                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
+                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories,
+                GROUP_CONCAT(DISTINCT pt.name SEPARATOR ', ') as tags
             FROM products p
             LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
             LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
             LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+            LEFT JOIN product_tag_links ptl ON p.product_id = ptl.product_id
+            LEFT JOIN product_tags pt ON ptl.tag_id = pt.tag_id
             WHERE p.status = 'PUBLISHED' 
                 AND p.is_deleted = 0
             GROUP BY p.product_id
@@ -84,6 +87,9 @@ def create_product_vectors_and_metadata(products, output_dir='ML'):
         if product['categories']:
             text += f"{product['categories']}"
         
+        if product.get('tags'):  # Check if tags exist
+            text += f"{product['tags']}"
+
         product_texts.append(text.strip())
         
         # Store metadata
