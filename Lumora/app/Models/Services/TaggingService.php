@@ -8,7 +8,7 @@ class TaggingService {
     
     public function __construct() {
         // Python Flask API URL
-        $this->pythonApiUrl = getenv('PYTHON_API_URL') ?: 'http://127.0.0.1:5000';
+        $this->pythonApiUrl = 'https://lumora-ai-api-production.up.railway.app';
         $this->timeout = 60; // seconds
     }
 
