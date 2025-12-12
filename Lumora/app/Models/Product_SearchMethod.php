@@ -5,7 +5,7 @@ namespace App\Models;
 
 use App\Core\Database;
 
-class Product {
+class Search {
     protected $conn;
 
     public function __construct() {
@@ -16,9 +16,10 @@ class Product {
 
     /**
      * Get products by array of IDs (for smart search results)
+     * Maintains the order of IDs as returned by ML service
      * 
      * @param array $productIds Array of product IDs
-     * @return array Products
+     * @return array Products in the same order as input IDs
      */
     public function getProductsByIds($productIds) {
         if (empty($productIds)) {
@@ -50,20 +51,30 @@ class Product {
         
         $stmt = $this->conn->prepare($query);
         
-        // Bind parameters dynamically
+        // Bind parameters dynamically for MySQLi
         $types = str_repeat('i', count($productIds));
         $stmt->bind_param($types, ...$productIds);
         
         $stmt->execute();
         $result = $stmt->get_result();
         
-        $products = [];
+        // Fetch all products into associative array
+        $productsMap = [];
         while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+            $productsMap[$row['id']] = $row;
         }
         
         $stmt->close();
-        return $products;
+        
+        // Sort products to match the order of input IDs (ML ranking)
+        $sortedProducts = [];
+        foreach ($productIds as $id) {
+            if (isset($productsMap[$id])) {
+                $sortedProducts[] = $productsMap[$id];
+            }
+        }
+        
+        return $sortedProducts;
     }
 
     /**
