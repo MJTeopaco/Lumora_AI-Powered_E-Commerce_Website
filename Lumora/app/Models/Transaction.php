@@ -247,4 +247,9 @@ class Transaction {
         
         return $transactions;
     }
+    public function getTransactionByOrderId($orderId) {
+        $db = \App\Core\Database::getInstance();
+        $sql = "SELECT * FROM transactions WHERE order_id = :order_id ORDER BY created_at DESC LIMIT 1";
+        return $db->query($sql, [':order_id' => $orderId])->find();
+    }
 }

@@ -12,7 +12,8 @@ use App\Models\OrderItem;
 use App\Models\Transaction;
 use App\Models\Address;
 use App\Models\UserProfile;
-use App\Models\Notification; // Added Notification Model
+use App\Models\Notification;
+use App\Models\ShopEarnings; // Added this import
 use App\Helpers\PayMongoService;
 use App\Helpers\RedirectHelper;
 
@@ -26,7 +27,6 @@ class CheckoutController extends Controller {
     private $paymongoService;
     
     public function __construct() {
-        // Require authentication
         if (!Session::has('user_id')) {
             RedirectHelper::redirect('/login?redirect=/checkout');
         }
@@ -39,31 +39,23 @@ class CheckoutController extends Controller {
         $this->paymongoService = new PayMongoService();
     }
     
-    /**
-     * Display checkout page
-     */
     public function index() {
         $userId = Session::get('user_id');
-        
-        // Get and validate cart
         $cartItems = $this->cartModel->getUserCart($userId);
         
         if (empty($cartItems)) {
             RedirectHelper::redirect('/cart?status=error&message=' . urlencode('Your cart is empty'));
         }
         
-        // Validate stock availability
         $stockIssues = $this->cartModel->validateCartStock($userId);
         if (!empty($stockIssues)) {
             $this->cartModel->autoAdjustQuantities($userId);
             RedirectHelper::redirect('/cart?status=warning&message=' . urlencode('Some items were adjusted due to stock availability'));
         }
         
-        // Get user's saved addresses
         $addresses = $this->addressModel->getAddressesByUserId_User($userId);
         $defaultAddress = $this->addressModel->getDefaultAddress($userId);
         
-        // Calculate totals
         $subtotal = 0;
         $processedItems = [];
         
@@ -86,11 +78,9 @@ class CheckoutController extends Controller {
             ];
         }
         
-        // Shipping calculation
-        $shippingFee = 50.00; // Flat rate
+        $shippingFee = 50.00;
         $total = $subtotal + $shippingFee;
         
-        // Fetch User Profile for Header
         $userProfileModel = new UserProfile();
         $userProfile = $userProfileModel->getByUserId($userId);
 
@@ -113,21 +103,14 @@ class CheckoutController extends Controller {
             ->render();
     }
     
-    /**
-     * Process checkout and create order
-     */
     public function process() {
-        // Validate CSRF token
         if (!$this->validateCsrfToken()) {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Invalid security token'));
         }
         
         $userId = Session::get('user_id');
-        
-        // Get form data
         $addressId = (int)($_POST['address_id'] ?? 0);
         
-        // Validate address
         if (!$addressId) {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Please select a shipping address'));
         }
@@ -137,28 +120,22 @@ class CheckoutController extends Controller {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Invalid shipping address'));
         }
         
-        // Get cart items
         $cartItems = $this->cartModel->getUserCart($userId);
         
         if (empty($cartItems)) {
             RedirectHelper::redirect('/cart?status=error&message=' . urlencode('Your cart is empty'));
         }
         
-        // Final stock validation
         $stockIssues = $this->cartModel->validateCartStock($userId);
         if (!empty($stockIssues)) {
             RedirectHelper::redirect('/cart?status=error&message=' . urlencode('Some items are no longer available'));
         }
         
-        // Calculate totals
         $subtotal = $this->cartModel->getCartSubtotal($userId);
         $shippingFee = 50.00;
         $total = $subtotal + $shippingFee;
-        
-        // Get shop_id from first cart item
         $shopId = $cartItems[0]['shop_id'] ?? null;
         
-        // Create order with PENDING_PAYMENT status
         $orderData = [
             'user_id' => $userId,
             'shop_id' => $shopId,
@@ -174,14 +151,12 @@ class CheckoutController extends Controller {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Failed to create order'));
         }
         
-        // Add order items
         $itemsAdded = $this->orderItemModel->addOrderItemsFromCart($orderId, $cartItems);
         
         if ($itemsAdded === 0) {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Failed to add items to order'));
         }
         
-        // Create PayMongo checkout session
         $checkoutSessionData = $this->createPayMongoSession($orderId, $cartItems, $total);
         
         if (!$checkoutSessionData) {
@@ -189,65 +164,112 @@ class CheckoutController extends Controller {
             RedirectHelper::redirect('/checkout?status=error&message=' . urlencode('Failed to initialize payment'));
         }
         
-        // Create transaction record
         $transactionData = [
             'order_id' => $orderId,
             'payment_method' => 'E_WALLET',
             'payment_gateway' => 'PayMongo',
-            'transaction_id' => $checkoutSessionData['data']['id'],
+            'transaction_id' => $checkoutSessionData['data']['id'], // This is the Session ID
             'amount_paid' => $total,
             'status' => 'PENDING'
         ];
         
         $this->transactionModel->createTransaction($transactionData);
         
-        // --- CHANGED: Removed clearCart from here so it doesn't clear on back button ---
-        
-        // Redirect to PayMongo checkout
         $checkoutUrl = $checkoutSessionData['data']['attributes']['checkout_url'];
         header('Location: ' . $checkoutUrl);
         exit;
     }
     
     /**
-     * Payment success page
+     * MODIFIED: Manual Status Check for InfinityFree
      */
     public function success() {
         $userId = Session::get('user_id');
         $orderId = $_GET['order_id'] ?? null;
         
-        if (!$orderId) {
-            RedirectHelper::redirect('/orders');
-        }
+        if (!$orderId) RedirectHelper::redirect('/orders');
         
         $order = $this->orderModel->getOrderById($orderId, $userId);
-        
-        if (!$order) {
-            RedirectHelper::redirect('/orders');
-        }
+        if (!$order) RedirectHelper::redirect('/orders');
 
-        // --- CHANGED: Clear cart HERE (after successful payment/return) ---
-        $this->cartModel->clearCart($userId);
-        $this->cartModel->markCartCheckedOut($userId);
+        // --- MANUAL CHECK LOGIC START ---
+        // 1. We need to find the PayMongo Session ID associated with this order.
+        // NOTE: You must ensure your Transaction Model can fetch pending transactions.
+        // If getSuccessfulTransaction returns nothing, we manually look for the PENDING one.
         
-        // --- ENHANCED NOTIFICATION SYSTEM INTEGRATION ---
-        $notificationModel = new Notification();
-        // 1. Notify Payment Success
-        $notificationModel->notifyPaymentSuccess(
-            $userId,
-            $orderId,
-            $order['total_amount']
-        );
-        // 2. Notify Order Placed
-        $notificationModel->notifyOrderPlaced(
-            $userId,
-            $orderId,
-            $order['total_amount']
-        );
-        // ------------------------------------------------
-        
-        $orderItems = $this->orderItemModel->getOrderItems($orderId);
         $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);
+        
+        // If not already marked successful in DB, let's check with PayMongo
+        if (!$transaction && $order['order_status'] === 'PENDING_PAYMENT') {
+            
+            // Try to find the pending transaction using a custom method (See Step 3 below)
+            // If you haven't added getTransactionByOrderId yet, this next line is crucial:
+            if (method_exists($this->transactionModel, 'getTransactionByOrderId')) {
+                $pendingTx = $this->transactionModel->getTransactionByOrderId($orderId);
+            } else {
+                // FALLBACK: If you didn't update Transaction.php, we can't check.
+                // You MUST add the method in Step 3 for this to work.
+                $pendingTx = null; 
+            }
+
+            if ($pendingTx) {
+                $sessionId = $pendingTx['transaction_id']; // The PayMongo Session ID
+                
+                // 2. Call PayMongo API to check status
+                $sessionData = $this->paymongoService->getCheckoutSession($sessionId);
+                $paymentStatus = $sessionData['data']['attributes']['payment_status'] ?? 'unpaid';
+
+                if ($paymentStatus === 'paid') {
+                    // 3. It is paid! Run all the updates here immediately.
+                    
+                    // A. Update Transaction Status
+                    $this->transactionModel->updateTransactionStatus($sessionId, 'COMPLETED');
+                    
+                    // B. Update Order Status
+                    $this->orderModel->updateOrderStatus($orderId, 'PROCESSING');
+                    $this->orderItemModel->updateAllItemsStatus($orderId, 'PROCESSING');
+                    
+                    // C. Reduce Stock
+                    $orderItems = $this->orderItemModel->getOrderItems($orderId);
+                    $productModel = new \App\Models\Product();
+                    foreach ($orderItems as $item) {
+                        $productModel->updateStock($item['variant_id'], $item['quantity']);
+                    }
+
+                    // D. Record Earnings
+                    $earningsModel = new ShopEarnings();
+                    if ($order['shop_id']) {
+                        $earningsModel->calculateAndRecord(
+                            $order['order_id'],
+                            $order['shop_id'],
+                            $order['total_amount'],
+                            $order['shipping_fee']
+                        );
+                    }
+
+                    // E. Clear Cart
+                    $this->cartModel->clearCart($userId);
+                    $this->cartModel->markCartCheckedOut($userId);
+
+                    // F. Notifications
+                    $notificationModel = new Notification();
+                    $notificationModel->notifyPaymentSuccess($userId, $orderId, $order['total_amount']);
+                    $notificationModel->notifyOrderPlaced($userId, $orderId, $order['total_amount']);
+                    
+                    // Refresh data for the view
+                    $order['order_status'] = 'PROCESSING';
+                    $transaction = $pendingTx; // Show the now-valid transaction
+                }
+            }
+        }
+        // --- MANUAL CHECK LOGIC END ---
+        
+        // Fetch data for view
+        $orderItems = $this->orderItemModel->getOrderItems($orderId);
+        // Refresh transaction fetch
+        if (!$transaction) {
+            $transaction = $this->transactionModel->getSuccessfulTransaction($orderId);
+        }
         
         $userProfileModel = new UserProfile();
         $userProfile = $userProfileModel->getByUserId($userId);
@@ -267,9 +289,6 @@ class CheckoutController extends Controller {
             ->render();
     }
     
-    /**
-     * Payment failed page
-     */
     public function failed() {
         $userId = Session::get('user_id');
         $orderId = $_GET['order_id'] ?? null;
@@ -290,9 +309,6 @@ class CheckoutController extends Controller {
             ->render();
     }
     
-    /**
-     * Create PayMongo checkout session
-     */
     private function createPayMongoSession($orderId, $cartItems, $total) {
         $lineItems = $this->paymongoService->buildLineItems($cartItems);
         
@@ -307,7 +323,6 @@ class CheckoutController extends Controller {
             'description' => 'Lumora Order #' . $orderId,
             'line_items' => $lineItems,
             'payment_method_types' => ['gcash', 'paymaya', 'card'],
-            // Use base_url() helper here
             'success_url' => base_url('/checkout/success?order_id=' . $orderId),
             'cancel_url' => base_url('/checkout/failed?order_id=' . $orderId),
             'metadata' => [
@@ -319,9 +334,6 @@ class CheckoutController extends Controller {
         return $this->paymongoService->createCheckoutSession($sessionData);
     }
     
-    /**
-     * Helper: Validate CSRF token
-     */
     private function validateCsrfToken() {
         $token = $_POST['csrf_token'] ?? '';
         $sessionToken = Session::get('csrf_token');
