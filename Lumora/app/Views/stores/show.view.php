@@ -1,65 +1,102 @@
 <?php
 // app/Views/stores/show.view.php
 
-// --- CSS FIX: Load stores.css with a cache buster ---
-// We try both paths to ensure it loads regardless of server config
-?>
-<link rel="stylesheet" href="<?= base_url('css/stores.css') ?>?v=<?= time() ?>">
-<link rel="stylesheet" href="<?= base_url('public/css/stores.css') ?>?v=<?= time() ?>">
-<?php
-// ----------------------------------------------------
-
 /**
- * SMART IMAGE RESOLVER HELPER
- * Ensures shop images load correctly by checking DB paths or scanning directories.
+ * ROBUST IMAGE RESOLVER (Show Page)
+ * 1. Checks Database Path
+ * 2. Fallback: Auto-Discovery (Scans disk if DB is empty)
+ * 3. Handles 'public/public' nested folder issues
  */
 $resolveShopImage = function($path, $shopId, $type = 'banner') {
+    // === STRATEGY 1: Database Path (Fastest) ===
     if (!empty($path)) {
         $cleanPath = ltrim($path, '/');
-        // Handle nested public/public/uploads structure if present
-        if (strpos($cleanPath, 'uploads/shop/') === 0) {
-            return 'public/' . $cleanPath;
+        
+        // Case A: Already has 'public/' prefix
+        if (strpos($cleanPath, 'public/') === 0) {
+            return base_url($cleanPath);
         }
-        return $cleanPath;
+        
+        // Case B: Has 'uploads/' path (Standard) -> Add 'public/' prefix
+        if (strpos($cleanPath, 'uploads/') === 0) {
+            return base_url('public/' . $cleanPath);
+        }
+        
+        // Case C: Legacy Filename
+        $folder = ($type === 'banner') ? 'banners' : 'profiles';
+        return base_url("public/uploads/shop/{$folder}/" . $cleanPath);
     }
 
+    // === STRATEGY 2: Auto-Discovery (Fallback for NULL DB) ===
+    // This finds files physically existing on the server
+    
     $dirType = ($type === 'banner') ? 'banners' : 'profiles';
     $prefix  = ($type === 'banner') ? 'banner_' : 'profile_';
     
-    // Pattern: public/uploads/shop/[banners|profiles]/[prefix][id]_*
-    $searchPattern = 'public/uploads/shop/' . $dirType . '/' . $prefix . $shopId . '_*.*';
+    // We define the physical path to the 'public' folder on the server
+    // dirname(__DIR__, 3) gets us to the project root (Lumora/)
+    $projectRoot = dirname(__DIR__, 3); 
     
-    $files = glob($searchPattern);
+    // We check TWO possible locations because of the folder structure issues
     
-    if ($files && !empty($files)) {
-        return $files[0]; 
+    // Location 1: Standard (Lumora/public/uploads/...)
+    $stdPattern = $projectRoot . '/public/uploads/shop/' . $dirType . '/' . $prefix . $shopId . '_*.*';
+    
+    // Location 2: Nested (Lumora/public/public/uploads/...) - This matches your index.view.php logic
+    $nestedPattern = $projectRoot . '/public/public/uploads/shop/' . $dirType . '/' . $prefix . $shopId . '_*.*';
+
+    // Try Standard first
+    $files = glob($stdPattern);
+    
+    // If not found, try Nested
+    if (!$files || empty($files)) {
+        $files = glob($nestedPattern);
+        $isNested = true;
+    } else {
+        $isNested = false;
     }
 
-    return null; // No image found
+    if ($files && !empty($files)) {
+        $foundFile = $files[0];
+        $filename = basename($foundFile);
+        
+        // Construct the URL based on where we found it
+        if ($isNested) {
+            // Found in public/public/uploads... URL needs 'public/public/...'
+            return base_url("public/public/uploads/shop/{$dirType}/{$filename}");
+        } else {
+            // Found in public/uploads... URL needs 'public/uploads/...'
+            return base_url("public/uploads/shop/{$dirType}/{$filename}");
+        }
+    }
+
+    return null; // No image found anywhere
 };
 
-// Resolve images for the current shop
-$bannerPath = $resolveShopImage($shop['shop_banner'] ?? null, $shop['shop_id'], 'banner');
-$profilePath = $resolveShopImage($shop['shop_profile'] ?? null, $shop['shop_id'], 'profile');
+// Resolve images to Full URLs
+$bannerUrl = $resolveShopImage($shop['shop_banner'] ?? null, $shop['shop_id'], 'banner');
+$profileUrl = $resolveShopImage($shop['shop_profile'] ?? null, $shop['shop_id'], 'profile');
 ?>
 
 <div class="shop-page-wrapper">
     <div class="shop-header-banner">
         <div class="banner-image">
-            <?php if ($bannerPath): ?>
-                <img src="<?= base_url($bannerPath) ?>" 
+            <?php if ($bannerUrl): ?>
+                <img src="<?= $bannerUrl ?>" 
                      alt="<?= htmlspecialchars($shop['shop_name'] ?? 'Shop') ?> Banner"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <?php endif; ?>
             
-            <div class="banner-placeholder" <?= $bannerPath ? 'style="display: none;"' : '' ?>></div>
+            <div class="banner-placeholder" <?= $bannerUrl ? 'style="display: none;"' : '' ?>>
+                <i class="fas fa-image"></i>
+            </div>
         </div>
 
         <div class="shop-header-content container">
             <div class="shop-profile-section">
                 <div class="shop-avatar">
-                    <?php if ($profilePath): ?>
-                        <img src="<?= base_url($profilePath) ?>" 
+                    <?php if ($profileUrl): ?>
+                        <img src="<?= $profileUrl ?>" 
                              alt="<?= htmlspecialchars($shop['shop_name'] ?? 'Shop') ?>">
                     <?php else: ?>
                         <div class="avatar-placeholder"><?= strtoupper(substr($shop['shop_name'] ?? 'S', 0, 1)) ?></div>
@@ -131,31 +168,23 @@ $profilePath = $resolveShopImage($shop['shop_profile'] ?? null, $shop['shop_id']
 
                 <?php if (empty($products)): ?>
                     <div class="empty-state-stores" style="margin-top: 2rem;">
-                        <i class="fas fa-box-open" style="font-size: 3rem; color: var(--color-light-gray); margin-bottom: 1rem;"></i>
+                        <i class="fas fa-box-open" style="font-size: 3rem; color: #999; margin-bottom: 1rem;"></i>
                         <h3>No products found</h3>
                         <p>This shop hasn't added any products yet.</p>
                     </div>
                 <?php else: ?>
                     <div class="product-grid">
                         <?php foreach ($products as $product): ?>
-                            <a href="/products/<?= htmlspecialchars($product['slug'] ?? '') ?>" class="product-card">
+                            <a href="<?= base_url('/products/' . htmlspecialchars($product['slug'] ?? '')) ?>" class="product-card">
                                 <div class="product-image">
-                                    <?php 
-                                    // Handle product image path consistency
-                                    $imgSrc = $product['cover_picture'] ?? '';
-                                    if (!empty($imgSrc)) {
-                                        $imgSrc = ltrim($imgSrc, '/');
-                                        // Fix for nested public folders
-                                        if (strpos($imgSrc, 'uploads/') === 0 && strpos($imgSrc, 'public/') !== 0) {
-                                            $imgSrc = 'public/' . $imgSrc;
-                                        }
-                                    }
-                                    ?>
-                                    
-                                    <?php if (!empty($imgSrc)): ?>
-                                        <img src="<?= base_url($imgSrc) ?>" 
+                                    <?php if (!empty($product['cover_picture'])): ?>
+                                        <img src="<?= base_url($product['cover_picture']) ?>" 
                                              alt="<?= htmlspecialchars($product['name'] ?? 'Product') ?>"
-                                             loading="lazy">
+                                             loading="lazy"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="no-image-placeholder" style="display: none;">
+                                            <i class="fas fa-image"></i>
+                                        </div>
                                     <?php else: ?>
                                         <div class="no-image-placeholder">
                                             <i class="fas fa-image"></i>
