@@ -40,7 +40,7 @@ class ValidationHelper {
     }
 
     public static function validateRecaptcha($recaptchaResponse) {
-        define('RECAPTCHA_SECRET_KEY', '6LdpbwwsAAAAAOOGp4wXg-a0PJ1hg7sRgDkHmjGy');
+        define('RECAPTCHA_SECRET_KEY', '6LdrPCksAAAAAJl8SdLWDRthxN2QZvACM2fyHGbD');
 
         if (empty($recaptchaResponse)) {
             return false;
