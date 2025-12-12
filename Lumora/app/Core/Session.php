@@ -116,4 +116,49 @@ class Session {
     public static function refreshActivity() {
         self::set('last_activity', time());
     }
+    
+    /**
+     * Set a flash message that will be available only for the next request
+     */
+    public static function setFlash($key, $message) {
+        if (!isset($_SESSION['_flash'])) {
+            $_SESSION['_flash'] = [];
+        }
+        $_SESSION['_flash'][$key] = $message;
+    }
+
+    /**
+     * Get a flash message and remove it from session
+     */
+    public static function getFlash($key, $default = null) {
+        if (isset($_SESSION['_flash'][$key])) {
+            $message = $_SESSION['_flash'][$key];
+            unset($_SESSION['_flash'][$key]);
+            return $message;
+        }
+        return $default;
+    }
+
+    /**
+     * Check if a flash message exists
+     */
+    public static function hasFlash($key) {
+        return isset($_SESSION['_flash'][$key]);
+    }
+
+    /**
+     * Get all flash messages and clear them
+     */
+    public static function getAllFlash() {
+        $flash = $_SESSION['_flash'] ?? [];
+        $_SESSION['_flash'] = [];
+        return $flash;
+    }
+
+    /**
+     * Clear all flash messages
+     */
+    public static function clearFlash() {
+        $_SESSION['_flash'] = [];
+    }
 }

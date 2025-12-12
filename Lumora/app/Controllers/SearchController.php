@@ -6,6 +6,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Product;
+use App\Models\Product_SearchMethod;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Services\SmartSearchService;
@@ -16,12 +17,14 @@ class SearchController extends Controller {
     protected $userModel;
     protected $profileModel;
     protected $searchService;
+    protected $searchMethodModel;
 
     public function __construct() {
         $this->productModel = new Product();
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
         $this->searchService = new SmartSearchService();
+        $this->searchMethodModel = new Product_SearchMethod();
     }
 
     /**
@@ -118,7 +121,7 @@ class SearchController extends Controller {
                 $products = [];
             } else {
                 // Fetch products from database in the order returned by ML
-                $products = $this->productModel->getProductsByIds($productIds);
+                $products = $this->searchMethodModel->getProductsByIds($productIds);
                 
                 // Sort products to match ML ranking
                 $productMap = [];
@@ -185,7 +188,7 @@ class SearchController extends Controller {
             }
 
             // Get quick suggestions from database
-            $suggestions = $this->productModel->getSearchSuggestions($query, 5);
+            $suggestions = $this->searchMethodModel->getSearchSuggestions($query, 5);
 
             echo json_encode([
                 'success' => true,
@@ -209,7 +212,7 @@ class SearchController extends Controller {
         
         try {
             // Get product details
-            $product = $this->productModel->findById($productId);
+            $product = $this->searchMethodModel->findById($productId);
             
             if (!$product) {
                 echo json_encode([
@@ -235,7 +238,7 @@ class SearchController extends Controller {
                     });
                     
                     // Get product details
-                    $relatedProducts = $this->productModel->getProductsByIds(array_slice($productIds, 0, 5));
+                    $relatedProducts = $this->searchMethodModel->getProductsByIds(array_slice($productIds, 0, 5));
                     
                     echo json_encode([
                         'success' => true,
@@ -246,7 +249,7 @@ class SearchController extends Controller {
             }
 
             // Fallback: Get products from same category
-            $relatedProducts = $this->productModel->getRelatedProducts($productId, 5);
+            $relatedProducts = $this->searchMethodModel->getRelatedProducts($productId, 5);
             
             echo json_encode([
                 'success' => true,
