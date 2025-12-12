@@ -23,6 +23,9 @@
                 <?php if ($searchTerm): ?>
                     <input type="hidden" name="search" value="<?= htmlspecialchars($searchTerm) ?>">
                 <?php endif; ?>
+                <?php if (isset($_GET['page'])): ?>
+                    <input type="hidden" name="page" value="<?= htmlspecialchars($_GET['page']) ?>">
+                <?php endif; ?>
                 
                 <label for="sortSelect">Sort by:</label>
                 <select name="sort" id="sortSelect" class="sort-select" onchange="this.form.submit()">
@@ -176,5 +179,87 @@
                 </a>
             <?php endforeach; ?>
         </div>
+
+        <!-- Pagination -->
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination">
+                <?php
+                // Build query string for pagination links
+                $queryParams = [];
+                if ($currentCategory) $queryParams['category'] = $currentCategory;
+                if ($currentSort !== 'newest') $queryParams['sort'] = $currentSort;
+                if ($searchTerm) $queryParams['search'] = $searchTerm;
+                if ($priceMin) $queryParams['price_min'] = $priceMin;
+                if ($priceMax) $queryParams['price_max'] = $priceMax;
+                
+                $baseQuery = !empty($queryParams) ? '&' . http_build_query($queryParams) : '';
+                ?>
+
+                <!-- Previous Button -->
+                <?php if ($currentPage > 1): ?>
+                    <a href="/collections/index?page=<?= $currentPage - 1 ?><?= $baseQuery ?>" 
+                       class="pagination-btn">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </span>
+                <?php endif; ?>
+
+                <!-- Page Numbers -->
+                <div class="pagination-numbers">
+                    <?php
+                    $startPage = max(1, $currentPage - 2);
+                    $endPage = min($totalPages, $currentPage + 2);
+                    
+                    // Always show first page
+                    if ($startPage > 1): ?>
+                        <a href="/collections/index?page=1<?= $baseQuery ?>" 
+                           class="pagination-number">1</a>
+                        <?php if ($startPage > 2): ?>
+                            <span class="pagination-ellipsis">...</span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                        <?php if ($i == $currentPage): ?>
+                            <span class="pagination-number active"><?= $i ?></span>
+                        <?php else: ?>
+                            <a href="/collections/index?page=<?= $i ?><?= $baseQuery ?>" 
+                               class="pagination-number"><?= $i ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+
+                    <!-- Always show last page -->
+                    <?php if ($endPage < $totalPages): ?>
+                        <?php if ($endPage < $totalPages - 1): ?>
+                            <span class="pagination-ellipsis">...</span>
+                        <?php endif; ?>
+                        <a href="/collections/index?page=<?= $totalPages ?><?= $baseQuery ?>" 
+                           class="pagination-number"><?= $totalPages ?></a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Next Button -->
+                <?php if ($currentPage < $totalPages): ?>
+                    <a href="/collections/index?page=<?= $currentPage + 1 ?><?= $baseQuery ?>" 
+                       class="pagination-btn">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <!-- Pagination Info -->
+            <div class="pagination-info">
+                Showing <?= (($currentPage - 1) * $itemsPerPage) + 1 ?> to 
+                <?= min($currentPage * $itemsPerPage, $totalProducts) ?> of 
+                <?= $totalProducts ?> products
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>

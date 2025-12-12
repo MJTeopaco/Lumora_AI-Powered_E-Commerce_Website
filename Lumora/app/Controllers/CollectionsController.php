@@ -6,7 +6,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Product;
-use App\Models\ProductReview; // Added Review Model
+use App\Models\ProductReview;
 use App\Models\User;
 use App\Models\UserProfile;
 
@@ -15,13 +15,13 @@ class CollectionsController extends Controller {
     protected $productModel;
     protected $userModel;
     protected $profileModel;
-    protected $reviewModel; // Added property
+    protected $reviewModel;
 
     public function __construct() {
         $this->productModel = new Product();
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
-        $this->reviewModel = new ProductReview(); // Instantiate Review Model
+        $this->reviewModel = new ProductReview();
     }
 
     /**
@@ -39,10 +39,8 @@ class CollectionsController extends Controller {
             $userId = Session::get('user_id');
             $username = Session::get('username');
             
-            // Get user profile
             $userProfile = $this->profileModel->getByUserId($userId);
             
-            // Default profile if empty
             if (!$userProfile) {
                 $userProfile = [
                     'profile_pic' => '',
@@ -53,10 +51,7 @@ class CollectionsController extends Controller {
                 ];
             }
             
-            // Check if seller
             $isSeller = $this->userModel->checkRole($userId);
-            
-            // Optional: Add logic to fetch actual cart/notification counts here
             $cartCount = 0; 
             $notificationCount = 0;
         }
@@ -72,7 +67,7 @@ class CollectionsController extends Controller {
     }
 
     /**
-     * Display all products with filters
+     * Display all products with filters and pagination
      */
     public function index() {
         // Get filter parameters
@@ -81,6 +76,11 @@ class CollectionsController extends Controller {
         $search = $_GET['search'] ?? '';
         $priceMin = $_GET['price_min'] ?? null;
         $priceMax = $_GET['price_max'] ?? null;
+        
+        // Pagination parameters
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $itemsPerPage = 12; // Products per page
+        $offset = ($page - 1) * $itemsPerPage;
 
         // Get all products
         if (!empty($search)) {
@@ -128,10 +128,16 @@ class CollectionsController extends Controller {
                 });
                 break;
             case 'popular':
-                // For now, just random shuffle
                 shuffle($products);
                 break;
         }
+
+        // Calculate pagination
+        $totalProducts = count($products);
+        $totalPages = ceil($totalProducts / $itemsPerPage);
+        
+        // Slice products for current page
+        $products = array_slice($products, $offset, $itemsPerPage);
 
         // Attach Review Stats to each product
         foreach ($products as &$product) {
@@ -149,24 +155,32 @@ class CollectionsController extends Controller {
 
         $data = array_merge($userData, [
             'pageTitle' => 'Shop All Products - Lumora',
-            'products' => array_values($products), // Re-index array
+            'products' => array_values($products),
             'categories' => $categories,
             'currentCategory' => $category,
             'currentSort' => $sort,
             'searchTerm' => $search,
             'priceMin' => $priceMin,
             'priceMax' => $priceMax,
-            'totalProducts' => count($products)
+            'totalProducts' => $totalProducts,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'itemsPerPage' => $itemsPerPage
         ]);
 
         $this->view('collections/index', $data);
     }
 
     /**
-     * Get products by category
+     * Get products by category with pagination
      */
     public function byCategory($categorySlug) {
         $conn = $this->productModel->getConnection();
+        
+        // Pagination parameters
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $itemsPerPage = 12;
+        $offset = ($page - 1) * $itemsPerPage;
         
         // Get category details
         $stmt = $conn->prepare("
@@ -183,7 +197,25 @@ class CollectionsController extends Controller {
             return;
         }
 
-        // Get products in this category
+        // Get total count
+        $stmt = $conn->prepare("
+            SELECT COUNT(DISTINCT p.product_id) as total
+            FROM products p
+            INNER JOIN product_category_links pcl ON p.product_id = pcl.product_id
+            INNER JOIN product_categories pc ON pcl.category_id = pc.category_id
+            WHERE pc.slug = ? 
+                AND p.status = 'PUBLISHED' 
+                AND p.is_deleted = 0
+        ");
+        $stmt->bind_param("s", $categorySlug);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $totalProducts = $result->fetch_assoc()['total'];
+        $stmt->close();
+        
+        $totalPages = ceil($totalProducts / $itemsPerPage);
+
+        // Get products in this category with pagination
         $stmt = $conn->prepare("
             SELECT 
                 p.product_id as id,
@@ -203,8 +235,9 @@ class CollectionsController extends Controller {
                 AND p.is_deleted = 0
             GROUP BY p.product_id
             ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
         ");
-        $stmt->bind_param("s", $categorySlug);
+        $stmt->bind_param("sii", $categorySlug, $itemsPerPage, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -234,7 +267,10 @@ class CollectionsController extends Controller {
             'products' => $products,
             'categories' => $categories,
             'currentCategory' => $categorySlug,
-            'totalProducts' => count($products)
+            'totalProducts' => $totalProducts,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'itemsPerPage' => $itemsPerPage
         ]);
 
         $this->view('collections/index', $data);
