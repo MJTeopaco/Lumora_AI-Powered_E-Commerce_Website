@@ -6,7 +6,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Product;
-use App\Models\Search;
+use App\Models\Product_SearchMethod;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Models\Services\SmartSearchService;
@@ -24,7 +24,7 @@ class SearchController extends Controller {
         $this->userModel = new User();
         $this->profileModel = new UserProfile();
         $this->searchService = new SmartSearchService();
-        $this->searchMethodModel = new Search();
+        $this->searchMethodModel = new Product_SearchMethod();
     }
 
     /**

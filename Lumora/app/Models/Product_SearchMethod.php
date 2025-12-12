@@ -1,11 +1,11 @@
 <?php
-// app/Models/Product.php - ADD THESE METHODS TO YOUR EXISTING Product.php
+// app/Models/Product_SearchMethod.php - ADD THESE METHODS TO YOUR EXISTING Product.php
 
 namespace App\Models;
 
 use App\Core\Database;
 
-class Search {
+class Product_SearchMethod {
     protected $conn;
 
     public function __construct() {
