@@ -310,7 +310,7 @@
                     <form id="register-captcha-form-element" action="<?= base_url('/auth/register-step-3') ?>" method="POST">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <div class="input-group captcha-group">
-                            <div class="g-recaptcha" data-sitekey="6LdpbwwsAAAAAGUr6X_3imAtgnaSBzwyzs20Lpdi"></div>
+                            <div class="g-recaptcha" data-sitekey="6LdrPCksAAAAAJx1G6vALS-6bQF-8Q6qhBb2HDNR"></div>
                         </div>
                         <button type="submit" class="submit-btn">Verify</button>
                     </form>
