@@ -126,44 +126,4 @@ function previewImage(input) {
     } else {
         fileName.textContent = 'No file chosen';
     }
-    function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'flex';
-        // Small timeout to allow display:flex to apply before adding opacity class
-        setTimeout(() => {
-            modal.classList.add('show');
-        }, 10);
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('show');
-        // Wait for animation to finish before hiding
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300); 
-        document.body.style.overflow = '';
-    }
-}
-
-// Close modal when clicking outside the content area
-window.addEventListener('click', function(event) {
-    if (event.target.classList.contains('modal')) {
-        closeModal(event.target.id);
-    }
-});
-
-// Close modal on Escape key press
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        const openModals = document.querySelectorAll('.modal.show');
-        openModals.forEach(modal => {
-            closeModal(modal.id);
-        });
-    }
-});
 }
