@@ -20,5 +20,13 @@
                 <p>Revenue trends, top products, and order performance</p>
             </div>
         </a>
+
+        <a href="/admin/machine-learning-reports" class="action-btn">
+            <i class="fas fa-chart-line"></i>
+            <div class="action-btn-text">
+                <h4>Machine Learning Reports</h4>
+                <p>monitor the quality and administrative efficiency provided by the auto-tagging feature</p>
+            </div>
+        </a>
     </div>
 </div>

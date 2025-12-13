@@ -15,10 +15,11 @@ import os
 
 # Database configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',  # Change to your DB user
-    'password': '',  # Change to your DB password
-    'database': 'lumora_db'  # Change to your database name
+    'host': os.environ.get('DB_HOST', 'sql305.infinityfree.com'),
+    'user': os.environ.get('DB_USER', 'if0_40627650'),
+    'password': os.environ.get('DB_PASSWORD', 'zDm97qyXmb'),
+    'database': os.environ.get('DB_NAME', 'if0_40627650_lumora_db'),
+    'port': os.environ.get('DB_PORT', '3306')
 }
 
 def fetch_products_from_db():

@@ -89,7 +89,7 @@ $isLoggedIn = $isLoggedIn ?? false;
 
       <a href="/collections?category=bags" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-bags.jpg" alt="Bags" class="category-thumb">
+          <img src="/img/placeholder-bags.png" alt="Bags" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Bags</span>
@@ -113,7 +113,7 @@ $isLoggedIn = $isLoggedIn ?? false;
 
       <a href="/collections?category=vintage" class="category-item">
         <div class="category-thumb-wrapper">
-          <img src="/img/placeholder-vintage.jpg" alt="Vintage" class="category-thumb">
+          <img src="/img/placeholder-vintage.png" alt="Vintage" class="category-thumb">
         </div>
         <div class="category-text">
           <span class="category-name">Vintage</span>

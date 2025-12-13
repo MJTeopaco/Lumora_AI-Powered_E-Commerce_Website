@@ -9,6 +9,7 @@ $partialsPath = __DIR__ . '/../partials/';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?? 'Admin Dashboard - Lumora' ?></title>
     <link rel="stylesheet" href="/css/admin.css">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -53,5 +54,7 @@ $partialsPath = __DIR__ . '/../partials/';
             <?= $content ?? '' ?>
         </main>
     </div>
+    <script src="/js/admin.js" defer></script>
+
 </body>
 </html>

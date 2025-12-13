@@ -153,6 +153,7 @@ $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/add-category', 'AdminController@addCategory');
 $router->post('/admin/update-category', 'AdminController@updateCategory');
 $router->post('/admin/delete-category', 'AdminController@deleteCategory');
+$router->get('/admin/machine-learning-reports', 'AdminController@machineLearningReports');
 
 // User Management Routes
 $router->get('/admin/users', 'AdminController@users');
