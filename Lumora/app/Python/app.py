@@ -50,7 +50,7 @@ DB_CONFIG = {
     'user': os.environ.get('DB_USER', 'if0_40627650'),
     'password': os.environ.get('DB_PASSWORD', 'zDm97qyXmb'),
     'database': os.environ.get('DB_NAME', 'if0_40627650_lumora_db'),
-    'port': os.environ.get('DB_NAME', '3306'),
+    'port': os.environ.get('DB_PORT', '3306'),
     'pool_name': 'search_pool',
     'pool_size': 5
 }
