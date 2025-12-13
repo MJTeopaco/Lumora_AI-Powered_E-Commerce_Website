@@ -15,6 +15,7 @@ use App\Helpers\AddProductHelper;
 use App\Helpers\RedirectHelper;
 use App\Helpers\EmailService;
 use App\Models\Services\TaggingService;
+use App\Helpers\DatabaseSync;
 
 class ShopController extends Controller {
 
@@ -175,12 +176,14 @@ class ShopController extends Controller {
         $conn->begin_transaction();
 
         try {
+            // Create product in InfinityFree database
             $productId = $this->shopModel->createProduct($productData);
 
             if (!$productId) {
                 throw new \Exception('Failed to create product');
             }
 
+            // Link product to category in InfinityFree
             if (!$this->shopModel->linkProductToCategory($productId, $_POST['category_id'])) {
                 throw new \Exception('Failed to link product to category');
             }
@@ -230,16 +233,82 @@ class ShopController extends Controller {
 
             $conn->commit();
 
+            // NEW: Sync to Railway database after successful InfinityFree save
+            try {
+                $dbSync = new DatabaseSync($conn);
+                
+                // Prepare product data for Railway sync
+                $railwayProductData = [
+                    'product_id' => $productId,
+                    'shop_id' => $shopData['shop_id'],
+                    'name' => $productData['name'],
+                    'slug' => $productData['slug'],
+                    'short_description' => $productData['short_description'],
+                    'description' => $productData['description'],
+                    'cover_picture' => $productData['cover_picture'],
+                    'status' => $productData['status'],
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+                
+                $railwaySynced = $dbSync->syncProductToRailway($railwayProductData, $_POST['category_id']);
+                
+                if ($railwaySynced) {
+                    error_log("Product ID $productId successfully synced to Railway database");
+                } else {
+                    error_log("Warning: Product ID $productId saved to InfinityFree but failed to sync to Railway");
+                }
+                
+                $dbSync->close();
+                
+            } catch (\Exception $syncError) {
+                // Log the error but don't fail the whole operation
+                error_log("Railway sync error: " . $syncError->getMessage());
+            }
+
             Session::set('success', "Product created successfully with {$variantsProcessed} variant(s)!");
             RedirectHelper::redirect('/shop/products');
 
         } catch (\Exception $e) {
             $conn->rollback();
-            AddProductHelper::cleanupFiles($uploadedFiles);
-
-            Session::set('error', 'Failed to create product: ' . $e->getMessage());
+            
+            foreach ($uploadedFiles as $file) {
+                $filePath = "public/uploads/products/" . $file;
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+            }
+            
+            Session::set('error', $e->getMessage());
             RedirectHelper::redirect('/shop/add-product');
         }
+    }
+
+    // ... [Keep all remaining methods unchanged: orders, orderDetails, updateOrderStatus, cancellations, addresses, reviews, earnings, predictTags] ...
+    
+    /**
+     * NEW: Utility method to sync all existing products to Railway
+     * Can be accessed via /shop/sync-railway (you may want to protect this endpoint)
+     */
+    public function syncToRailway() {
+        // Optional: Add admin/security check here
+        if (!Session::has('user_id')) {
+            Session::set('error', 'Unauthorized access');
+            RedirectHelper::redirect('/login');
+        }
+        
+        $conn = $this->shopModel->getConnection();
+        $dbSync = new DatabaseSync($conn);
+        
+        $result = $dbSync->syncAllProducts();
+        $dbSync->close();
+        
+        if ($result['success']) {
+            Session::set('success', $result['message']);
+        } else {
+            Session::set('error', $result['message']);
+        }
+        
+        RedirectHelper::redirect('/shop/dashboard');
     }
 
     public function orders() {
