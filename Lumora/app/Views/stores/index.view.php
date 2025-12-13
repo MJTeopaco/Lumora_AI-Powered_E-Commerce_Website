@@ -1,7 +1,6 @@
 <?php
 // app/Views/stores/index.view.php
-// Fixed: Automatically finds shop images even if Database is NULL by scanning the directory
-// Handles nested 'public/public/uploads' structure.
+// Fixed: Corrected image path resolution to match shop-profile.view.php
 
 $shops = $shops ?? [];
 $featuredSellers = $featuredSellers ?? [];
@@ -13,40 +12,38 @@ $searchTerm = $searchTerm ?? '';
 $totalShops = $totalShops ?? 0;
 
 /**
- * Smart Helper to resolve image paths.
- * 1. If path exists in DB, clean and format it.
- * 2. If path is EMPTY in DB, try to find the file on disk using Shop ID.
- * 3. Handles the nested 'public/public/uploads' folder structure.
+ * Smart Helper to resolve image paths - FIXED to match shop-profile.view.php
  */
 $resolveShopImage = function($path, $shopId, $type = 'banner') {
-    // 1. If we have a path from DB, just fix the URL format
-    if (!empty($path)) {
-        $cleanPath = ltrim($path, '/');
-        // Fix: If it's a standard upload path, verify if it needs 'public/' prefix
-        // (For your specific structure: public/public/uploads/...)
-        if (strpos($cleanPath, 'uploads/shop/') === 0) {
-            return 'public/' . $cleanPath;
+    if (empty($path)) {
+        // Try Auto-Discovery if DB is NULL
+        $dirType = ($type === 'banner') ? 'banners' : 'profiles';
+        $prefix  = ($type === 'banner') ? 'banner_' : 'profile_';
+        
+        // Search in uploads/shop/[type] directory
+        $searchPattern = 'uploads/shop/' . $dirType . '/' . $prefix . $shopId . '_*.*';
+        $files = glob($searchPattern);
+        
+        if ($files && !empty($files)) {
+            // Return path without 'public/' prefix - base_url() will handle it
+            return $files[0]; 
         }
+        
+        return null;
+    }
+    
+    // Clean the path from DB
+    $cleanPath = ltrim($path, '/');
+    
+    // If path already starts with 'uploads/', just return it
+    // base_url() will add the domain
+    if (strpos($cleanPath, 'uploads/') === 0) {
         return $cleanPath;
     }
-
-    // 2. If DB is NULL, attempt Auto-Discovery
-    // Look inside the nested public folder: public/public/uploads/shop/[banners|profiles]
-    $dirType = ($type === 'banner') ? 'banners' : 'profiles';
-    $prefix  = ($type === 'banner') ? 'banner_' : 'profile_';
     
-    // Pattern to search: public/uploads/shop/banners/banner_{id}_*
-    // Note: Relative to public/index.php execution context
-    $searchPattern = 'public/uploads/shop/' . $dirType . '/' . $prefix . $shopId . '_*.*';
-    
-    $files = glob($searchPattern);
-    
-    if ($files && !empty($files)) {
-        // Return the first match found, ensuring it has the 'public/' prefix for the URL
-        return $files[0]; 
-    }
-
-    return null; // No image found
+    // Legacy: just a filename, prepend the full path
+    $folder = ($type === 'banner') ? 'banners' : 'profiles';
+    return "uploads/shop/{$folder}/" . basename($cleanPath);
 };
 ?>
 
@@ -332,8 +329,7 @@ $resolveShopImage = function($path, $shopId, $type = 'banner') {
                                             <?php foreach ($shop['product_previews'] as $preview): ?>
                                                 <a href="<?= base_url('/products/' . htmlspecialchars($preview['slug'])) ?>" class="preview-thumb">
                                                     <?php if (!empty($preview['cover_picture'])): 
-                                                        $prodImg = $preview['cover_picture'];
-                                                        if (strpos($prodImg, 'uploads/shop/') === 0) $prodImg = 'public/' . $prodImg;
+                                                        $prodImg = ltrim($preview['cover_picture'], '/');
                                                     ?>
                                                         <img src="<?= base_url($prodImg) ?>" 
                                                              alt="<?= htmlspecialchars($preview['name']) ?>"

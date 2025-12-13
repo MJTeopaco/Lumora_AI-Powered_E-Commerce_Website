@@ -262,35 +262,42 @@ class ShopProfileController extends Controller {
                 return;
             }
 
-            // === FIX START: Path Logic for Nested Public Folder ===
-            $relativePath = 'uploads/shop/banners/';
-            // We use DOCUMENT_ROOT/public/ to reach the inner 'public' folder where uploads live
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/' . $relativePath;
+            // Define the relative path that will be stored in the database
+            $relativeDbPath = 'uploads/shop/banners/';
             
+            // Build the actual filesystem path
+            // This points to: /htdocs/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/uploads/shop/banners/
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/' . $relativeDbPath;
+            
+            // Create directory if it doesn't exist
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                if (!mkdir($uploadDir, 0755, true)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Failed to create upload directory']);
+                    return;
+                }
             }
 
             // Generate unique filename
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'banner_' . $shop_id . '_' . time() . '.' . $extension;
-            $filepath = $uploadDir . $filename;
+            $fullFilePath = $uploadDir . $filename;
             
-            // This is what we save to DB: 'uploads/shop/banners/filename.jpg'
-            $dbPath = $relativePath . $filename;
+            // This is what we save to the database (relative path from public folder)
+            $dbPath = $relativeDbPath . $filename;
 
             // Move uploaded file
-            if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            if (move_uploaded_file($file['tmp_name'], $fullFilePath)) {
                 // Delete old banner if exists
                 if (!empty($shopData['shop_banner'])) {
-                    // Handle both old filename-only paths and new relative paths
                     $oldBannerPath = $shopData['shop_banner'];
-                    if (strpos($oldBannerPath, '/') === false) {
-                        // Old format: just filename
-                        $oldFile = $uploadDir . $oldBannerPath;
+                    
+                    // Handle both old and new path formats
+                    if (strpos($oldBannerPath, 'uploads/') === 0) {
+                        // New format: relative path like 'uploads/shop/banners/filename.jpg'
+                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/' . $oldBannerPath;
                     } else {
-                        // New format: relative path
-                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/public/' . ltrim($oldBannerPath, '/');
+                        // Old format: just filename or wrong path
+                        $oldFile = $uploadDir . basename($oldBannerPath);
                     }
                     
                     if (file_exists($oldFile) && is_file($oldFile)) {
@@ -298,7 +305,7 @@ class ShopProfileController extends Controller {
                     }
                 }
 
-                // Update database with FULL RELATIVE PATH
+                // Update database with the relative path
                 $result = $this->shopProfileModel->updateBanner($shop_id, $dbPath);
 
                 if ($result) {
@@ -306,19 +313,19 @@ class ShopProfileController extends Controller {
                         'success' => true,
                         'message' => 'Banner uploaded successfully',
                         'filename' => $filename,
-                        'url' => base_url('public/' . $dbPath) // Return full URL for JS preview
+                        'url' => base_url($dbPath) // Return URL for preview
                     ]);
                 } else {
                     // Delete uploaded file if database update fails
-                    unlink($filepath);
+                    unlink($fullFilePath);
                     $this->jsonResponse(['success' => false, 'message' => 'Failed to update database']);
                 }
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to move uploaded file']);
             }
-            // === FIX END ===
 
         } catch (\Exception $e) {
+            error_log('Banner upload error: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
@@ -364,31 +371,42 @@ class ShopProfileController extends Controller {
                 return;
             }
 
-            // === FIX START: Path Logic for Nested Public Folder ===
-            $relativePath = 'uploads/shop/profiles/';
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/public/' . $relativePath;
+            // Define the relative path that will be stored in the database
+            $relativeDbPath = 'uploads/shop/profiles/';
             
+            // Build the actual filesystem path
+            // This points to: /htdocs/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/uploads/shop/profiles/
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/' . $relativeDbPath;
+            
+            // Create directory if it doesn't exist
             if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                if (!mkdir($uploadDir, 0755, true)) {
+                    $this->jsonResponse(['success' => false, 'message' => 'Failed to create upload directory']);
+                    return;
+                }
             }
 
             // Generate unique filename
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'profile_' . $shop_id . '_' . time() . '.' . $extension;
-            $filepath = $uploadDir . $filename;
+            $fullFilePath = $uploadDir . $filename;
             
-            // This is what we save to DB: 'uploads/shop/profiles/filename.jpg'
-            $dbPath = $relativePath . $filename;
+            // This is what we save to the database (relative path from public folder)
+            $dbPath = $relativeDbPath . $filename;
 
             // Move uploaded file
-            if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            if (move_uploaded_file($file['tmp_name'], $fullFilePath)) {
                 // Delete old profile picture if exists
                 if (!empty($shopData['shop_profile'])) {
                     $oldProfilePath = $shopData['shop_profile'];
-                    if (strpos($oldProfilePath, '/') === false) {
-                        $oldFile = $uploadDir . $oldProfilePath;
+                    
+                    // Handle both old and new path formats
+                    if (strpos($oldProfilePath, 'uploads/') === 0) {
+                        // New format: relative path like 'uploads/shop/profiles/filename.jpg'
+                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/Lumora_AI-Powered_E-Commerce_Website/Lumora/public/' . $oldProfilePath;
                     } else {
-                        $oldFile = $_SERVER['DOCUMENT_ROOT'] . '/public/' . ltrim($oldProfilePath, '/');
+                        // Old format: just filename or wrong path
+                        $oldFile = $uploadDir . basename($oldProfilePath);
                     }
                     
                     if (file_exists($oldFile) && is_file($oldFile)) {
@@ -396,7 +414,7 @@ class ShopProfileController extends Controller {
                     }
                 }
 
-                // Update database with FULL RELATIVE PATH
+                // Update database with the relative path
                 $result = $this->shopProfileModel->updateProfilePicture($shop_id, $dbPath);
 
                 if ($result) {
@@ -404,19 +422,19 @@ class ShopProfileController extends Controller {
                         'success' => true,
                         'message' => 'Profile picture uploaded successfully',
                         'filename' => $filename,
-                        'url' => base_url('public/' . $dbPath) // Return full URL for JS preview
+                        'url' => base_url($dbPath) // Return URL for preview
                     ]);
                 } else {
                     // Delete uploaded file if database update fails
-                    unlink($filepath);
+                    unlink($fullFilePath);
                     $this->jsonResponse(['success' => false, 'message' => 'Failed to update database']);
                 }
             } else {
                 $this->jsonResponse(['success' => false, 'message' => 'Failed to move uploaded file']);
             }
-            // === FIX END ===
 
         } catch (\Exception $e) {
+            error_log('Profile upload error: ' . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
