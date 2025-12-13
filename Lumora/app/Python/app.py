@@ -840,8 +840,8 @@ def smart_search():
             }), 400
         
         query = data.get('query', '').strip()
-        top_k = data.get('top_k', 20)
-        min_similarity = data.get('min_similarity', 0.15)
+        top_k = data.get('top_k', 30)
+        min_similarity = data.get('min_similarity', 0.05)
         tag_boost_weight = data.get('tag_boost_weight', 0.3)
         
         if not query:
