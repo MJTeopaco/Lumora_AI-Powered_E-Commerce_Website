@@ -87,8 +87,8 @@ class SellerController extends Controller {
         // 3. Route based on status
         switch ($sellerStatus['status']) {
             case 'approved':
-                // Redirect to seller dashboard
-                header('Location: /seller/dashboard');
+                // FIX: Redirect to the correct shop dashboard route (was /seller/dashboard)
+                header('Location: /shop/dashboard');
                 exit();
                 
             case 'pending':
@@ -317,3 +317,4 @@ class SellerController extends Controller {
         $this->view('seller/shop-dashboard', $data, 'seller');
     }
 }
+?>
