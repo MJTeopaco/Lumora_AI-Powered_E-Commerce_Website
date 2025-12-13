@@ -46,10 +46,11 @@ db_pool = None
 
 # Database configuration (from environment variables)
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', ''),
-    'database': os.environ.get('DB_NAME', 'lumora_db'),
+    'host': os.environ.get('DB_HOST', 'sql305.infinityfree.com'),
+    'user': os.environ.get('DB_USER', 'if0_40627650'),
+    'password': os.environ.get('DB_PASSWORD', 'zDm97qyXmb'),
+    'database': os.environ.get('DB_NAME', 'if0_40627650_lumora_db'),
+    'port': os.environ.get('DB_NAME', '3306'),
     'pool_name': 'search_pool',
     'pool_size': 5
 }
