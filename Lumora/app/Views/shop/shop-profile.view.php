@@ -2,31 +2,25 @@
 // app/Views/shop/shop-profile.view.php
 
 /**
- * Helper to resolve image paths correctly for the Profile View.
- * Handles:
- * 1. Just filename (legacy) -> prepends public/uploads/shop/...
- * 2. Relative path (uploads/...) -> prepends public/
- * 3. Full path with public/ -> leaves as is
+ * SIMPLIFIED PATH RESOLVER - Fixed for your structure
+ * Database stores: 'uploads/shop/banners/filename.jpg'
+ * base_url() returns: 'https://lumora.infinityfreeapp.com/'
+ * Final URL should be: 'https://lumora.infinityfreeapp.com/uploads/shop/banners/filename.jpg'
  */
 $resolveProfileImage = function($path, $type) {
     if (empty($path)) return null;
     
-    // Clean path
+    // Clean the path
     $cleanPath = ltrim($path, '/');
     
-    // Case A: Already has 'public/' prefix (e.g. from Auto-Discovery)
-    if (strpos($cleanPath, 'public/') === 0) {
+    // If path already starts with 'uploads/', just pass it to base_url()
+    if (strpos($cleanPath, 'uploads/') === 0) {
         return base_url($cleanPath);
     }
     
-    // Case B: Has 'uploads/' path (New Standard from Controller)
-    if (strpos($cleanPath, 'uploads/') === 0) {
-        return base_url('public/' . $cleanPath);
-    }
-    
-    // Case C: Just a filename (Legacy DB records)
+    // Legacy: just a filename, prepend the full path
     $folder = ($type === 'banner') ? 'banners' : 'profiles';
-    return base_url("public/uploads/shop/{$folder}/" . $cleanPath);
+    return base_url("uploads/shop/{$folder}/" . basename($cleanPath));
 };
 
 // Resolve URLs for this specific page load

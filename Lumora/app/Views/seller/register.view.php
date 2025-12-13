@@ -1,19 +1,8 @@
 <?php
 // app/Views/seller/register.view.php
+// Main layout handles HTML/CSS/JS inclusions
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Become a Seller - Lumora</title>
-    <link rel="stylesheet" href="/css/main.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/seller-register.css">
-</head>
-<body>
-
-<div class="container">
+<div class="container seller-register-view">
     <div class="header">
         <h1><i class="fas fa-store"></i> Become a Seller on Lumora</h1>
         <p>Join our marketplace and start selling your products today</p>
@@ -42,7 +31,7 @@
         </div>
 
         <form action="/seller/register" method="POST" id="sellerRegistrationForm">
-            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             
             <div class="form-section">
                 <div class="section-title">
@@ -157,7 +146,7 @@
             <div class="terms-checkbox">
                 <input type="checkbox" id="terms" name="terms" required>
                 <label for="terms">
-                    I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> and <a href="/seller-policy" target="_blank">Seller Policy</a>.
+                    I agree to the <a href="#" id="terms-link">Terms and Conditions</a> and <a href="#" id="seller-policy-link">Seller Policy</a>.
                 </label>
             </div>
 
@@ -168,6 +157,4 @@
     </div>
 </div>
 
-<script src="/js/seller-register.js"></script>
-</body>
-</html>
+<?php require __DIR__ . '/../layouts/partials/seller-terms-modals.partial.php'; ?>

@@ -461,7 +461,7 @@ def smart_search():
         
         query = data.get('query', '').strip()
         top_k = data.get('top_k', 10)
-        min_similarity = data.get('min_similarity', 0.1)
+        min_similarity = data.get('min_similarity', 0.01)
         
         if not query:
             return jsonify({
