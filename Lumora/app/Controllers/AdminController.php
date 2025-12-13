@@ -561,4 +561,44 @@ class AdminController extends Controller {
         header('Location: /admin/payouts');
         exit;
     }
+
+    /**
+     * Machine Learning Reports - Smart Search & Auto-Tagging Analytics
+     * Add this method to AdminController.php
+     */
+    public function machineLearningReports() {
+        $this->checkAdminAccess();
+        
+        // Date filters (default last 30 days)
+        $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+        $endDate = $_GET['end_date'] ?? date('Y-m-d');
+        
+        // Fetch all ML-related data
+        $searchVolume = $this->adminModel->getSearchVolumeTrend($startDate, $endDate);
+        $missingTagsCount = $this->adminModel->getProductsMissingTags();
+        $missingTagsList = $this->adminModel->getProductsMissingTagsList(20);
+        $tagDensity = $this->adminModel->getTagDensityDistribution();
+        $autoTagStats = $this->adminModel->getAutoTaggingStats();
+        $topTags = $this->adminModel->getTopTags(20);
+        $confidenceDistribution = $this->adminModel->getConfidenceDistribution();
+        $taggingProgress = $this->adminModel->getTaggingProgressOverTime($startDate, $endDate);
+        
+        $data = [
+            'pageTitle' => 'ML Reports - Lumora',
+            'headerTitle' => 'Smart Search & Auto-Tagging Analytics',
+            'username' => Session::get('username'),
+            'userRole' => 'Administrator',
+            'searchVolume' => $searchVolume,
+            'missingTagsCount' => $missingTagsCount,
+            'missingTagsList' => $missingTagsList,
+            'tagDensity' => $tagDensity,
+            'autoTagStats' => $autoTagStats,
+            'topTags' => $topTags,
+            'confidenceDistribution' => $confidenceDistribution,
+            'taggingProgress' => $taggingProgress,
+            'dateRange' => ['start' => $startDate, 'end' => $endDate]
+        ];
+
+        $this->view('admin/machine-learning-reports', $data, 'admin');
+    }
 }

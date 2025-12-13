@@ -584,4 +584,219 @@ class Admin {
         $stmt->bind_param("si", $batchRef, $shopId);
         return $stmt->execute();
     }
+
+    // ==================== MACHINE LEARNING REPORTS ====================
+
+    /**
+     * Get search volume trend data
+     * Returns daily search counts for the specified date range
+     */
+    public function getSearchVolumeTrend($startDate, $endDate) {
+        // This assumes you'll create a search_logs table to track searches
+        // If you don't have one yet, this will return sample data structure
+        $stmt = $this->conn->prepare("
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as search_count
+            FROM search_logs
+            WHERE created_at BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+        
+        $stmt->bind_param("ss", $start, $end);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $data;
+    }
+
+    /**
+     * Get count of products with zero tags
+     */
+    public function getProductsMissingTags() {
+        $stmt = $this->conn->prepare("
+            SELECT COUNT(DISTINCT p.product_id) as count
+            FROM products p
+            LEFT JOIN product_tag_links ptl ON p.product_id = ptl.product_id
+            WHERE p.status = 'PUBLISHED' 
+            AND ptl.tag_id IS NULL
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $data['count'];
+    }
+
+    /**
+     * Get list of products missing tags for detailed view
+     */
+    public function getProductsMissingTagsList($limit = 20) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                p.product_id,
+                p.name,
+                p.slug,
+                s.shop_name,
+                p.created_at
+            FROM products p
+            LEFT JOIN product_tag_links ptl ON p.product_id = ptl.product_id
+            JOIN shops s ON p.shop_id = s.shop_id
+            WHERE p.status = 'PUBLISHED' 
+            AND ptl.tag_id IS NULL
+            GROUP BY p.product_id
+            ORDER BY p.created_at DESC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $products = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $products;
+    }
+
+    /**
+     * Get tag density distribution
+     * Returns histogram data showing how many tags products have
+     */
+    public function getTagDensityDistribution() {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                tag_count,
+                COUNT(*) as product_count
+            FROM (
+                SELECT 
+                    p.product_id,
+                    COUNT(ptl.tag_id) as tag_count
+                FROM products p
+                LEFT JOIN product_tag_links ptl ON p.product_id = ptl.product_id
+                WHERE p.status = 'PUBLISHED'
+                GROUP BY p.product_id
+            ) as tag_counts
+            GROUP BY tag_count
+            ORDER BY tag_count ASC
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $data;
+    }
+
+    /**
+     * Get auto-tagging statistics
+     */
+    public function getAutoTaggingStats() {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                COUNT(DISTINCT p.product_id) as total_products,
+                SUM(CASE WHEN ptl.is_auto_generated = 1 THEN 1 ELSE 0 END) as auto_tags,
+                SUM(CASE WHEN ptl.is_auto_generated = 0 THEN 1 ELSE 0 END) as manual_tags,
+                AVG(CASE WHEN ptl.is_auto_generated = 1 THEN ptl.confidence_score ELSE NULL END) as avg_confidence
+            FROM product_tag_links ptl
+            JOIN products p ON ptl.product_id = p.product_id
+            WHERE p.status = 'PUBLISHED'
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_assoc();
+        $stmt->close();
+        
+        return $data;
+    }
+
+    /**
+     * Get tag usage frequency
+     * Returns top N most used tags
+     */
+    public function getTopTags($limit = 20) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                pt.name,
+                COUNT(ptl.product_id) as usage_count,
+                SUM(CASE WHEN ptl.is_auto_generated = 1 THEN 1 ELSE 0 END) as auto_generated_count,
+                SUM(CASE WHEN ptl.is_auto_generated = 0 THEN 1 ELSE 0 END) as manual_count
+            FROM product_tags pt
+            JOIN product_tag_links ptl ON pt.tag_id = ptl.tag_id
+            JOIN products p ON ptl.product_id = p.product_id
+            WHERE p.status = 'PUBLISHED'
+            GROUP BY pt.tag_id
+            ORDER BY usage_count DESC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $tags = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $tags;
+    }
+
+    /**
+     * Get auto-tagging accuracy by confidence score ranges
+     */
+    public function getConfidenceDistribution() {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                CASE 
+                    WHEN confidence_score >= 0.9 THEN '0.9-1.0 (Excellent)'
+                    WHEN confidence_score >= 0.7 THEN '0.7-0.9 (Good)'
+                    WHEN confidence_score >= 0.5 THEN '0.5-0.7 (Fair)'
+                    WHEN confidence_score >= 0.3 THEN '0.3-0.5 (Low)'
+                    ELSE '0.0-0.3 (Very Low)'
+                END as confidence_range,
+                COUNT(*) as tag_count
+            FROM product_tag_links
+            WHERE is_auto_generated = 1 
+            AND confidence_score IS NOT NULL
+            GROUP BY confidence_range
+            ORDER BY MIN(confidence_score) DESC
+        ");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $data;
+    }
+
+    /**
+     * Get tagging completion rate over time
+     */
+    public function getTaggingProgressOverTime($startDate, $endDate) {
+        $stmt = $this->conn->prepare("
+            SELECT 
+                DATE(p.created_at) as date,
+                COUNT(DISTINCT p.product_id) as products_created,
+                COUNT(DISTINCT CASE WHEN ptl.tag_id IS NOT NULL THEN p.product_id END) as products_tagged
+            FROM products p
+            LEFT JOIN product_tag_links ptl ON p.product_id = ptl.product_id
+            WHERE p.status = 'PUBLISHED'
+            AND p.created_at BETWEEN ? AND ?
+            GROUP BY DATE(p.created_at)
+            ORDER BY date ASC
+        ");
+        
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+        
+        $stmt->bind_param("ss", $start, $end);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        return $data;
+    }
 }
