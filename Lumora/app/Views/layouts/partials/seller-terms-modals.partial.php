@@ -13,19 +13,13 @@
             <p>Welcome to Lumora. By registering as a seller ("Vendor") on our platform, you agree to be bound by these Terms and Conditions.</p>
 
             <h3>1. Seller Eligibility</h3>
-            <p>You must be at least 18 years old and legally able to enter into contracts. You agree to provide accurate, current, and complete information during the registration process and to update such information to keep it accurate, current, and complete.</p>
+            <p>You must be at least 18 years old and legally able to enter into contracts. You agree to provide accurate, current, and complete information during the registration process.</p>
 
-            <h3>2. Account Security</h3>
-            <p>You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password. You agree not to disclose your password to any third party.</p>
+            <h3>2. Content Ownership</h3>
+            <p>You retain all rights to the images and descriptions of products you list on Lumora. However, by listing products, you grant Lumora a license to use your content for marketing purposes.</p>
 
-            <h3>3. Content Ownership</h3>
-            <p>You retain all rights to the images and descriptions of products you list on Lumora. However, by listing products, you grant Lumora a non-exclusive, worldwide, royalty-free license to use, display, and reproduce your content for marketing and promotional purposes.</p>
-
-            <h3>4. Termination</h3>
-            <p>Lumora reserves the right to suspend or terminate your seller account at any time, without notice, for conduct that we believe violates these Terms or is harmful to other users of the Service, us, or third parties, or for any other reason.</p>
-
-            <h3>5. Liability</h3>
-            <p>Lumora is a marketplace platform. We are not responsible for the quality, safety, or legality of the items advertised, the truth or accuracy of the listings, or the ability of sellers to sell items.</p>
+            <h3>3. Termination</h3>
+            <p>Lumora reserves the right to suspend or terminate your seller account at any time for conduct that violates these Terms.</p>
         </div>
     </div>
 </div>
@@ -38,31 +32,19 @@
             <p class="effective-date">Last Updated: January 1, 2025</p>
         </div>
         <div class="modal-body">
-            <p>This Seller Policy is a part of our Terms of Service. It outlines your rights and obligations as a seller on Lumora.</p>
+            <p>This Seller Policy outlines your rights and obligations as a seller on Lumora.</p>
 
             <h3>1. Prohibited Items</h3>
-            <p>You may only list authentic, handcrafted, or curated accessories. The following are strictly prohibited:</p>
-            <ul>
-                <li>Counterfeit or "replica" luxury goods.</li>
-                <li>Items made from endangered species.</li>
-                <li>Stolen goods or property.</li>
-                <li>Weapons or hazardous materials.</li>
-            </ul>
+            <p>You may only list authentic, handcrafted, or curated accessories. Counterfeit goods, weapons, and hazardous materials are strictly prohibited.</p>
 
             <h3>2. Commission and Fees</h3>
-            <p>Lumora charges a flat commission rate of <strong>5%</strong> on the final sale price of each item (excluding shipping). This fee is automatically deducted from your payout. Payment processing fees (e.g., PayMongo) may also apply.</p>
+            <p>Lumora charges a flat commission rate of <strong>5%</strong> on the final sale price of each item. This fee is automatically deducted from your payout.</p>
 
             <h3>3. Shipping and Fulfillment</h3>
-            <p>Sellers are expected to ship orders within <strong>1-3 business days</strong> of purchase. You must provide valid tracking numbers for all shipments. Failure to ship on time may result in order cancellation and account suspension.</p>
+            <p>Sellers are expected to ship orders within <strong>1-3 business days</strong> of purchase and provide valid tracking numbers.</p>
 
-            <h3>4. Returns and Refunds</h3>
-            <p>Sellers must honor Lumora's 7-day return policy for items that are damaged, defective, or significantly not as described. For "change of mind" returns, sellers may set their own policies, provided they are clearly stated in the shop description.</p>
-
-            <h3>5. Payout Schedule</h3>
-            <p>Earnings are available for withdrawal 7 days after the order is marked as "Delivered" by the courier. This holding period ensures funds are available for potential refunds. Payouts are processed weekly on Wednesdays.</p>
-
-            <h3>6. Customer Service</h3>
-            <p>You agree to respond to customer inquiries within 24 hours. Professional and respectful communication is required at all times. Harassment of buyers or Lumora staff will result in immediate account termination.</p>
+            <h3>4. Payout Schedule</h3>
+            <p>Earnings are available for withdrawal 7 days after the order is marked as "Delivered".</p>
         </div>
     </div>
 </div>
@@ -87,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 modal.classList.add('show');
             }, 10);
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden'; 
         }
     }
 
@@ -130,14 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
             closeModal(e.target);
-        }
-    });
-
-    // Close on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal(termsModal);
-            closeModal(sellerPolicyModal);
         }
     });
 });

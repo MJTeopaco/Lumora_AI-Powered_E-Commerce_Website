@@ -6,6 +6,9 @@ use App\Core\Controller;
 use App\Core\Session;
 use App\Models\Seller;
 use App\Models\User;
+use App\Models\UserProfile;
+use App\Models\Cart;
+use App\Models\Notification;
 
 class SellerController extends Controller {
 
@@ -18,42 +21,47 @@ class SellerController extends Controller {
     }
 
     /**
-     * Display seller guidelines page
+     * Helper to fetch common header data (Profile, Cart, Notifications)
      */
-    public function guidelines() {
-        // Initialize default values
-        $isLoggedIn = Session::has('user_id');
-        $username = null;
-        $userProfile = null;
-        $cartCount = 0;
-        $notificationCount = 0;
-        $isSeller = false;
-    
-        // If logged in, fetch user data
-        if ($isLoggedIn) {
-            $userId = Session::get('user_id');
-            $username = Session::get('username');
-            
-            // Fetch profile for the avatar
-            $userProfile = (new \App\Models\UserProfile())->getByUserId($userId);
-    
-            // Fetch cart and notification counts
-            $cartCount = (new \App\Models\Cart())->getCartCount($userId);
-            $notificationCount = (new \App\Models\Notification())->getUnreadCount($userId);
-            
-            // Check if the user is a seller
-            $isSeller = $this->userModel->checkRole($userId);
-        }
-    
-        $data = [
-            'isLoggedIn' => $isLoggedIn,
+    private function getHeaderData($userId) {
+        $userProfile = (new UserProfile())->getByUserId($userId);
+        $cartCount = (new Cart())->getCartCount($userId);
+        $notifCount = (new Notification())->getUnreadCount($userId);
+        $isSeller = $this->userModel->checkRole($userId);
+        $username = Session::get('username');
+
+        return [
+            'isLoggedIn' => true,
             'username' => $username,
             'userProfile' => $userProfile,
             'cartCount' => $cartCount,
-            'notificationCount' => $notificationCount,
+            'notificationCount' => $notifCount,
             'isSeller' => $isSeller
         ];
-    
+    }
+
+    /**
+     * Display seller guidelines page
+     */
+    public function guidelines() {
+        $isLoggedIn = Session::has('user_id');
+        $data = [];
+
+        if ($isLoggedIn) {
+            $userId = Session::get('user_id');
+            $data = $this->getHeaderData($userId);
+        } else {
+            // Default data for guests
+            $data = [
+                'isLoggedIn' => false,
+                'cartCount' => 0,
+                'notificationCount' => 0,
+                'userProfile' => null,
+                'isSeller' => false
+            ];
+        }
+        
+        $data['pageTitle'] = 'Seller Guidelines - Lumora';
         $this->view('main/seller-guidelines', $data);
     }
 
@@ -69,52 +77,37 @@ class SellerController extends Controller {
         }
 
         $userId = Session::get('user_id');
+        
+        // 1. Fetch Header Data so Navbar works
+        $headerData = $this->getHeaderData($userId);
 
-        // --- Header Data Fetching ---
-        $username = Session::get('username');
-        $userProfile = (new \App\Models\UserProfile())->getByUserId($userId);
-        $cartCount = (new \App\Models\Cart())->getCartCount($userId);
-        $notificationCount = (new \App\Models\Notification())->getUnreadCount($userId);
-        $isSeller = $this->userModel->checkRole($userId);
-        // ----------------------------
-
-        // Check seller status
+        // 2. Check seller status
         $sellerStatus = $this->sellerModel->getSellerStatus($userId);
 
-        // Route based on status
+        // 3. Route based on status
         switch ($sellerStatus['status']) {
             case 'approved':
-                // Redirect to seller dashboard
-                header('Location: /seller/dashboard');
+                // FIX: Redirect to the correct shop dashboard route (was /seller/dashboard)
+                header('Location: /shop/dashboard');
                 exit();
                 
             case 'pending':
-                // Show pending approval page
-                $data = [
+                // Show pending approval page with header data
+                $data = array_merge($headerData, [
                     'shopName' => $sellerStatus['shop_name'],
                     'appliedAt' => $sellerStatus['applied_at'],
-                    'isLoggedIn' => true,
-                    'username' => $username,
-                    'userProfile' => $userProfile,
-                    'cartCount' => $cartCount,
-                    'notificationCount' => $notificationCount,
-                    'isSeller' => $isSeller
-                ];
+                    'pageTitle' => 'Application Pending - Lumora'
+                ]);
                 $this->view('seller/pending-approval', $data);
                 break;
                 
             case 'none':
             default:
-                // Show registration form
-                $data = [
+                // Show registration form with header data
+                $data = array_merge($headerData, [
                     'regions' => $this->getPhilippineRegions(),
-                    'isLoggedIn' => true,
-                    'username' => $username,
-                    'userProfile' => $userProfile,
-                    'cartCount' => $cartCount,
-                    'notificationCount' => $notificationCount,
-                    'isSeller' => $isSeller
-                ];
+                    'pageTitle' => 'Become a Seller - Lumora'
+                ]);
                 $this->view('seller/register', $data);
                 break;
         }
@@ -124,7 +117,6 @@ class SellerController extends Controller {
      * Handle seller registration form submission
      */
     public function registerSubmit() {
-        // ADDED: CSRF Protection
         $this->verifyCsrfToken();
 
         // Check if user is logged in
@@ -325,3 +317,4 @@ class SellerController extends Controller {
         $this->view('seller/shop-dashboard', $data, 'seller');
     }
 }
+?>

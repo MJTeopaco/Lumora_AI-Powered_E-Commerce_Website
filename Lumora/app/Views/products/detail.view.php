@@ -172,7 +172,7 @@
                         <?php if (!empty($shop['shop_description'])): ?>
                             <p class="shop-description"><?= htmlspecialchars($shop['shop_description']) ?></p>
                         <?php endif; ?>
-                        <a href="<?= base_url('/shop/' . $shop['slug']) ?>" class="btn-visit-shop">
+                        <a href="<?= base_url('/stores/' . $shop['slug']) ?>" class="btn-visit-shop">
                             Visit Shop <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>

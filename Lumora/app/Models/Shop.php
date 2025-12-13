@@ -22,41 +22,59 @@ class Shop {
 
     // ... [Previous methods remain unchanged: getSellerStatus, getShopByUserId, getShopById, updateBillingDetails, getDashboardStats, getTopProducts] ...
 
-    /**
-     * Get all shop products
-     */
-    public function getShopProducts($shopId) {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                p.product_id,
-                p.name,
-                p.slug,
-                p.short_description,
-                p.cover_picture,
-                p.status,
-                p.created_at,
-                COUNT(DISTINCT pv.variant_id) as variant_count,
-                MIN(pv.price) as min_price,
-                MAX(pv.price) as max_price,
-                SUM(pv.quantity) as total_stock
-            FROM products p
-            LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
-            WHERE p.shop_id = ? AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
-            GROUP BY p.product_id
-            ORDER BY p.created_at DESC
-        ");
-        
-        $stmt->bind_param("i", $shopId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $products = [];
-        while ($row = $result->fetch_assoc()) {
-            $products[] = $row;
+ /**
+ * Get all shop products
+ */
+public function getShopProducts($shopId) {
+    $stmt = $this->conn->prepare("
+        SELECT 
+            p.product_id,
+            p.name,
+            p.slug,
+            p.short_description,
+            p.cover_picture,
+            p.status,
+            p.created_at,
+            COUNT(DISTINCT pv.variant_id) as variant_count,
+            MIN(pv.price) as min_price,
+            MAX(pv.price) as max_price,
+            SUM(pv.quantity) as total_stock
+        FROM products p
+        LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+        WHERE p.shop_id = ? AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+        GROUP BY p.product_id
+        ORDER BY p.created_at DESC
+    ");
+    
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $products = [];
+    while ($row = $result->fetch_assoc()) {
+        // Fix the cover_picture path
+        if (!empty($row['cover_picture'])) {
+            $coverPic = $row['cover_picture'];
+            
+            // Remove leading slashes
+            $coverPic = ltrim($coverPic, '/');
+            
+            // Remove ALL instances of 'public/' from the path
+            $coverPic = str_replace('public/', '', $coverPic);
+            
+            // Ensure it starts with 'uploads/'
+            if (strpos($coverPic, 'uploads/') !== 0) {
+                $coverPic = 'uploads/' . $coverPic;
+            }
+            
+            $row['cover_picture'] = $coverPic;
         }
         
-        return $products;
+        $products[] = $row;
     }
+    
+    return $products;
+}
 
     // ... [Keep all other existing methods: getShopOrders, getRecentOrders, getOrderDetails, getOrderItems, updateOrderStatus, getOrderStatsByStatus, getTotalOrderCount, getCancelledOrders, getShopAddress, createShop, updateShop, deleteShop, getAllCategories, createProduct, linkProductToCategory, getOrCreateTag, linkProductToTag, getAllActiveShops, getFeaturedShops, getShopBySlug, getShopProductPreviews, getShopProductCount, getAvailableRegions, getAvailableSpecialties] ...
     
@@ -729,102 +747,110 @@ class Shop {
     }
 
     /**
-     * Get all active shops with location and product info
-     */
-    public function getAllActiveShops() {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                s.shop_id,
-                s.user_id,
-                s.shop_name,
-                s.slug,
-                s.shop_description,
-                s.contact_email,
-                s.contact_phone,
-                s.shop_banner,
-                s.shop_profile,
-                s.created_at,
-                a.city,
-                a.province,
-                a.region,
-                up.profile_pic,
-                up.full_name as owner_name,
-                COUNT(DISTINCT p.product_id) as product_count,
-                COUNT(DISTINCT o.order_id) as order_count,
-                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
-            FROM shops s
-            LEFT JOIN addresses a ON s.address_id = a.address_id
-            LEFT JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN user_profiles up ON u.user_id = up.user_id
-            LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
-            LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
-            LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
-            LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
-            WHERE s.is_deleted = 0
-            GROUP BY s.shop_id
-            ORDER BY order_count DESC, product_count DESC
-        ");
-        
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $shops = [];
-        while ($row = $result->fetch_assoc()) {
-            $shops[] = $row;
-        }
-        
-        $stmt->close();
-        return $shops;
+ * Get all active shops with location and product info
+ */
+public function getAllActiveShops() {
+    $stmt = $this->conn->prepare("
+        SELECT 
+            s.shop_id,
+            s.user_id,
+            s.shop_name,
+            s.slug,
+            s.shop_description,
+            s.contact_email,
+            s.contact_phone,
+            s.shop_banner,
+            s.shop_profile,
+            s.created_at,
+            a.city,
+            a.province,
+            a.region,
+            up.profile_pic,
+            up.full_name as owner_name,
+            COUNT(DISTINCT p.product_id) as product_count,
+            COUNT(DISTINCT o.order_id) as order_count,
+            GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
+        FROM shops s
+        INNER JOIN user_roles ur ON s.user_id = ur.user_id
+        INNER JOIN roles r ON ur.role_id = r.role_id
+        LEFT JOIN addresses a ON s.address_id = a.address_id
+        LEFT JOIN users u ON s.user_id = u.user_id
+        LEFT JOIN user_profiles up ON u.user_id = up.user_id
+        LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+        LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
+        LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+        LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+        WHERE s.is_deleted = 0
+        AND r.name = 'seller'
+        AND ur.is_approved = 1
+        GROUP BY s.shop_id
+        ORDER BY order_count DESC, product_count DESC
+    ");
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $shops = [];
+    while ($row = $result->fetch_assoc()) {
+        $shops[] = $row;
     }
+    
+    $stmt->close();
+    return $shops;
+}
 
     /**
-     * Get featured shops (top sellers)
-     */
-    public function getFeaturedShops($limit = 3) {
-        $stmt = $this->conn->prepare("
-            SELECT 
-                s.shop_id,
-                s.shop_name,
-                s.slug,
-                s.shop_description,
-                s.shop_banner,
-                s.shop_profile,
-                s.created_at,
-                a.city,
-                a.province,
-                a.region,
-                up.profile_pic,
-                up.full_name as owner_name,
-                COUNT(DISTINCT p.product_id) as product_count,
-                COUNT(DISTINCT o.order_id) as order_count,
-                COALESCE(SUM(CASE WHEN o.order_status IN ('DELIVERED', 'COMPLETED') THEN o.total_amount ELSE 0 END), 0) as total_revenue,
-                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
-            FROM shops s
-            LEFT JOIN addresses a ON s.address_id = a.address_id
-            LEFT JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN user_profiles up ON u.user_id = up.user_id
-            LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
-            LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
-            LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
-            LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
-            WHERE s.is_deleted = 0
-            GROUP BY s.shop_id
-            ORDER BY total_revenue DESC, order_count DESC
-            LIMIT ?
-        ");
-        
-        $stmt->bind_param("i", $limit);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        $shops = [];
-        while ($row = $result->fetch_assoc()) {
-            $shops[] = $row;
-        }
-        
-        $stmt->close();
-        return $shops;
+ * Get featured shops (top sellers)
+ */
+public function getFeaturedShops($limit = 3) {
+    $stmt = $this->conn->prepare("
+        SELECT 
+            s.shop_id,
+            s.shop_name,
+            s.slug,
+            s.shop_description,
+            s.shop_banner,
+            s.shop_profile,
+            s.created_at,
+            a.city,
+            a.province,
+            a.region,
+            up.profile_pic,
+            up.full_name as owner_name,
+            COUNT(DISTINCT p.product_id) as product_count,
+            COUNT(DISTINCT o.order_id) as order_count,
+            COALESCE(SUM(CASE WHEN o.order_status IN ('DELIVERED', 'COMPLETED') THEN o.total_amount ELSE 0 END), 0) as total_revenue,
+            GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as specialties
+        FROM shops s
+        INNER JOIN user_roles ur ON s.user_id = ur.user_id
+        INNER JOIN roles r ON ur.role_id = r.role_id
+        LEFT JOIN addresses a ON s.address_id = a.address_id
+        LEFT JOIN users u ON s.user_id = u.user_id
+        LEFT JOIN user_profiles up ON u.user_id = up.user_id
+        LEFT JOIN products p ON s.shop_id = p.shop_id AND p.is_deleted = 0 AND p.status = 'PUBLISHED'
+        LEFT JOIN orders o ON s.shop_id = o.shop_id AND o.is_deleted = 0
+        LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+        LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+        WHERE s.is_deleted = 0
+        AND r.name = 'seller'
+        AND ur.is_approved = 1
+        GROUP BY s.shop_id
+        ORDER BY total_revenue DESC, order_count DESC
+        LIMIT ?
+    ");
+    
+    $stmt->bind_param("i", $limit);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $shops = [];
+    while ($row = $result->fetch_assoc()) {
+        $shops[] = $row;
     }
+    
+    $stmt->close();
+    return $shops;
+}
 
     /**
      * Get shop by slug

@@ -22,6 +22,8 @@
         <link rel="stylesheet" href="<?= base_url('/css/notifications.css') ?>">
         <link rel="stylesheet" href="<?= base_url('/css/stores.css') ?>">
 
+        <link rel="stylesheet" href="<?= base_url('/css/seller-register.css') ?>">
+
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         
         <script>
@@ -69,5 +71,6 @@
         <script src="<?= base_url('/js/cart.js') ?>" defer></script>
         <script src="<?= base_url('/js/notifications.js') ?>" defer></script>
         <script src="<?= base_url('/js/stores.js') ?>" defer></script>
+        <script src="<?= base_url('/js/seller-register.js') ?>" defer></script>
     </body>
     </html>

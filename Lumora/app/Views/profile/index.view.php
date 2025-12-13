@@ -104,4 +104,5 @@
 <!-- Modals -->
 <?php include __DIR__ . '/../layouts/partials/profile-modals.partial.php'; ?>
 
+<script src="/js/profile-common.js"></script>
 <script src="/js/profile-index.js"></script>
