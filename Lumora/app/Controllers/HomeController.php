@@ -82,7 +82,7 @@ class HomeController extends Controller {
         $categoryCounts = $this->productModel->getCategoryCounts();
 
         // 2. Get all products (or featured products)
-        $products = $this->productModel->getAllProducts();
+        $products = $this->productModel->getAllProducts(8);
 
         // 3. Get Review Stats for each product
         foreach ($products as &$product) {

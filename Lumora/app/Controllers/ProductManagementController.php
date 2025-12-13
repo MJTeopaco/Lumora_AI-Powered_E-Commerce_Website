@@ -240,10 +240,10 @@ class ProductManagementController extends Controller {
             }
 
             // Update category link
-            if (isset($_POST['category_id'])) {
-                $this->productModel->removeProductCategoryLinks($id);
-                $this->productModel->linkProductToCategory($id, intval($_POST['category_id']));
-            }
+            if (!empty($_POST['category_id'])) { // CHANGE: Use !empty instead of isset
+    $this->productModel->removeProductCategoryLinks($id);
+    $this->productModel->linkProductToCategory($id, intval($_POST['category_id']));
+}
 
             // Update tags
             if (isset($_POST['tags'])) {

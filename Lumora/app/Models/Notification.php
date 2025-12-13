@@ -1,5 +1,5 @@
 <?php
-// app/Models/Notification.php - ENHANCED VERSION
+// app/Models/Notification.php
 
 namespace App\Models;
 
@@ -35,16 +35,19 @@ class Notification {
 
     /**
      * Create a new notification
+     * FIXED: Uses PHP date() to ensure timezone consistency
      */
     public function createNotification($userId, $title, $message, $type, $referenceId = null, $metadata = null) {
         $query = "INSERT INTO notifications 
                   (user_id, title, message, type, reference_id, metadata, is_read, created_at) 
-                  VALUES (?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)";
+                  VALUES (?, ?, ?, ?, ?, ?, 0, ?)";
         
         $metadataJson = $metadata ? json_encode($metadata) : null;
+        $createdAt = date('Y-m-d H:i:s'); // Use PHP's Manila time
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("isssis", $userId, $title, $message, $type, $referenceId, $metadataJson);
+        // Added 's' to types string for created_at
+        $stmt->bind_param("isssiss", $userId, $title, $message, $type, $referenceId, $metadataJson, $createdAt);
         
         $success = $stmt->execute();
         $notificationId = $success ? $this->conn->insert_id : false;
@@ -113,7 +116,6 @@ class Notification {
      * Get notification counts by type
      */
     public function getNotificationCounts($userId) {
-        // FIXED: Added backticks around `read` because it is a reserved keyword in MySQL
         $query = "SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread,
@@ -136,14 +138,17 @@ class Notification {
 
     /**
      * Mark single notification as read
+     * FIXED: Uses PHP date()
      */
     public function markAsRead($notificationId, $userId) {
         $query = "UPDATE notifications 
-                  SET is_read = 1, read_at = CURRENT_TIMESTAMP 
+                  SET is_read = 1, read_at = ? 
                   WHERE notification_id = ? AND user_id = ?";
         
+        $readAt = date('Y-m-d H:i:s'); // Use PHP's Manila time
+        
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("ii", $notificationId, $userId);
+        $stmt->bind_param("sii", $readAt, $notificationId, $userId);
         $success = $stmt->execute();
         $stmt->close();
         
@@ -152,14 +157,17 @@ class Notification {
     
     /**
      * Mark all as read
+     * FIXED: Uses PHP date()
      */
     public function markAllAsRead($userId) {
         $query = "UPDATE notifications 
-                  SET is_read = 1, read_at = CURRENT_TIMESTAMP 
+                  SET is_read = 1, read_at = ? 
                   WHERE user_id = ? AND is_read = 0";
         
+        $readAt = date('Y-m-d H:i:s'); // Use PHP's Manila time
+        
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $userId);
+        $stmt->bind_param("si", $readAt, $userId);
         $success = $stmt->execute();
         $stmt->close();
         
@@ -216,17 +224,21 @@ class Notification {
 
     /**
      * Check if similar notification exists (prevent duplicates)
+     * FIXED: Uses PHP time for comparison
      */
     public function similarNotificationExists($userId, $type, $referenceId, $withinMinutes = 5) {
+        // Calculate the cutoff time using PHP (Manila Time)
+        $cutoffTime = date('Y-m-d H:i:s', strtotime("-{$withinMinutes} minutes"));
+
         $query = "SELECT notification_id FROM notifications 
                   WHERE user_id = ? 
                   AND type = ? 
                   AND reference_id = ? 
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+                  AND created_at >= ?
                   LIMIT 1";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("isii", $userId, $type, $referenceId, $withinMinutes);
+        $stmt->bind_param("isis", $userId, $type, $referenceId, $cutoffTime);
         $stmt->execute();
         $result = $stmt->get_result();
         $exists = $result->num_rows > 0;
@@ -394,18 +406,21 @@ class Notification {
 
     /**
      * Bulk create notifications (for promotions/announcements)
+     * FIXED: Uses PHP date()
      */
     public function bulkCreateNotifications($userIds, $title, $message, $type = self::TYPE_PROMOTION, $metadata = null) {
         $query = "INSERT INTO notifications 
                   (user_id, title, message, type, metadata, is_read, created_at) 
-                  VALUES (?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)";
+                  VALUES (?, ?, ?, ?, ?, 0, ?)";
         
         $metadataJson = $metadata ? json_encode($metadata) : null;
+        $createdAt = date('Y-m-d H:i:s'); // Use PHP's Manila time
+        
         $stmt = $this->conn->prepare($query);
         
         $successCount = 0;
         foreach ($userIds as $userId) {
-            $stmt->bind_param("issss", $userId, $title, $message, $type, $metadataJson);
+            $stmt->bind_param("isssss", $userId, $title, $message, $type, $metadataJson, $createdAt);
             if ($stmt->execute()) {
                 $successCount++;
             }
@@ -417,14 +432,17 @@ class Notification {
 
     /**
      * Clean old notifications (optional - run via cron)
+     * Uses PHP date to determine cutoff
      */
     public function deleteOldNotifications($daysOld = 90) {
+        $cutoffDate = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+        
         $query = "DELETE FROM notifications 
-                  WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY) 
+                  WHERE created_at < ?
                   AND is_read = 1";
         
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("i", $daysOld);
+        $stmt->bind_param("s", $cutoffDate);
         $success = $stmt->execute();
         $affectedRows = $stmt->affected_rows;
         $stmt->close();

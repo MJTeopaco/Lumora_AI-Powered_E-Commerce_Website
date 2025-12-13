@@ -18,36 +18,37 @@ class Product {
     }
 
     /**
-     * Get all published products with basic info
-     */
-    public function getAllProducts($limit = 12, $offset = 0) {
-        $query = "SELECT 
-                    p.product_id as id,
-                    p.name,
-                    p.short_description as description,
-                    p.cover_picture as image,
-                    p.slug,
-                    MIN(pv.price) as price,
-                    NULL as old_price,
-                    SUM(pv.quantity) as stock,
-                    GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
-                  FROM products p
-                  LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
-                  LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
-                  LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
-                  WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
-                  GROUP BY p.product_id
-                  ORDER BY p.created_at DESC
-                  ";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $products = $result->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        
-        return $products;
-    }
+ * Get all published products with basic info
+ */
+public function getAllProducts($limit = 12, $offset = 0) {
+    $query = "SELECT 
+                p.product_id as id,
+                p.name,
+                p.short_description as description,
+                p.cover_picture as image,
+                p.slug,
+                MIN(pv.price) as price,
+                NULL as old_price,
+                SUM(pv.quantity) as stock,
+                GROUP_CONCAT(DISTINCT pc.name SEPARATOR ', ') as categories
+              FROM products p
+              LEFT JOIN product_variants pv ON p.product_id = pv.product_id AND pv.is_active = 1
+              LEFT JOIN product_category_links pcl ON p.product_id = pcl.product_id
+              LEFT JOIN product_categories pc ON pcl.category_id = pc.category_id
+              WHERE p.status = 'PUBLISHED' AND p.is_deleted = 0
+              GROUP BY p.product_id
+              ORDER BY p.created_at DESC
+              LIMIT ? OFFSET ?";  // Added LIMIT and OFFSET here
+    
+    $stmt = $this->conn->prepare($query);
+    $stmt->bind_param("ii", $limit, $offset);  // Bind the parameters
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $products = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    return $products;
+}
 
     /**
      * Get featured products for homepage
@@ -281,9 +282,9 @@ class Product {
         return $result;
     }
 
-    public function getAllCategories() {
+public function getAllCategories() {
         $query = "SELECT 
-                    category_id as id,
+                    category_id,
                     name,
                     slug 
                   FROM product_categories

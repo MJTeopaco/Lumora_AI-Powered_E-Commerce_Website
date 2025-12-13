@@ -2,6 +2,11 @@
 // Lumora - public/index.php
 // The one and only entry point for all web requests.
 
+// --- TIMEZONE FIX ---
+// Force the application to use Philippines Time
+date_default_timezone_set('Asia/Manila');
+// --------------------
+
 // Start output buffering to prevent header errors
 ob_start();
 
@@ -16,10 +21,8 @@ if (function_exists('opcache_reset')) {
 }
 require __DIR__ . '/../vendor/autoload.php';
 
-// --- ADDED THIS LINE ---
 // Load Helper Functions (base_url, etc.)
 require __DIR__ . '/../app/Core/functions.php';
-// -----------------------
 
 use App\Core\Request;
 use App\Core\Router;

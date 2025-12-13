@@ -568,3 +568,78 @@
         grid-template-columns: 1fr;
     }
 }
+/* ============================================
+   TOAST NOTIFICATIONS (POP-UPS)
+   ============================================ */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    transform: translateX(120%);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border-left: 4px solid #333;
+    min-width: 300px;
+    max-width: 450px;
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification i {
+    font-size: 1.2rem;
+}
+
+.toast-notification span {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Toast Variants */
+.toast-success {
+    border-left-color: #28a745;
+}
+.toast-success i {
+    color: #28a745;
+}
+
+.toast-error {
+    border-left-color: #dc3545;
+}
+.toast-error i {
+    color: #dc3545;
+}
+
+.toast-warning {
+    border-left-color: #ffc107;
+}
+.toast-warning i {
+    color: #ffc107;
+}
+
+.toast-info {
+    border-left-color: #17a2b8;
+}
+.toast-info i {
+    color: #17a2b8;
+}
+
+/* Mobile Responsiveness for Toasts */
+@media (max-width: 480px) {
+    .toast-notification {
+        width: 90%;
+        left: 5%;
+        right: 5%;
+        top: 10px;
+        min-width: auto;
+    }
+}
